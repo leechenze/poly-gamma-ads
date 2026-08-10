@@ -3,5 +3,8 @@
     <string name="title_privacy_setting">
         Privacy Setting
     </string>
+    <string name="title_device_setting">
+        Privacy Device Info Setting
+    </string>
 
 </resources>

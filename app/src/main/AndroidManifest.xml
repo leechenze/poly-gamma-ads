@@ -37,6 +37,10 @@
             android:name=".PrivacySettingActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".DeviceSettingActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

@@ -70,7 +70,6 @@ public class PrivacySettingActivity extends Activity {
         // Synchronize settings to Origin SDK
         applySettingsToSDK();
 
-        Toast.makeText(this, "设置已保存", Toast.LENGTH_SHORT).show();
         // print value of cbAdult, cbPersonalized, cbprogrammatic.
         Log.d(
                 TAG,
@@ -81,6 +80,8 @@ public class PrivacySettingActivity extends Activity {
                         cbProgrammatic.isChecked()
                 )
         );
+
+        Toast.makeText(this, "设置已保存", Toast.LENGTH_SHORT).show();
         finish();
     }
 

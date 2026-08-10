@@ -6,6 +6,7 @@ import android.util.Log;
 import android.util.Pair;
 
 
+import com.polygamma.adsdemo.constants.SDKInitConfig;
 import com.polygamma.adsdemo.utils.DeviceIdGenerator;
 
 import org.polygamma.android.origin.Origin;
@@ -32,7 +33,7 @@ public class MyApplication extends Application {
     }
 
 
-    public boolean initSDK() {
+    public boolean initSDK(SDKInitConfig sdkInitConfig) {
         try {
             Origin.initializeWithOptions(this,
                     new OriginOptions()
@@ -42,7 +43,52 @@ public class MyApplication extends Application {
                                 Log.d(TAG, "Dynamic GAID: " + originDeviceId);
                                 return new Pair<>(originDeviceId, gaidLimited);
                             }));
+
+
+            /**
+             * To do
+             * Improve of Origin SDK methods
+             */
+            if (sdkInitConfig.isAdult) {
+            }
+            if (sdkInitConfig.isPersonalized) {
+            }
+            if (sdkInitConfig.isProgrammatic) {
+            }
+            if (sdkInitConfig.canUseLocation) {
+            }
+            if (sdkInitConfig.canUsePhoneState) {
+            }
+            if (sdkInitConfig.canUseOaid) {
+            }
+            if (sdkInitConfig.canUseAndroidId) {
+            }
+            if (sdkInitConfig.canUseAppList) {
+            }
+            if (sdkInitConfig.canUseSimOperator) {
+            }
+            if (sdkInitConfig.canUseSpaceSize) {
+            }
+
+
+            Log.d(
+                    TAG,
+                    String.format(
+                            "saveSettings: isAdult=%s, isPersonalized=%s, isProgrammatic=%s, location=%s, phoneState=%s, oaid=%s, androidId=%s, appList=%s, simOperator=%s, spaceSize=%s",
+                            sdkInitConfig.isAdult,
+                            sdkInitConfig.isPersonalized,
+                            sdkInitConfig.isProgrammatic,
+                            sdkInitConfig.canUseLocation,
+                            sdkInitConfig.canUsePhoneState,
+                            sdkInitConfig.canUseOaid,
+                            sdkInitConfig.canUseAndroidId,
+                            sdkInitConfig.canUseAppList,
+                            sdkInitConfig.canUseSimOperator,
+                            sdkInitConfig.canUseSpaceSize
+                    )
+            );
             Log.d(TAG, "Origin SDK launched");
+
             return true;
 
         } catch (Exception e) {
