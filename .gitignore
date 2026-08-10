@@ -67,7 +67,7 @@ __pycache__/
 
 
 # ===============================================================
-build
-.gradle
-.build
-.idea
+build/
+.gradle/
+.build/
+.idea/
