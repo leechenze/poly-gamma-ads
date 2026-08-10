@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">adsdemo</string>
+    <string name="title_privacy_setting">
+        Privacy Setting
+    </string>
+
+</resources>

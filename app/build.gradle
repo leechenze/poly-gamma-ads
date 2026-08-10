@@ -1,0 +1,64 @@
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    namespace 'com.polygamma.adsdemo'
+    compileSdk {
+        version = release(36)
+    }
+
+    defaultConfig {
+        applicationId "com.polygamma.adsdemo"
+        minSdk 34
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("./releaseKey/ads-key.jks")
+            storePassword "lcz19930316"
+            keyAlias "adskey"
+            keyPassword "lcz19930316"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation libs.appcompat
+    implementation libs.material
+    implementation libs.activity
+    implementation libs.constraintlayout
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+
+    implementation(files(
+        project.layout.projectDirectory
+                .dir("libs")
+                .file("origin-release.aar")
+    ))
+
+    implementation(files(
+        project.layout.projectDirectory
+                .dir("libs")
+                .file("oaid_sdk_2.1.0.aar")
+    ))
+    implementation 'com.google.android.gms:play-services-ads-identifier:18.2.0'
+}

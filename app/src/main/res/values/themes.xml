@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Adsdemo" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Customize your light theme here. -->
+
+        <!-- ActionBar 背景颜色 -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <!-- 标题文字颜色 -->
+        <item name="android:textColorPrimary">@color/white</item>
+    </style>
+
+    <style name="Theme.Adsdemo" parent="Base.Theme.Adsdemo" />
+</resources>
