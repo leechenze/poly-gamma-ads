@@ -64,3 +64,10 @@ Backup_*
 # Python bytecode and cache files
 __pycache__/
 *.py[cod]
+
+
+# ===============================================================
+build
+.gradle
+.build
+.idea
