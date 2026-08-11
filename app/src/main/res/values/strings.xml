@@ -6,5 +6,24 @@
     <string name="title_device_setting">
         Privacy Device Info Setting
     </string>
+    <string name="title_ad_entry">
+        Ads Entry
+    </string>
+    <string name="title_splash_ad">
+        Splash AD
+    </string>
+    <string name="title_rewarded_ad">
+        Rewarded AD
+    </string>
+    <string name="title_interstitial_ad">
+        Interstitial AD
+    </string>
+    <string name="title_native_ad">
+        Native AD
+    </string>
+    <string name="title_device_info">
+        Device Info
+    </string>
+
 
 </resources>

@@ -22,7 +22,6 @@ public class MyApplication extends Application {
     private boolean gaidLimited = false;
     private String originDeviceId;
 
-
     @Override
     public void onCreate() {
 
@@ -43,7 +42,6 @@ public class MyApplication extends Application {
                                 Log.d(TAG, "Dynamic GAID: " + originDeviceId);
                                 return new Pair<>(originDeviceId, gaidLimited);
                             }));
-
 
             /**
              * To do
@@ -69,7 +67,6 @@ public class MyApplication extends Application {
             }
             if (sdkInitConfig.canUseSpaceSize) {
             }
-
 
             Log.d(
                     TAG,

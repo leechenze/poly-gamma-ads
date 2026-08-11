@@ -12,6 +12,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.polygamma.adsdemo.constants.Constants;
 import com.polygamma.adsdemo.constants.SDKInitConfig;
 
+import org.polygamma.android.origin.Origin;
+import org.polygamma.android.origin.ads.AdsModule;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private Button sdkInitBtn;
     private Button privacySettingBtn;
     private Button deviceSettingBtn;
+    private Button startSDKBtn;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -28,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         sdkInitBtn = findViewById(R.id.btn_sdk_init);
         privacySettingBtn = findViewById(R.id.btn_privacy_setting);
         deviceSettingBtn = findViewById(R.id.btn_device_setting);
+        startSDKBtn = findViewById(R.id.btn_start_sdk);
 
         // click listener group
         sdkInitBtn.setOnClickListener(view -> initSDK());
@@ -36,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         deviceSettingBtn.setOnClickListener(v -> {
             startActivity(new Intent(MainActivity.this, DeviceSettingActivity.class));
         });
+        startSDKBtn.setOnClickListener(v -> startSDK());
 
     }
 
@@ -89,5 +95,20 @@ public class MainActivity extends AppCompatActivity {
         // ==========================================================================================
         sdkInitBtn.setEnabled(true);
         sdkInitBtn.setText("SDK 初始化");
+    }
+
+
+    private void startSDK() {
+        // AdsModule ads = Origin.ads();
+
+        // if (!ads.isInit()) {
+        //     Toast.makeText(this, "请先进行 SDK 初始化", Toast.LENGTH_SHORT).show();
+        //     return;
+        // }
+
+        // 需要有个 判断IVT SDK是否启动正常的方法, 如果正常就提示IVT SDK正常=成功, 否则提示SDK异常=失败.
+        // 当SDK成功启动时, 加载选择不同广告位的页面.
+        startActivity(new Intent(MainActivity.this, AdEntryActivity.class));
+
     }
 }

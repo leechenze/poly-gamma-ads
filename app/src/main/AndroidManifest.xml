@@ -33,14 +33,55 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".PrivacySettingActivity"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
-            android:screenOrientation="portrait" />
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"></activity>
+
         <activity
             android:name=".DeviceSettingActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"></activity>
+
+        <activity
+            android:name=".AdEntryActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"></activity>
+
+        <!-- All activity of Ad Entry -->
+        <activity
+            android:name=".SplashAdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
+            android:exported="true"
+            android:hardwareAccelerated="true"
             android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".RewardedActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".InterstitialActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".NativeAdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".DeviceInfoActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:background="@color/colorPrimary"
+        android:paddingTop="60dp"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:title="@string/title_ad_entry"
+        app:titleTextColor="@color/white" />
+
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+
+            <Button
+                android:id="@+id/splash_ad_btn"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/btn_round_primary"
+                android:gravity="center"
+                android:text="开屏广告"
+                android:textColor="@color/white" />
+
+
+            <Button
+                android:id="@+id/rewarded_ad_btn"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/btn_round_primary"
+                android:text="激励视频"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/interstitial_ad_btn"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/btn_round_primary"
+                android:text="插屏广告"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/native_ad_btn"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/btn_round_primary"
+                android:text="原生广告"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/device_info_btn"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/btn_round_primary"
+                android:text="设备信息"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btn_back"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/btn_round_primary"
+                android:text="返回上一页"
+                android:textColor="@color/white" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

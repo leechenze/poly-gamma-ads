@@ -42,20 +42,12 @@
         android:text="隐私设备信息控制" />
 
     <Button
-        android:id="@+id/btn_privacy_view"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="30dp"
-        android:gravity="center"
-        android:text="个人信息查询及删除" />
-
-    <Button
         android:id="@+id/btn_start_sdk"
         android:layout_width="240dp"
         android:layout_height="60dp"
         android:layout_marginBottom="30dp"
         android:gravity="center"
-        android:text="启动 SDK" />
+        android:text="启动 SDK Demo" />
 
     <Button
         android:id="@+id/btn_request_phone_state"
