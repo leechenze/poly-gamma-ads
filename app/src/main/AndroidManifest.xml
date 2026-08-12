@@ -55,14 +55,14 @@
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".RewardedActivity"
+            android:name=".RewardedAdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
             android:exported="true"
             android:hardwareAccelerated="true"
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".InterstitialActivity"
+            android:name=".InterstitialAdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
             android:exported="true"
             android:hardwareAccelerated="true"

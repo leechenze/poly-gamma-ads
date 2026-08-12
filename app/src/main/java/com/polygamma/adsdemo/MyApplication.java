@@ -15,11 +15,9 @@ import org.polygamma.android.origin.OriginOptions;
 public class MyApplication extends Application {
 
     private static final String TAG = "MyApplication";
+    private boolean sdkInitialized = false;
 
-    // GAID缓存
-    private volatile String gaid = "";
-
-    private boolean gaidLimited = false;
+    private boolean deviceIdLimited = false;
     private String originDeviceId;
 
     @Override
@@ -31,6 +29,9 @@ public class MyApplication extends Application {
 
     }
 
+    public boolean isSdkInitialized() {
+        return sdkInitialized;
+    }
 
     public boolean initSDK(SDKInitConfig sdkInitConfig) {
         try {
@@ -38,9 +39,9 @@ public class MyApplication extends Application {
                     new OriginOptions()
                             .addCapability(Origin.CAPABILITY_ANTIFRAUD)
                             .addCapability(Origin.CAPABILITY_ADS)
-                            .addDynamicDeviceId("GAID", ctxt -> {
-                                Log.d(TAG, "Dynamic GAID: " + originDeviceId);
-                                return new Pair<>(originDeviceId, gaidLimited);
+                            .addDynamicDeviceId("CUSTOMID", ctxt -> {
+                                Log.d(TAG, "Dynamic CUSTOMID: " + originDeviceId);
+                                return new Pair<>(originDeviceId, deviceIdLimited);
                             }));
 
             /**
@@ -85,11 +86,11 @@ public class MyApplication extends Application {
                     )
             );
             Log.d(TAG, "Origin SDK launched");
-
+            sdkInitialized = true;
             return true;
-
         } catch (Exception e) {
             Log.e(TAG, "Origin SDK init failed", e);
+            sdkInitialized = false;
             return false;
         }
     }

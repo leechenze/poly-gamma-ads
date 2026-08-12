@@ -6,6 +6,7 @@
     <string name="title_device_setting">
         Privacy Device Info Setting
     </string>
+
     <string name="title_ad_entry">
         Ads Entry
     </string>
@@ -24,6 +25,12 @@
     <string name="title_device_info">
         Device Info
     </string>
+
+    <string name="view_splash_ad">
+        Splash AD View
+    </string>
+
+    <string name="close">Close</string>
 
 
 </resources>

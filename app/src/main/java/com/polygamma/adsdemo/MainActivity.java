@@ -19,6 +19,7 @@ import org.polygamma.android.origin.ads.AdsModule;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    MyApplication app;
 
     private Button sdkInitBtn;
     private Button privacySettingBtn;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        app = (MyApplication) getApplication();
         sdkInitBtn = findViewById(R.id.btn_sdk_init);
         privacySettingBtn = findViewById(R.id.btn_privacy_setting);
         deviceSettingBtn = findViewById(R.id.btn_device_setting);
@@ -49,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
         sdkInitBtn.setEnabled(false);
         sdkInitBtn.setText("SDK 初始化中...");
         // ==========================================================================================
-        MyApplication app = (MyApplication) getApplication();
         SharedPreferences privacySp = getSharedPreferences(Constants.PREFS_PRIVACY_SETTING, 0);
         final boolean cbAdult = privacySp.getBoolean(Constants.PREFS_KEY_ADULT, true);
         final boolean cbPersonalized = privacySp.getBoolean(Constants.PREFS_KEY_PERSONALIZED, true);
@@ -99,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void startSDK() {
+
         // AdsModule ads = Origin.ads();
 
         // if (!ads.isInit()) {
@@ -108,7 +110,12 @@ public class MainActivity extends AppCompatActivity {
 
         // 需要有个 判断IVT SDK是否启动正常的方法, 如果正常就提示IVT SDK正常=成功, 否则提示SDK异常=失败.
         // 当SDK成功启动时, 加载选择不同广告位的页面.
-        startActivity(new Intent(MainActivity.this, AdEntryActivity.class));
 
+        if (app.isSdkInitialized()) {
+            startActivity(new Intent(MainActivity.this, AdEntryActivity.class));
+        } else {
+            Toast.makeText(this, "请先进行 SDK 初始化", Toast.LENGTH_SHORT).show();
+            return;
+        }
     }
 }

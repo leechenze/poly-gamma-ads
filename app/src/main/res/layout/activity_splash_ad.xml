@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <!--    <com.google.android.material.appbar.MaterialToolbar-->
+    <!--        android:id="@+id/toolbar"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="120dp"-->
+    <!--        android:background="@color/colorPrimary"-->
+    <!--        android:paddingTop="60dp"-->
+    <!--        app:navigationIcon="@drawable/ic_arrow_back"-->
+    <!--        app:title="@string/view_splash_ad"-->
+    <!--        app:titleTextColor="@color/white" />-->
+
+
+    <!-- Splash Ad -->
+    <FrameLayout
+        android:id="@+id/splash_ad_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white">
+
+    </FrameLayout>
+
+    <!-- Top-right close button -->
+    <ImageButton
+        android:id="@+id/btn_close_icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:background="@drawable/bg_close_btn"
+        android:contentDescription="@string/close"
+        android:padding="10dp"
+        android:src="@drawable/ic_close" />
+
+    <!-- Bottom buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#CCA9A9A9"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="24dp">
+
+        <Button
+            android:id="@+id/btn_close"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_round_primary"
+            android:text="Close" />
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="0dp" />
+
+        <Button
+            android:id="@+id/btn_landing_page"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_round_primary"
+            android:text="Landing Page" />
+
+    </LinearLayout>
+</FrameLayout>

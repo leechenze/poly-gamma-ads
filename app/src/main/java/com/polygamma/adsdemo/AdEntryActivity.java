@@ -40,9 +40,9 @@ public class AdEntryActivity extends AppCompatActivity {
         splashAdBtn.setOnClickListener(v ->
                 startActivity(new Intent(this, SplashAdActivity.class)));
         rewardedAdBtn.setOnClickListener(v ->
-                startActivity(new Intent(this, RewardedActivity.class)));
+                startActivity(new Intent(this, RewardedAdActivity.class)));
         interstitialAdBtn.setOnClickListener(v ->
-                startActivity(new Intent(this, InterstitialActivity.class)));
+                startActivity(new Intent(this, InterstitialAdActivity.class)));
         nativeAdBtn.setOnClickListener(v ->
                 startActivity(new Intent(this, NativeAdActivity.class)));
         deviceInfoBtn.setOnClickListener(v ->

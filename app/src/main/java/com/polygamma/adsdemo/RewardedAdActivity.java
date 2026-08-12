@@ -5,12 +5,12 @@ import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 
-public class InterstitialActivity extends Activity {
+public class RewardedAdActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // setContentView(R.layout.activity_interstitial_ad);
+        // setContentView(R.layout.activity_rewarded_ad);
 
     }
 }
