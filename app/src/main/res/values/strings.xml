@@ -25,7 +25,9 @@
     <string name="title_device_info">
         Device Info
     </string>
-
+    <string name="title_benchmark_test">
+        Benchmark Test
+    </string>
     <string name="view_splash_ad">
         Splash AD View
     </string>

@@ -20,4 +20,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "adsdemo"
-include ':app'
+include(":app")
+includeBuild('origin-android')

@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private Button privacySettingBtn;
     private Button deviceSettingBtn;
     private Button startSDKBtn;
+    private Button benchmarkTestBtn;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
         privacySettingBtn = findViewById(R.id.btn_privacy_setting);
         deviceSettingBtn = findViewById(R.id.btn_device_setting);
         startSDKBtn = findViewById(R.id.btn_start_sdk);
+        benchmarkTestBtn = findViewById(R.id.btn_benchmark_test);
 
         // click listener group
         sdkInitBtn.setOnClickListener(view -> initSDK());
@@ -44,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(MainActivity.this, DeviceSettingActivity.class));
         });
         startSDKBtn.setOnClickListener(v -> startSDK());
+        benchmarkTestBtn.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, BenchmarkTestActivity.class));
+        });
 
     }
 

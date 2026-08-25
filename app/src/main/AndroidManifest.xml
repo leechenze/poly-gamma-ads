@@ -82,6 +82,13 @@
             android:hardwareAccelerated="true"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:name=".BenchmarkTestActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

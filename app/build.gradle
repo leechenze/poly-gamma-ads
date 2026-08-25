@@ -49,11 +49,11 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 
-    implementation(files(
-        project.layout.projectDirectory
-                .dir("libs")
-                .file("origin-release.aar")
-    ))
+    // implementation(files(
+    //     project.layout.projectDirectory
+    //             .dir("libs")
+    //             .file("origin-release.aar")
+    // ))
 
     implementation(files(
         project.layout.projectDirectory
@@ -61,4 +61,7 @@ dependencies {
                 .file("oaid_sdk_2.1.0.aar")
     ))
     implementation 'com.google.android.gms:play-services-ads-identifier:18.2.0'
+    implementation 'org.poly-gamma.android.origin:origin:1.2.0'
+    // implementation 'org.poly-gamma.android.origin:origin-crypt:1.2.0'
+
 }
