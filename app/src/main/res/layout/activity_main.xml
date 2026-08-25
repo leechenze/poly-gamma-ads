@@ -15,64 +15,81 @@
         app:title="Origin SDK Version : Test Version"
         app:titleTextColor="@color/white" />
 
-    <Button
-        android:id="@+id/btn_sdk_init"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="30dp"
-        android:gravity="center"
-        android:text="SDK 初始化" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btn_sdk_init"
+                android:layout_width="240dp"
+                android:layout_height="60dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="30dp"
+                android:gravity="center"
+                android:text="SDK 初始化" />
 
 
-    <Button
-        android:id="@+id/btn_privacy_setting"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="30dp"
-        android:gravity="center"
-        android:text="隐私设置" />
+            <Button
+                android:id="@+id/btn_privacy_setting"
+                android:layout_width="240dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="30dp"
+                android:gravity="center"
+                android:text="隐私设置" />
 
-    <Button
-        android:id="@+id/btn_device_setting"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="30dp"
-        android:gravity="center"
-        android:text="隐私设备信息控制" />
+            <Button
+                android:id="@+id/btn_device_setting"
+                android:layout_width="240dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="30dp"
+                android:gravity="center"
+                android:text="隐私设备信息控制" />
 
-    <Button
-        android:id="@+id/btn_start_sdk"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="30dp"
-        android:gravity="center"
-        android:text="启动 SDK Demo" />
+            <Button
+                android:id="@+id/btn_start_sdk"
+                android:layout_width="240dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="30dp"
+                android:gravity="center"
+                android:text="启动 SDK Demo" />
 
-    <Button
-        android:id="@+id/btn_request_phone_state"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="30dp"
-        android:gravity="center"
-        android:text="申请手机状态权限" />
+            <Button
+                android:id="@+id/btn_request_phone_state"
+                android:layout_width="240dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="30dp"
+                android:gravity="center"
+                android:text="申请手机状态权限" />
 
-    <Button
-        android:id="@+id/btn_request_location"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="30dp"
-        android:gravity="center"
-        android:text="申请位置权限" />
+            <Button
+                android:id="@+id/btn_request_location"
+                android:layout_width="240dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="30dp"
+                android:gravity="center"
+                android:text="申请位置权限" />
 
 
-    <Button
-        android:id="@+id/btn_benchmark_test"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="30dp"
-        android:gravity="center"
-        android:text="Benchmark Test" />
+            <Button
+                android:id="@+id/btn_benchmark_test"
+                android:layout_width="240dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="30dp"
+                android:gravity="center"
+                android:text="Benchmark Test" />
 
+
+        </LinearLayout>
+
+    </ScrollView>
 
 </LinearLayout>
