@@ -15,7 +15,6 @@ import static org.polygamma.android.origin.crypt.UnsignedMath.divideCeil;
 public class TorusFheBenchmarkRunner {
 
     private static final long RANDOM_SEED = 44L;
-    private static final int TEST_PLAINTEXT = 1;
 
     public BenchmarkResult run(
             BenchmarkConfig config
@@ -69,16 +68,34 @@ public class TorusFheBenchmarkRunner {
 
         for (int i = 0; i < iterations; i++) {
 
+            context.plaintext =
+                    i % context.plaintextSpace;
+
             long start =
                     System.nanoTime();
 
-            executeOperation(config, context);
+            executeOperation(
+                    config,
+                    context
+            );
 
             long end =
                     System.nanoTime();
 
-            samples[i] =
-                    end - start;
+            if (config.getMode() == BenchmarkConfig.Mode.FULL
+                    && context.decrypted != context.plaintext) {
+
+                throw new IllegalStateException(
+                        "FHE round-trip failed at iteration "
+                                + i
+                                + ": plaintext="
+                                + context.plaintext
+                                + ", decrypted="
+                                + context.decrypted
+                );
+            }
+
+            samples[i] = end - start;
         }
 
         long totalEnd =
@@ -216,6 +233,9 @@ public class TorusFheBenchmarkRunner {
             BenchmarkContext context
     ) throws Exception {
 
+        context.plaintext =
+                config.getBenchmarkIterations() % context.plaintextSpace;
+
         switch (config.getMode()) {
 
             case ENCRYPT:
@@ -250,7 +270,7 @@ public class TorusFheBenchmarkRunner {
                         context.pkMaskOffset,
                         context.buffer,
                         context.pkBodyOffset,
-                        TEST_PLAINTEXT
+                        context.plaintext
                 );
     }
 
@@ -275,10 +295,6 @@ public class TorusFheBenchmarkRunner {
     private void benchmarkFullRoundTrip(
             BenchmarkContext context
     ) throws Exception {
-
-        /*
-         * Encrypt
-         */
         context.ctBody =
                 context.fhe.encrypt(
                         context.buffer,
@@ -287,12 +303,8 @@ public class TorusFheBenchmarkRunner {
                         context.pkMaskOffset,
                         context.buffer,
                         context.pkBodyOffset,
-                        TEST_PLAINTEXT
+                        context.plaintext
                 );
-
-        /*
-         * Decrypt
-         */
         context.decrypted =
                 context.fhe.decrypt(
                         context.buffer,
@@ -301,6 +313,15 @@ public class TorusFheBenchmarkRunner {
                         context.ctMaskOffset,
                         context.ctBody
                 );
+
+        if (context.decrypted != context.plaintext) {
+            throw new IllegalStateException(
+                    "FHE round-trip failed: plaintext="
+                            + context.plaintext
+                            + ", decrypted="
+                            + context.decrypted
+            );
+        }
     }
 
     private BenchmarkContext createBenchmarkContext(
@@ -334,6 +355,13 @@ public class TorusFheBenchmarkRunner {
                         config.getLogNoiseB(),
                         csprng
                 );
+
+        int plaintextSpace =
+                fhe.messageModulus()
+                        * fhe.carryModulus();
+
+        int plaintext =
+                plaintextSpace > 1 ? 1 : 0;
 
         /*
          * Same basic size calculations as TorusFheTest.
@@ -435,7 +463,7 @@ public class TorusFheBenchmarkRunner {
                         pkMaskOffset,
                         buffer,
                         pkBodyOffset,
-                        TEST_PLAINTEXT
+                        plaintext
                 );
 
         return new BenchmarkContext(
@@ -448,6 +476,8 @@ public class TorusFheBenchmarkRunner {
                 pkMaskOffset,
                 pkBodyOffset,
                 ctMaskOffset,
+                plaintextSpace,
+                plaintext,
                 ctBody
         );
     }
@@ -514,8 +544,10 @@ public class TorusFheBenchmarkRunner {
         final int pkBodyOffset;
         final int ctMaskOffset;
 
+        final int plaintextSpace;
         long ctBody;
         long decrypted;
+        int plaintext;
 
         BenchmarkContext(
                 TorusFhe fhe,
@@ -527,6 +559,8 @@ public class TorusFheBenchmarkRunner {
                 int pkMaskOffset,
                 int pkBodyOffset,
                 int ctMaskOffset,
+                int plaintextSpace,
+                int plaintext,
                 long ctBody
         ) {
             this.fhe = fhe;
@@ -538,6 +572,8 @@ public class TorusFheBenchmarkRunner {
             this.pkMaskOffset = pkMaskOffset;
             this.pkBodyOffset = pkBodyOffset;
             this.ctMaskOffset = ctMaskOffset;
+            this.plaintextSpace = plaintextSpace;
+            this.plaintext = plaintext;
             this.ctBody = ctBody;
         }
     }

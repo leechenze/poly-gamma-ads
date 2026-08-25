@@ -22,7 +22,16 @@ import java.util.concurrent.Executors;
 public class BenchmarkTestActivity extends Activity {
 
     private static final String TAG = "PrivacySettingActivity";
-
+    private static final int[] VALID_LWE_DIMENSIONS = {
+            256,
+            512,
+            1024,
+            2048,
+            4096,
+            8192,
+            16384,
+            32768
+    };
     private TextInputEditText etN;
     private TextInputEditText etMsgMod;
     private TextInputEditText etCarryMod;
@@ -176,6 +185,17 @@ public class BenchmarkTestActivity extends Activity {
         return Integer.parseInt(value);
     }
 
+    private boolean isValidLweDimension(int n) {
+
+        for (int value : VALID_LWE_DIMENSIONS) {
+            if (value == n) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void validateConfig(
             int n,
             int msgMod,
@@ -185,6 +205,13 @@ public class BenchmarkTestActivity extends Activity {
             int iterations
     ) {
 
+        if (!isValidLweDimension(n)) {
+            throw new IllegalArgumentException(
+                    "n must be one of: "
+                            + "256, 512, 1024, 2048, "
+                            + "4096, 8192, 16384, 32768"
+            );
+        }
         if (n <= 0) {
             throw new IllegalArgumentException("n must be > 0");
         }
