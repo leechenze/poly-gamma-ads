@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+/*
+ * Origin application conventions.
+ *
+ * This extends `origin-common` with application specific conventions.
+ */
+
+plugins {
+	id("origin-common")
+	id("com.android.application")
+}
+
+android {
+	namespace = project.ext.originNamespace
+	compileSdk = 35
+
+	defaultConfig {
+		applicationId = project.ext.originNamespace
+		minSdk = 21
+		targetSdk = 35
+		versionCode =
+			project.ext.originVersionMajor * 10000 +
+			project.ext.originVersionMinor * 100 +
+			project.ext.originVersionPatchLevel +
+			(project.ext.originVersionDevelopment ? 100000 : 0)
+		versionName = project.version
+
+		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+	}
+
+	buildTypes {
+		release {
+			minifyEnabled = true
+			proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+		}
+	}
+
+	compileOptions {
+		sourceCompatibility = JavaVersion.VERSION_1_8
+		targetCompatibility = JavaVersion.VERSION_1_8
+	}
+}
+
+dependencies {
+	implementation(libs.androidx.appcompat)
+	implementation(libs.google.material)
+
+	testImplementation(libs.junit)
+
+	androidTestImplementation(libs.androidx.test.junit)
+	androidTestImplementation(libs.androidx.test.espresso.core)
+}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- Required permissions: -->
+	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+	<application
+		android:label="Ads Test"
+		android:theme="@style/WhiteBackgroundTheme"
+	>
+		<activity
+			android:name="org.polygamma.android.origin.ads.AdMediaLayoutTest$TestActivity"
+			android:exported="true"
+		/>
+		<activity
+			android:name="org.polygamma.android.origin.ads.ViewUtilsTest$TestActivity"
+			android:exported="true"
+		/>
+	</application>
+</manifest>

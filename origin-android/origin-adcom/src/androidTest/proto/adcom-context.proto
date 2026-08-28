@@ -1,0 +1,667 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+syntax="proto3";
+package org.polygamma.origin.adcom;
+
+import "adcom-enums.proto";
+
+/// Data signal segment.
+message Segment {
+	/// Segment identifier, unique to data provider.
+	string id		= 1;
+
+	/// Segment name.
+	string name		= 2;
+
+	/// Segment value.
+	string value	= 3;
+}
+
+/// Data signal collection.
+message Data {
+	/// Signal collection identifier, unique to data provider.
+	string id					= 1;
+
+	/// Signal collection name.
+	string name					= 2;
+
+	/// Extended content identifiers.
+	repeated string cids		= 3;
+
+	/// Data signal segments.
+	repeated Segment segment	= 4;
+}
+
+/// Description of channel in which content is displayed.
+message Channel {
+	/// Channel identifier, unique to publisher.
+	string id		= 1;
+
+	/// Channel name.
+	string name		= 2;
+
+	/// Top-level domain name of channel.
+	string domain	= 3;
+}
+
+/// Description of network through which content is distributed.
+message Network {
+	/// Network identifier, unique to publisher.
+	string id		= 1;
+
+	/// Network name.
+	string name		= 2;
+
+	/// Top-level domain name of network.
+	string domain	= 3;
+}
+
+/// Description of content producer.
+message Producer {
+	/// Producer identifier, unique to vendor.
+	string id						= 1;
+
+	/// Producer name.
+	string name						= 2;
+
+	/// Top-level domain name of producer.
+	string domain					= 3;
+
+	/// Categories describing producer.
+	repeated string cat				= 4;
+
+	/// Code of taxonomy in which [categories](Producer::cat) are defined in.
+	CategoryTaxonomyCode cattax		= 5;
+}
+
+/// Description of content where ad media will be distributed.
+message Content {
+	/// Publisher assigned content identifier.
+	string id						=  1;
+
+	/// Episode number.
+	int32 episode					=  2;
+
+	/// Content title.
+	string title					=  3;
+
+	/// Series name.
+	string series					=  4;
+
+	/// Season string.
+	string season					=  5;
+
+	/// Artist credited with content.
+	string artist					=  6;
+
+	// Genre that best describes the content.
+	//DEPRECATED
+	//string genre					=  7;
+
+	/// Categories describing content genre.
+	repeated string genres			=  8;
+
+	/// Code of taxonomy in which genre [categories](Content::genres) are defined in.
+	CategoryTaxonomyCode gtax		=  9;
+
+	/// Name of album to which content belongs.
+	string album					= 10;
+
+	/// International Standard Recording Code.
+	string isrc						= 11;
+
+	/// Content URL suitable for buy-side contextualization or review.
+	string url						= 12;
+
+	/// Categories describing content.
+	repeated string cat				= 13;
+
+	/// Code of taxonomy in which [categories](Content::cat) are defined in.
+	CategoryTaxonomyCode cattax		= 14;
+
+	/// Production quality of content.
+	ContentProductionQuality prodq	= 15;
+
+	/// Content context type.
+	ContentContextType context		= 16;
+
+	/// Content rating, i.e. `MPAA`.
+	string rating					= 17;
+
+	/// User rating of content.
+	string urating					= 18;
+
+	/// Audience rating per IQG guidelines.
+	MediaAudienceRating mrating		= 19;
+
+	// Comma delimited list of keywords describing content.
+	//DEPRECATED
+	//string keywords				= 20;
+
+	/// Keywords describing content.
+	repeated string kwarray			= 20;
+
+	/// Content is live.
+	bool live						= 21;
+
+	/// Content is sourced directly.
+	bool srcrel						= 22;
+
+	/// Length, in seconds, of content.
+	uint32 len						= 23;
+
+	oneof lang {
+		/// ISO-639-1-alpha-2 language code of content.
+		string langiso				= 24;
+
+		/// BCP-47 language code of content.
+		string langb				= 25;
+	}
+
+	/// Content is embedded.
+	bool embed						= 26;
+
+	/// Content producer description.
+	Producer producer				= 27;
+
+	/// Network through which content is distributed.
+	Network network					= 28;
+
+	/// Channel on which content is displayed.
+	Channel channel					= 29;
+
+	/// Additional data signals.
+	repeated Data data				= 30;
+}
+
+/// Publisher of content distributed through distribution channel.
+message Publisher {
+	/// Publisher identifier, unique to vendor.
+	string id						= 1;
+
+	/// Publisher name.
+	string name						= 2;
+
+	/// Top-level domain name of publisher.
+	string domain					= 3;
+
+	/// Categories describing publisher.
+	repeated string cat				= 4;
+
+	/// Code of taxonomy in which [categories](Publisher::cat) are defined in.
+	CategoryTaxonomyCode cattax		= 5;
+}
+
+/// Specialization of [`DistributionChannel`](DistributionChannel) for websites.
+message Site {
+	/// Top-level domain name of website.
+	string domain					=  1;
+
+	/// Categories describing website.
+	repeated string cat				=  2;
+
+	/// Categories describing current section of website user is consuming content of.
+	repeated string sectcat			=  3;
+
+	/// Categories describing current page of website user is consuming content of.
+	repeated string pagecat			=  4;
+
+	/// Code of taxonomy [website](Site::cat), [section](Site::sectcat), and [page](Site::pagecat)
+	/// are defined in.
+	CategoryTaxonomyCode cattax		=  5;
+
+	/// Website has a privacy policy.
+	bool privpolicy					=  6;
+
+	// Comma-delimited list of keywords describing website.
+	//DEPRECATED
+	//string keywords				=  7;
+
+	/// Keywords describing website.
+	repeated string kwarray			=  7;
+
+	/// URL of page user is consuming content of.
+	string page						=  8;
+
+	/// Referrer URL which caused navigation to current website [page](Site::page).
+	string ref						=  9;
+
+	/// Search string which caused navigation to current website [page](Site::page).
+	string search					= 10;
+
+	/// Website is optimized for mobile browsers.
+	bool mobile						= 11;
+
+	/// Current website [page](Site::page) is built using AMP.
+	bool amp						= 12;
+}
+
+/// Specialization of [`DistributionChannel`](DistributionChannel) for non-browser applications.
+message App {
+	/// Top-level domain name of application.
+	string domain					=  1;
+
+	/// Categories describing application.
+	repeated string cat				=  2;
+
+	/// Categories describing current section, of application, user is consuming content of.
+	repeated string sectcat			=  3;
+
+	/// Categories describing current page, of application, user is consuming content of.
+	repeated string pagecat			=  4;
+
+	/// Code of taxonomy [application](App::cat), [section](App::sectcat), and
+	/// [page](App::pagecat) categories are specified in.
+	CategoryTaxonomyCode cattax		=  5;
+
+	/// Application has a privacy policy.
+	bool privpolicy					=  6;
+
+	// Comma-delimited list of keywords describing website.
+	//DEPRECATED
+	//string keywords				=  7;
+
+	/// Keywords describing application.
+	repeated string kwarray			=  7;
+
+	/// Bundle identifier of application.
+	string bundle					=  8;
+
+	/// Application-store assigned identifier of application.
+	string storeid					=  9;
+
+	/// URL of application within application store.
+	string storeurl					= 10;
+
+	/// Application version number.
+	string ver						= 11;
+
+	/// Paid version of application is being used.
+	bool paid						= 12;
+
+	/// Debuggable build of application is being used.
+	bool debug						= 500;
+
+	/// Application is installed as part of a system image.
+	bool system						= 501;
+}
+
+/// Specialization of [`DistributionChannel`](DistributionChannel) for digital-out-of-home.
+message Dooh {
+	// Venue type.
+	//DEPRECATED
+	//uint32 venue						= 1;
+	reserved 1;
+
+	// Venue location type.
+	//DEPRECATED
+	//DoohLocationType fixed			= 2;
+	reserved 2;
+
+	/// Exposure duration, in seconds.
+	uint32 etime						= 3;
+
+	// Minimum DPI supported.
+	//DEPRECATED
+	//uint32 dpi						= 4;
+	reserved 4;
+
+	/// Categories describing venue.
+	repeated string venuetype			= 500;
+
+	/// Code of taxonomy in which [venue](Dooh::venuetype) categories are defined in.
+	DoohVenueTaxonomyCode venuetypetax	= 501;
+}
+
+/// Channel through which ad media is distributed.
+message DistributionChannel {
+	/// Channel identifier, unique to vendor.
+	string id			= 1;
+
+	/// Human-readable channel name.
+	string name			= 2;
+
+	/// Publisher of channel.
+	Publisher pub		= 3;
+
+	/// Content distributed through channel.
+	Content content		= 4;
+
+	oneof inner {
+		/// Site-specific channel description.
+		Site site		= 5;
+
+		/// Non-browser application specific description.
+		App app			= 6;
+
+		/// Digital-out-of-home specific description.
+		Dooh dooh		= 7;
+	}
+}
+
+/// Geographical location description.
+message Geo {
+	/// Location information source.
+	GeoSourceType type			=  1;
+
+	/// Latitude between `-90` and `90`, where negative is south.
+	double lat					=  2;
+
+	/// Longitude between `-180` and `180`, where negative is west.
+	double lon					=  3;
+
+	/// Estimated accuracy, in meters, of [latitude](Geo::lat) and [longitude](Geo::lon).
+	uint32 accur				=  4;
+
+	/// Duration, in seconds, since GPS fix was established.
+	uint32 lastfix				=  5;
+
+	/// Service used, if any, to derive geolocation from IP address.
+	GeoIpLookupService ipserv	=  6;
+
+	/// ISO-3166-1-alpha-2 country code.
+	string country				=  7;
+
+	/// ISO-3166-2 region code, or 2-letter state code if USA.
+	string region				=  8;
+
+	/// Regional marketing area.
+	string metro				=  9;
+
+	/// UN/LOCODE of city.
+	string city					= 10;
+
+	/// ZIP or postal code.
+	string zip					= 11;
+
+	/// Local time offset in minutes from UTC.
+	sint32 utcoffset			= 12;
+
+	/// Timestamp, in seconds since UNIX epoch, of when [latitude](Geo::lat) and
+	/// [longitude](Geo::lon) were sourced from location provider.
+	fixed64 timestampsec		= 500;
+
+	/// Name of provider, on device, location was sourced from.
+	string provider				= 501;
+
+	/// Accuracy, in meters, of [latitude](Geo::lat) and [longitude](Geo::lon).
+	float horzaccur				= 502;
+
+	/// Bearing, in degrees.
+	double bearing				= 503;
+
+	/// Accuracy, in degrees, of [bearing](Geo::bearing).
+	float bearingaccur			= 504;
+
+	/// Speed, in meters per second.
+	double speed				= 505;
+
+	/// Accuracy, in meters per second, of [speed](Geo::speed).
+	float speedaccur			= 506;
+
+	/// Altitude, in meters above WGS84 reference ellipsoid.
+	double altwgs84				= 507;
+
+	/// Accuracy, in meters, of [WGS84 altitude](Geo::altwgs84).
+	float altwgs84accur			= 508;
+
+	/// Mean Sea Level (MSL) altitude, in meters.
+	double altmsl				= 509;
+
+	/// Accuracy, in meters, of [MSL altitude](Geo::altmsl).
+	float altmslaccur			= 510;
+}
+
+/// Third-party user identifier.
+message ExtendedUid {
+	/// User identifier.
+	string id			= 1;
+
+	/// User-agent match is from.
+	UidAgentType atype	= 2;
+}
+
+/// Third-party [user](User) identifier set.
+message ExtendedUidSet {
+	/// Top-level domain-name of UID set provider.
+	string source				= 1;
+
+	/// Underlying user identifiers.
+	repeated ExtendedUid uids	= 2;
+
+	/// Canonical domain name of entity which constructed the UID set.
+	string inserter				= 3;
+
+	/// Top-level domain name of provider which performed [matching](ExtendedUidSet::mm).
+	string matcher				= 4;
+
+	/// Matching method used.
+	UidMatchMethod mm			= 5;
+}
+
+/// Description of human-user to which ad media will be distributed.
+message User {
+	/// User identifier, unique to exchange.
+	string id						= 1;
+
+	/// User identifier, unique to buyer.
+	string buyeruid					= 2;
+
+	// Year user was born in.
+	//DEPRECATED
+	//uint32 yob					= 3;
+	reserved 3;
+
+	// Gender of user.
+	//DEPRECATED
+	//string gender					= 4;
+	reserved 4;
+
+	// Comma-delimited list of keywords describing user.
+	//DEPRECATED
+	//string keywords				= 5;
+
+	/// Keywords describing user.
+	repeated string kwarray			= 5;
+
+	/// GDPR consent string.
+	string consent					= 6;
+
+	/// User's home location.
+	Geo geo							= 7;
+
+	/// Additional user data signals.
+	repeated Data data				= 8;
+
+	/// Third-party user identifier sets.
+	repeated ExtendedUidSet eids	= 9;
+}
+
+/// Brand and version description.
+message BrandVersion {
+	/// Brand name.
+	string brand				= 1;
+
+	/// Version components sequence.
+	repeated string version		= 2;
+}
+
+/// Structured user-agent description.
+message UserAgent {
+	/// Software components brand and version.
+	repeated BrandVersion browsers	= 1;
+
+	/// Executing platform brand and version.
+	BrandVersion platform			= 2;
+
+	/// Agent prefers mobile version of content, when available.
+	bool mobile						= 3;
+
+	/// Binary architecture.
+	string architecture				= 4;
+
+	/// Bitness.
+	string bitness					= 5;
+
+	/// Model name.
+	string model					= 6;
+
+	/// Source description was sourced from.
+	UserAgentSourceType source		= 7;
+}
+
+/// Device advertising sanctioned identifier.
+message DeviceIfa {
+	/// Identifier type.
+	string type			= 1;
+
+	/// Identifier value.
+	string value		= 2;
+}
+
+/// Description of device on which ad media will be rendered.
+message Device {
+	/// Device type.
+	DeviceType type				=  1;
+
+	/// `User-Agent` HTTP header value.
+	string ua					=  2;
+
+	/// Structured user-agent.
+	UserAgent sua				=  3;
+
+	/// Device id, sanctioned for advertising.
+	string ifa					=  4;
+
+	/// Do-not-track has been requested.
+	bool dnt					=  5;
+
+	/// Limit-ad-tracking has been requested.
+	bool lmt					=  6;
+
+	/// Device manufacturer name.
+	string make					=  7;
+
+	/// Device model name.
+	string model				=  8;
+
+	/// Device operating-system.
+	OsCode os					=  9;
+
+	/// Device operating-system version.
+	string osv					= 10;
+
+	/// Device model version.
+	string hwv					= 11;
+
+	/// Screen height, in pixels.
+	uint32 h					= 12;
+
+	/// Screen width, in pixels.
+	uint32 w					= 13;
+
+	/// Screen size, in pixels per linear inch.
+	uint32 ppi					= 14;
+
+	/// Ratio of screen's physical pixels to device independent pixels (DIPS).
+	float pxratio				= 15;
+
+	/// Device supports JavaScript.
+	bool js						= 16;
+
+	oneof lang {
+		/// ISO-639-1-alpha-2 language code of device.
+		string langiso			= 17;
+
+		/// BCP-47 language code of device.
+		string langb			= 18;
+	}
+
+	/// IPv4 address of device.
+	string ip					= 19;
+
+	/// IPv6 address of device.
+	string ipv6					= 20;
+
+	/// `X-Forwarded-For` HTTP header value.
+	string xff					= 21;
+
+	/// IP address is truncated.
+	bool iptr					= 22;
+
+	/// Cellular network carrier or ISP name.
+	string carrier				= 23;
+
+	/// Cellular network operator MCC/MNC code.
+	string mccmnc				= 24;
+
+	/// Cellular network SIM MCC/MNC code.
+	string mccmncsim			= 25;
+
+	/// Network connection type.
+	ConnectionType contype		= 26;
+
+	/// Device supports Geofetch Web API.
+	bool geofetch				= 27;
+
+	/// Geographic location descriptions of device.
+	repeated Geo geo			= 28;
+
+	/// Device identifiers, sanctioned for advertising.
+	repeated DeviceIfa allifa	= 500;
+
+	/// Additional BCP-47 language codes supported by device.
+	repeated string extralangb	= 501;
+
+	/// Device is using dark or night theme.
+	bool nightmode				= 502;
+
+	/// Device orientation is landscape.
+	bool landscape				= 503;
+
+	/// JavaScript execution within sandbox is supported.
+	bool jssandbox				= 504;
+}
+
+/// Legal, governmental, or industry regulations.
+message Regs {
+	/// COPPA regulations apply.
+	bool coppa				= 1;
+
+	/// GDPR regulations apply.
+	bool gdpr				= 2;
+
+	/// Global Privacy Platform (GPP) string.
+	string gpp				= 3;
+
+	/// Applicable GPP section ids.
+	repeated uint32 gppsid	= 4;
+
+	/// US Privacy string.
+	string usprivacy		= 200;
+
+	/// PIPL regulations apply.
+	bool pipl				= 500;
+}
+
+/// Restrictions applicable to ad media.
+message Restrictions {
+	/// Allowed categories.
+	repeated string acat				= 1;
+
+	/// Blocked categories.
+	repeated string bcat				= 2;
+
+	/// Code of taxonomy [allowed](Restrictions::acat) or [blocked](Restrictions::bcat) are
+	/// specified in.
+	CategoryTaxonomyCode cattax			= 3;
+
+	/// Top-level domain names of blocked advertisers.
+	repeated string badv				= 4;
+
+	/// Blocked application bundle or package names.
+	repeated string bapp				= 5;
+
+	/// Blocked creative attributes.
+	repeated CreativeAttribute battr	= 6;
+}

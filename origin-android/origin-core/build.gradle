@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+plugins {
+	id("origin-library")
+}
+
+description = "Core SDK functionality."
+
+android {
+	buildFeatures.buildConfig = true
+	defaultConfig {
+		/*
+		 * `ORIGIN_SDK_VERSION` - Version of the SDK which backend services should take into consideration
+		 * for behavioural quirks. The major and minor versions should be consistent, irrespective of
+		 * vendor or build configuration, in order to allow backends to incorporate version based logic.
+		 *
+		 * `ORIGIN_SDK_NAME` - This should equal the final build name of the SDK integrated by
+		 * applications. For example, the standalone antifraud SDK sets this to `origin-antifraud`. This
+		 * may be used by backend services, however, it is used primarily for storage on the user's device.
+		 * If this module is merged in different SDKs, the different SDKs should have different cache
+		 * directories, etc. This must be an alphanumeric string, with optional underscores.
+		 *
+		 * `ORIGIN_SDK_VENDOR` - This should equal the name of the SDK vendor. Since `origin-android`
+		 * modules can be grouped together to build SDKs for different vendors, this, in combination with
+		 * `ORIGIN_SDK_NAME` help avoid cross-vendor conflict w.r.t APK metadata and device configurations.
+		 * Like `ORIGIN_SDK_NAME`, this must be an alphanumeric string, with optional underscores.
+		 *
+		 * `ORIGIN_SDK_REGION` - This may be `"global"`, `"cn"`, `"eu"`, or `"us"` for the region the SDK
+		 * is built for. This is used when `<ORIGIN_SDK_VENDOR>.<ORIGIN_SDK_NAME>.region` meta tag isn't
+		 * set. The set of laws and regulations which always apply are determined based on this value.
+		 *
+		 * `ORIGIN_{CHINA,GLOBAL}_RPC_HOST` - Root host Origin remote procedure calls are made to when
+		 * device is under China's legal jurisdiction or not, respectively. Any `%s` embedded within the
+		 * host name is replaced with the service of a remote procedure call.
+		 */
+		[
+			"CHINA_RPC_HOST": getProperty("origin.rpc.host.cn"),
+			"GLOBAL_RPC_HOST": getProperty("origin.rpc.host"),
+			"SDK_NAME": "origin_core",
+			"SDK_REGION": project.ext.originRegion,
+			"SDK_VENDOR": project.ext.originVendorName.toLowerCase().replace('-', '_'),
+			"SDK_VERSION": project.version
+		].forEach { name, val -> buildConfigField(
+			"@SuppressWarnings(\"doclint:missing\") String",
+			"ORIGIN_${name}",
+			"\"${val}\""
+		) }
+	}
+}
+
+android.buildFeatures.buildConfig = true
+
+dependencies {
+	api(project(":origin-adcom"))
+	api(project(":origin-util"))
+
+	implementation(project(":origin-gppstring"))
+	implementation(project(":origin-protobuf"))
+	implementation(libs.androidx.core)
+
+	compileOnly(libs.gms.ads.identifier)
+	compileOnly(libs.hms.ads.identifier)
+	compileOnly(project(":origin-msasdk-stub"))
+
+	androidTestImplementation(libs.androidx.test.rules)
+	androidTestImplementation(libs.androidx.test.uiautomator)
+	androidTestImplementation(libs.dnsjava)
+	androidTestImplementation(libs.mockwebserver)
+}

@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+plugins {
+	id("origin-library")
+}
+
+description = "Anti-fraud Origin SDK module."
+
+dependencies {
+	api(project(":origin-core"))
+	implementation(project(":origin-protobuf"))
+
+	androidTestImplementation(libs.androidx.concurrent.futures)
+	androidTestImplementation(libs.mockwebserver)
+}

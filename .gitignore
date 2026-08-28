@@ -71,3 +71,7 @@ build/
 .gradle/
 .build/
 .idea/
+
+/_build/
+texput.log
+.DS_Stores

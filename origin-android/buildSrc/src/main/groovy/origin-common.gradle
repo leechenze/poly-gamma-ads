@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+/*
+ * Origin conventions.
+ *
+ * Each project must have a name satisfying `origin-[a-z][-a-zA-Z0-9]*`, and define the
+ * following properties:
+ *
+ * - `origin.region`: (String) Region SDK is being built for.
+ * - `origin.vendor.name`: (String) SDK vendor name.
+ * - `origin.vendor.namespace`: (String) SDK vendor namespace.
+ * - `origin.version.major`: (int) Major project version. Can be accessed using
+ *   `ext.originVersionMajor`.
+ * - `origin.version.minor`: (int) Minor project version. Can be accessed using
+ *   `ext.originVersionMinor`.
+ * - `origin.version.patch-level`: (int) Patch level of project. Can be accessed using
+ *   `ext.originVersionPatchLevel`.
+ * - `origin.version.development`: (boolean; default=`false`) `true` or `false` if
+ *   development or release version of project, respectively. Can be accessed using
+ *   `ext.originVersionDevelopment`.
+ *
+ * The final version of the project is then set to `major.minor.patch-level` or
+ * `0.major.minor.patch-level.<TIMESTAMP>` for non-development and development, respectively.
+ *
+ * The base name of the project (name following `origin-` in `project.name`) can be accessed using
+ * `ext.originBaseName`. The full namespace can be accessed using `ext.originNamespace`.
+ */
+
+if (!(project.name ==~ /^origin(-[a-z][-a-zA-Z0-9]*)?$/)) {
+	throw new IllegalStateException("Invalid project name: ${project.name}")
+}
+
+def findProperty(name, defaultValue) {
+	def value = project.findProperty("origin.${name}")
+
+	if (defaultValue == null)
+		return Objects.requireNonNull(value, "property 'origin.${name}' not defined")
+	return Objects.requireNonNullElse(value, defaultValue)
+}
+
+def findIntProperty(name) {
+	try {
+		return Integer.parseInt(findProperty(name, null))
+	} catch (NumberFormatException err) {
+		throw new IllegalArgumentException(
+			String.format("malformed value for property '%s'", name),
+			err
+		)
+	}
+}
+
+def MAJOR_VERSION = findIntProperty("version.major")
+def MINOR_VERSION = findIntProperty("version.minor")
+def PATCH_LEVEL = findIntProperty("version.patch-level")
+def DEVELOPMENT = Boolean.parseBoolean(findProperty("version.development", "false"))
+
+project.group = findProperty("vendor.group", null).toString().trim()
+project.version =
+	DEVELOPMENT ? "0.${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_LEVEL}.${System.currentTimeSeconds()}" :
+	"${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_LEVEL}"
+project.ext {
+	originRegion = findProperty("region", null).toString().trim()
+	originVendorName = findProperty("vendor.name", null).toString().trim()
+	originVendorNamespace = findProperty("vendor.namespace", null).toString().trim()
+
+	originBaseName =
+		project.name == "origin" ? "" :
+		project.name.replaceFirst("origin-", "")
+	originNamespace = [
+		project.ext.originVendorNamespace,
+		project.ext.originBaseName.replace('-', '.')
+	].findAll { it != "" }.join(".")
+	originVersionMajor = MAJOR_VERSION
+	originVersionMinor = MINOR_VERSION
+	originVersionPatchLevel = PATCH_LEVEL
+	originVersionDevelopment = DEVELOPMENT
+}

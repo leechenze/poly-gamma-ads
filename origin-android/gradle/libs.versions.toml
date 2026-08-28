@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+[versions]
+android-gradle-plugin = "8.13.1"
+#noinspection GradleDependency
+androidx-annotation = "1.6.0"
+#noinspection GradleDependency
+androidx-appcompat = "1.7.0"
+#noinspection GradleDependency
+androidx-concurrent-futures = "1.2.0"
+#noinspection GradleDependency
+androidx-core = "1.12.0"
+#noinspection GradleDependency
+androidx-test-espresso-core = "3.6.1"
+#noinspection GradleDependency
+androidx-test-orchestrator = "1.5.1"
+#noinspection GradleDependency
+androidx-test-rules = "1.6.1"
+#noinspection GradleDependency
+androidx-test-junit = "1.2.1"
+androidx-test-uiautomator = "2.3.0"
+bouncycastle = "1.85"
+#noinspection NewerVersionAvailable
+dnsjava = "3.6.3"
+#noinspection GradleDependency
+gms-ads-identifier = "18.2.0"
+google-material = "1.13.0"
+#noinspection NewerVersionAvailable,GradleDependency
+guava-listenablefuture = "1.0"
+hms-ads-identifier = "3.4.39.302"
+junit = "4.13.2"
+#noinspection NewerVersionAvailable,GradleDependency
+mockwebserver = "4.12.0"
+#noinspection NewerVersionAvailable,GradleDependency
+protobuf-lite = "4.33.4"
+
+[libraries]
+androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "androidx-annotation" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
+androidx-concurrent-futures = { group = "androidx.concurrent", name = "concurrent-futures", version.ref = "androidx-concurrent-futures" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-test-espresso-core" }
+androidx-test-orchestrator = { group = "androidx.test", name = "orchestrator", version.ref = "androidx-test-orchestrator" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidx-test-rules" }
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
+androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidx-test-uiautomator" }
+bouncycastle = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
+dnsjava = { group = "dnsjava", name = "dnsjava", version.ref = "dnsjava" }
+gms-ads-identifier = { group = "com.google.android.gms", name = "play-services-ads-identifier", version.ref = "gms-ads-identifier" }
+google-material = { group = "com.google.android.material", name = "material", version.ref = "google-material" }
+guava-listenablefuture = { group = "com.google.guava", name = "listenablefuture", version.ref = "guava-listenablefuture" }
+hms-ads-identifier = { group = "com.huawei.hms", name = "ads-identifier", version.ref = "hms-ads-identifier" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
+protobuf-lite = { group = "com.google.protobuf", name = "protobuf-javalite", version.ref = "protobuf-lite" }
+
+[plugins]
+protobuf = { id = "com.google.protobuf", version = "0.9.6" }

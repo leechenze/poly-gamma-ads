@@ -1,0 +1,449 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+syntax="proto3";
+package org.polygamma.origin.adcom;
+
+import "adcom-enums.proto";
+
+/// Ad event.
+message AdEvent {
+	/// Event type.
+	AdEventType type					= 1;
+
+	/// Supported tracker types.
+	repeated AdEventTrackerType method	= 2;
+
+	/// Codes of supported APIs.
+	repeated AdApiCode api				= 3;
+
+	/// JavaScript tracker top-level domain restriction list.
+	repeated string jstrk				= 4;
+
+	/// JavaScript tracker [domain list](AdEvent::jstrk) are allowed.
+	bool wjs							= 5;
+
+	/// Pixel tracker top-level domain restriction list.
+	repeated string pxtrk				= 6;
+
+	/// Pixel tracker [domain list](AdEvent::pxtrk) are allowed.
+	bool wpx							= 7;
+}
+
+/// Companion advertising media format.
+message CompanionAdFormat {
+	/// Companion identifier, unique to placement.
+	string id					= 1;
+
+	/// Companion is rendered as an end-card.
+	bool vcm					= 2;
+
+	/// Media format.
+	DisplayAdFormat display		= 3;
+}
+
+/// Video advertising media format.
+message VideoAdFormat {
+	// ---- BEGIN `PlaybackAdFormat`
+
+	/// Ad playback start delay, in seconds.
+	///
+	/// This may be `-2`, `-1`, `0`, or a value greater than `0` for generic post-roll, generic
+	/// mid-roll, pre-roll, or mid-roll, respectively.
+	sint64 delay								=  1;
+
+	/// Ad is skippable.
+	bool skip									=  2;
+
+	/// Minimum duration, in seconds, of ad that is eligible for skipping.
+	uint64 skipmin								=  3;
+
+	/// Duration, in seconds, of ad playback after which skipping is enabled.
+	uint64 skipafter							=  4;
+
+	/// Playback ad start methods in-use for placement.
+	repeated PlaybackMethod playmethod			=  5;
+
+	/// Playback ad end method in-use for placement.
+	PlaybackEndMode playend						=  6;
+
+	/// Supported ad asset MIME types.
+	repeated string mime						=  7;
+
+	/// Supported ad APIs.
+	repeated AdApiCode api						=  8;
+
+	/// Supported creative types.
+	repeated PlaybackCreativeType ctype			=  9;
+
+	/// Minimum ad duration, in seconds.
+	uint64 mindur								= 10;
+
+	/// Maximum ad duration, in seconds.
+	uint64 maxdur								= 11;
+
+	/// Precise acceptable ad durations, in seconds.
+	repeated uint64 rqddurs						= 12;
+
+	/// Maximum duration, in seconds, ad may extend for, beyond normal ad duration.
+	uint64 maxext								= 13;
+
+	/// Minimum supported bit rate, in Kbps.
+	uint32 minbitr								= 14;
+
+	/// Maximum supported bit rate, in Kbps.
+	uint32 maxbitr								= 15;
+
+	/// Supported playback ad delivery methods.
+	repeated PlaybackDeliveryMethod delivery	= 16;
+
+	/// Maximum number of ads that can be played in a pod.
+	uint32 maxseq								= 17;
+
+	/// Duration, in seconds, of dynamic ad pod or dynamic portion of hybrid ad pod.
+	uint32 poddur								= 18;
+
+	/// Ad pod identifier, unique to placement.
+	uint32 podid								= 19;
+
+	/// Sequence of ad pod within content stream.
+	///
+	/// This may be `-1`, `0`, or `1` for last, any, or first pod in content stream,
+	/// respectively.
+	sint32 podseq								= 20;
+
+	/// Slot, within ad pod, for which ad delivery is guaranteed.
+	///
+	/// This may be `-1`, `0`, `1`, or `2` for last, any, first, or, first or last ad in pod,
+	/// respectively.
+	sint32 slotinpod							= 21;
+
+	/// Minimum cost-per-milli per-second for dynamic portion of ad pod.
+	double mincpmpersec							= 22;
+
+	/// Ad formats available as companions to playback ad.
+	repeated CompanionAdFormat comp				= 23;
+
+	/// Supported companion creative types.
+	repeated CompanionCreativeType comptype		= 24;
+
+	/// Directions in which ad overlay may expand.
+	repeated AdResizeType overlayexpdir			= 25;
+
+	/// Supported ad events.
+	repeated AdEvent event						= 500;
+	// ---- END `PlaybackAdFormat`
+
+	/// Video placement type.
+	PlacementVideoType ptype					= 40;
+
+	/// Position of placement on screen.
+	PlacementScreenPosition pos					= 41;
+
+	/// Behavior when ad is activated (i.e. clicked).
+	ActivationBehavior clktype					= 42;
+
+	/// Video player width.
+	uint32 w									= 43;
+
+	/// Video player height.
+	uint32 h									= 44;
+
+	/// Unit player [width](VideoAdFormat::w) and [height](VideoAdFormat::h) are measured in.
+	DimensionUnit unit							= 45;
+
+	/// Supported ad linearity mode.
+	AdLinearityMode linear						= 46;
+
+	/// Letterboxing of 4:3 creatives into a 16:9 placement is allowed.
+	bool boxing									= 47;
+
+	/// Directions in which creative may expand.
+	repeated AdResizeType expdir				= 48;
+}
+
+/// Audio advertising media format.
+message AudioAdFormat {
+	// ---- BEGIN `PlaybackAdFormat`
+
+	/// Ad playback start delay, in seconds.
+	///
+	/// This may be `-2`, `-1`, `0`, or a value greater than `0` for generic post-roll, generic
+	/// mid-roll, pre-roll, or mid-roll, respectively.
+	sint32 delay								=  1;
+
+	/// Ad is skippable.
+	bool skip									=  2;
+
+	/// Minimum duration, in seconds, of ad that is eligible for skipping.
+	uint32 skipmin								=  3;
+
+	/// Duration, in seconds, of ad playback after which skipping is enabled.
+	uint32 skipafter							=  4;
+
+	/// Playback ad start methods in-use for placement.
+	repeated PlaybackMethod playmethod			=  5;
+
+	/// Playback ad end method in-use for placement.
+	PlaybackEndMode playend						=  6;
+
+	/// Supported ad asset MIME types.
+	repeated string mime						=  7;
+
+	/// Supported ad APIs.
+	repeated AdApiCode api						=  8;
+
+	/// Supported creative types.
+	repeated PlaybackCreativeType ctype			=  9;
+
+	/// Minimum ad duration, in seconds.
+	uint32 mindur								= 10;
+
+	/// Maximum ad duration, in seconds.
+	uint32 maxdur								= 11;
+
+	/// Precise acceptable ad durations, in seconds.
+	repeated uint32 rqddurs						= 12;
+
+	/// Maximum duration, in seconds, ad may extend for, beyond normal ad duration.
+	uint32 maxext								= 13;
+
+	/// Minimum supported bit rate, in Kbps.
+	uint32 minbitr								= 14;
+
+	/// Maximum supported bit rate, in Kbps.
+	uint32 maxbitr								= 15;
+
+	/// Supported playback ad delivery methods.
+	repeated PlaybackDeliveryMethod delivery	= 16;
+
+	/// Maximum number of ads that can be played in a pod.
+	uint32 maxseq								= 17;
+
+	/// Duration, in seconds, of dynamic ad pod or dynamic portion of hybrid ad pod.
+	uint32 poddur								= 18;
+
+	/// Ad pod identifier, unique to placement.
+	uint32 podid								= 19;
+
+	/// Sequence of ad pod within content stream.
+	///
+	/// This may be `-1`, `0`, or `1` for last, any, or first pod in content stream,
+	/// respectively.
+	sint32 podseq								= 20;
+
+	/// Slot, within ad pod, for which ad delivery is guaranteed.
+	///
+	/// This may be `-1`, `0`, `1`, or `2` for last, any, first, or, first or last ad in pod,
+	/// respectively.
+	sint32 slotinpod							= 21;
+
+	/// Minimum cost-per-milli per-second for dynamic portion of ad pod.
+	double mincpmpersec							= 22;
+
+	/// Ad formats available as companions to playback ad.
+	repeated CompanionAdFormat comp				= 23;
+
+	/// Supported companion creative types.
+	repeated CompanionCreativeType comptype		= 24;
+
+	/// Directions in which ad overlay may expand.
+	repeated AdResizeType overlayexpdir			= 25;
+
+	/// Supported ad events.
+	repeated AdEvent event						= 500;
+	// ---- END `PlaybackAdFormat`
+
+	/// Audio feed type.
+	AudioFeedType feed							= 40;
+
+	/// Volume normalization mode.
+	VolumeNormalizationMode nvol				= 41;
+}
+
+/// Native display creative data asset format.
+message NativeDataAssetFormat {
+	/// Data asset type.
+	NativeDataAssetType type	= 1;
+
+	/// Maximum data text length, in characters.
+	uint32 len					= 2;
+}
+
+/// Native display creative image asset format.
+message NativeImageAssetFormat {
+	/// Image asset type.
+	NativeImageAssetType type	= 1;
+
+	/// Supported image MIME types.
+	repeated string mime		= 2;
+
+	/// Absolute image width, in device independent pixels (DIPS), supported.
+	uint32 w					= 3;
+
+	/// Absolute image height, in device independent pixels (DIPS), supported.
+	uint32 h					= 4;
+
+	/// Minimum image width, in device independent pixels (DIPS), supported.
+	uint32 wmin					= 5;
+
+	/// Minimum image height, in device independent pixels (DIPS), supported.
+	uint32 hmin					= 6;
+
+	/// Relative image width, expressed as a ratio, supported.
+	uint32 wratio				= 7;
+
+	/// Relative image height, expressed as a ratio, supported.
+	uint32 hratio				= 8;
+}
+
+/// Native display creative title asset format.
+message NativeTitleAssetFormat {
+	/// Maximum title text length, in characters.
+	uint32 len	= 1;
+}
+
+/// Native display creative asset format.
+message NativeAssetFormat {
+	/// Asset format identifier.
+	uint32 id							= 1;
+
+	/// Asset is required for format.
+	bool req							= 2;
+
+	oneof inner {
+		/// Title asset format.
+		NativeTitleAssetFormat title	= 3;
+
+		/// Image asset format.
+		NativeImageAssetFormat img		= 4;
+
+		/// Video asset format.
+		VideoAdFormat video				= 5;
+
+		/// Data asset format.
+		NativeDataAssetFormat data		= 6;
+	}
+}
+
+/// Native display creative format.
+message NativeFormat {
+	/// Creative asset formats.
+	repeated NativeAssetFormat asset	= 1;
+}
+
+/// Banner display creative format.
+message BannerFormat {
+	/// Absolute creative width, in owning format's [dimension unit](DisplayAdFormat::unit),
+	/// supported.
+	uint32 w						= 1;
+
+	/// Absolute creative height, in owning format's [dimension unit](DisplayAdFormat::unit),
+	/// supported.
+	uint32 h						= 2;
+
+	/// Relative creative width, expressed as a ratio.
+	uint32 wratio					= 3;
+
+	/// Relative creative width, expressed as a ratio.
+	uint32 hratio					= 4;
+
+	/// Directions in which creative may expand.
+	repeated AdResizeType expdir	= 5;
+}
+
+/// Display advertising media format.
+message DisplayAdFormat {
+	/// Position of placement on screen.
+	PlacementScreenPosition pos				=  1;
+
+	/// Placement is interstitial.
+	bool instl								=  2;
+
+	/// Ad media is loaded in top-frame.
+	bool topframe							=  3;
+
+	/// Names of supported `IFRAME` busters.
+	repeated string ifrbust					=  4;
+
+	/// Behavior when ad media is activated.
+	ActivationBehavior clktype				=  5;
+
+	/// AMP render mode used by placement.
+	AmpRenderMode ampren					=  6;
+
+	/// Display type of placement.
+	PlacementDisplayType ptype				=  7;
+
+	/// Context in which ad is executed.
+	DisplayContextType context				=  8;
+
+	/// Supported MIME types.
+	repeated string mime					=  9;
+
+	/// Codes of supported APIs.
+	repeated AdApiCode api					= 10;
+
+	/// Supported creative types.
+	repeated DisplayCreativeType ctype		= 11;
+
+	/// Width of placement.
+	uint32 w								= 12;
+
+	/// Height of placement.
+	uint32 h								= 13;
+
+	/// Unit of measurement [width](DisplayAdFormat::w) and [height](DisplayAdFormat::h) are
+	/// measured in.
+	DimensionUnit unit						= 14;
+
+	/// Placement supports buyer-specific privacy URLs.
+	bool priv								= 15;
+
+	/// Supported banner creative formats.
+	repeated BannerFormat displayfmt		= 16;
+
+	/// Supported native creative formats.
+	NativeFormat nativefmt					= 17;
+
+	/// Supported events.
+	repeated AdEvent event					= 18;
+}
+
+/// Advertising media placement.
+message Placement {
+	/// Placement identifier, unique to vendor.
+	string tagid					=   1;
+
+	/// Ad stitching type used for placement.
+	PlacementAdStitchType ssai		=   2;
+
+	/// Name of SDK used to render ad media.
+	string sdk						=   3;
+
+	/// Version of SDK used to render ad media.
+	string sdkver					=   4;
+
+	/// Placement provides user incentives.
+	bool reward						=   5;
+
+	/// ISO-639-1-alpha-2 or BCP-47 language codes allowed.
+	repeated string wlang			=   6;
+
+	/// Ad media assets must be delivered securely via HTTPS.
+	bool secure						=   7;
+
+	/// Inline ad markup is supported.
+	bool admx						=   8;
+
+	/// Ad markup URLs are supported.
+	bool curlx						=   9;
+
+	/// Display ad media format.
+	DisplayAdFormat display			=  10;
+
+	/// Video ad media format.
+	VideoAdFormat video				=  11;
+
+	/// Audio ad media format.
+	AudioAdFormat audio				=  12;
+}

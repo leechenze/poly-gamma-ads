@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+plugins {
+	id("origin-library")
+	alias(libs.plugins.protobuf)
+}
+
+description = "Cryptography definitions specialized for Android."
+
+dependencies {
+	implementation(project(":origin-util"))
+
+	androidTestImplementation(libs.bouncycastle)
+	androidTestImplementation(project(":origin-protobuf"))
+}
+
+plugins.withType(com.android.build.gradle.LibraryPlugin.class).configureEach {
+	def ext =
+		extensions.getByType(com.android.build.api.variant.LibraryAndroidComponentsExtension.class)
+	def adbProvider = ext.sdkComponents.adb
+	def namespace = android.namespace
+	def testRunner = android.defaultConfig.testInstrumentationRunner
+	def pkgDir = project.layout
+		.projectDirectory
+		.dir("src")
+		.dir("main")
+		.dir("java")
+		.dir("org")
+		.dir("polygamma")
+		.dir("android")
+		.dir("origin")
+		.dir("crypt")
+
+	tasks.register("generateConstants") {
+		group = "build"
+		description = "Generates constants required for various cryptography utilities."
+
+		dependsOn("installDebugAndroidTest")
+		doLast {
+			def adb = adbProvider.get().asFile.toString()
+
+			(new ProcessBuilder(adb, "logcat", "-c"))
+				.inheritIO()
+				.start()
+				.waitFor()
+			(new ProcessBuilder(
+				adb, "shell", "am", "instrument", "-w",
+				"-e", "class", "org.polygamma.android.origin.crypt.ConstantsTest#testGenerateConstants",
+				"${namespace}.test/$testRunner"
+			))
+				.inheritIO()
+				.start()
+				.waitFor()
+
+			def logcat = (new ProcessBuilder(adb, "logcat", "-d","-v", "threadtime"))
+				.start()
+			def log = logcat.inputStream
+
+			logcat.waitFor()
+
+			def constants = [:]
+
+			(new String(log.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).eachLine {
+				def match =
+					it =~
+					/^\d\d-\d\d \d\d:\d\d:\d\d.\d\d\d\s+\d+\s+\d+\s+D\s+GEN\s+:\s+([A-Z][_A-Z0-9]+)=(.*)$/
+
+				if (match.matches())
+					constants[match.group(1)] = match.group(2)
+			}
+
+			def prime32 = pkgDir.file("Prime32.java").asFile
+
+			prime32.write(prime32.readLines("UTF-8").collect {
+				def match = it =~ /^\s+[A-Za-z]+\s([A-Z][_A-Z0-9]+)\s*=\s*(.+);$/;
+				def value = constants.get(match.matches() ? match.group(1) : "", "")
+
+				if (value.isEmpty()) {
+					return it
+				} else {
+					return "${it.substring(0, match.start(2))}${value}${it.substring(match.end(2))}"
+				}
+			}.join("\n"), "UTF-8")
+		}
+	}
+}

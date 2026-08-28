@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- Required permissions: -->
+	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+	<!--
+	<application>
+	    # Recommended during integration, for identifying the integrating app, and required when
+	    # app is not distributed through Google Play:
+		<meta-data
+			android:name="poly-gamma.origin-core.application-id"
+			android:value="xxxxxxxx"
+		/>
+		## OR
+		<meta-data
+			android:name="poly-gamma.origin-core.publisher-id"
+			android:value="xxxxxxxx"
+		/>
+
+		# Should be set to `"global"`, `"cn"`, `"eu"`, or `"us"` for the region the application is
+		# built for. This determines the base set of laws & regulations, i.e. PIPL for China or
+		# GDPR for EU, which always apply. If this isn't set, the SDK default is used.
+		<meta-data
+			android:name="poly-gamma.origin-core.region"
+			android:value="global|cn|eu|us"
+		/>
+	</application>
+	-->
+</manifest>

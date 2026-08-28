@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- Required permissions: -->
+	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+	<!--
+	Recommended during integration, for identifying the integrating app, and required when app
+	is not distributed through Google Play:
+	<application>
+		<meta-data
+			android:name="poly-gamma.origin.application-id"
+			android:value="xxxxxxxx"
+		/>
+		## OR
+		<meta-data
+			android:name="poly-gamma.origin.publisher-id"
+			android:value="xxxxxxxx"
+		/>
+	</application>
+	-->
+</manifest>

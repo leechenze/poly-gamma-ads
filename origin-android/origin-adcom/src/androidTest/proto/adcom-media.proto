@@ -1,0 +1,552 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+syntax="proto3";
+package org.polygamma.origin.adcom;
+
+import "adcom-enums.proto";
+
+/// Ad media event tracker.
+message AdEventTracker {
+	/// Tracked event type.
+	AdEventType type			= 1;
+
+	/// Tracker type.
+	AdEventTrackerType method	= 2;
+
+	/// APIs required to execute tracker.
+	repeated AdApiCode api		= 3;
+
+	/// Tracker URL.
+	///
+	/// This URL may have macros embedded, using the coding scheme `\0<macro-type>\0`, where
+	/// `<macro-type>` is one of `AdTrackerUrlMacroType` and `\0` is a NUL byte. For example,
+	/// `\034\0` would be replaced with the asset URI.
+	string url					= 4;
+
+	/// Vendor-specific tracker data mapping.
+	map<string, string> cdata	= 5;
+
+	/// Trackers to fire when event tracker fails.
+	///
+	/// Like [`url`](AdEventTracker::url), any embedded macro is substituted with the value
+	/// represented by the respective macro.
+	repeated string errorurl	= 500;
+
+	oneof off {
+		/// Playback offset, in seconds, at which to fire tracker.
+		uint64 offsec			= 501;
+
+		/// Playback offset, in percent of total playback duration, at which to fire tracker.
+		uint32 offpct			= 502;
+	}
+}
+
+/// Navigation link asset.
+message LinkAsset {
+	/// Primary URL to navigate to.
+	string url						= 1;
+
+	/// Fallback URL to navigate to when [primary](LinkAsset::url) is not supported.
+	string urlfb					= 2;
+
+	/// Tracker URLs to fire before navigation is performed.
+	///
+	/// Like [`AdEventTracker::url`], any embedded macro is substituted with the value
+	/// represented by the respective macro.
+	repeated string trkr			= 3;
+}
+
+/// Displayable icon asset.
+message IconDisplayAsset {
+	/// MIME type.
+	string mime				= 1;
+
+	oneof inner {
+		/// Image asset URL.
+		string imgurl		= 2;
+
+		/// HTML asset URL to be loaded into an `iframe`.
+		string iframeurl	= 3;
+
+		/// HTML snippet markup.
+		string html			= 4;
+	}
+}
+
+/// Ad icon asset.
+message IconAsset {
+	/// Name of program represented by icon.
+	string program						=  1;
+
+	/// Alternative text for icon image.
+	string alt							=  2;
+
+	/// Human-readable tooltip text.
+	string tooltip						=  3;
+
+	/// Pixel ratio for which icon is intended.
+	float pxratio						=  4;
+
+	/// Width, in pixels, of icon image.
+	uint32 w							=  5;
+
+	/// Height, in pixels, of icon image.
+	uint32 h							=  6;
+
+	/// Position, along X axis, of icon.
+	///
+	/// Value may be positive or negative, where positive values position the icon relative to the
+	/// left-hand side of the screen, while negative values position the icon relative to the
+	/// right-hand side of the screen.
+	sint32 x							=  7;
+
+	/// Position, along Y axis, of icon.
+	///
+	/// Value may be positive or negative, where positive values position the icon relative to the
+	/// top of the screen, while negative values position the icon relative to the bottom of the
+	/// screen.
+	sint32 y							=  8;
+
+	/// Duration, in seconds, to display icon for.
+	uint64 dur							=  9;
+
+	/// Duration, in seconds, of ad playback to display icon at.
+	uint64 off							= 10;
+
+	/// Code of API required to execute icon resource.
+	AdApiCode api						= 11;
+
+	/// Event trackers.
+	repeated AdEventTracker event		= 12;
+
+	/// Link to navigate to when icon is activated.
+	LinkAsset link						= 13;
+
+	/// Available display assets.
+	repeated IconDisplayAsset display	= 14;
+}
+
+/// Playback creative interactive file asset.
+message LinearInteractiveAsset {
+	/// Code of API required to execute asset.
+	AdApiCode api		= 1;
+
+	/// Playback duration may extend beyond media asset.
+	bool vardur			= 2;
+}
+
+/// Linear creative media file asset.
+message LinearMediaAsset {
+	/// Asset identifier, unique to ad.
+	string id							=  1;
+
+	/// Codec used to encode asset.
+	string codec						=  2;
+
+	/// Size of asset, in bytes.
+	uint64 size							=  3;
+
+	/// Average bit rate of asset, in Kbps.
+	uint32 avgbitr						=  4;
+
+	/// Minimum bit rate of asset, in Kbps.
+	uint32 minbitr						=  5;
+
+	/// Maximum bit rate of asset, in Kbps.
+	uint32 maxbitr						=  6;
+
+	/// Supported delivery method for asset.
+	PlaybackDeliveryMethod delivery		=  7;
+
+	/// Native width of asset, in pixels.
+	uint32 w							=  8;
+
+	/// Native height of asset, in pixels.
+	uint32 h							=  9;
+
+	/// Asset can be scaled to larger dimensions.
+	bool scale							= 10;
+
+	/// Aspect ratio must be maintained if asset is scaled.
+	bool aspect							= 11;
+}
+
+/// Linear media closed caption asset.
+message LinearClosedCaptionAsset {
+	/// ISO 631-1 language code.
+	string lang		= 1;
+}
+
+/// Linear playback creative asset.
+message LinearAsset {
+	/// Asset URL.
+	string url								= 1;
+
+	/// MIME type.
+	string mime								= 2;
+
+	oneof inner {
+		/// Interactive asset.
+		LinearInteractiveAsset interactive	= 3;
+
+		/// Media file asset.
+		LinearMediaAsset media				= 4;
+
+		/// Mezzanine file asset.
+		LinearMediaAsset mezzanine			= 5;
+
+		/// Closed caption file asset.
+		LinearClosedCaptionAsset caption	= 6;
+	}
+}
+
+/// Companion advertising media.
+message CompanionAd {
+	/// Identifier of placement companion is for.
+	string plcmtid					= 1;
+
+	/// Companion media.
+	DisplayAd display				= 2;
+
+	/// Media intended for end-card.
+	bool vcm						= 3;
+}
+
+/// Linear playback creative media.
+message LinearCreative {
+	/// Link to navigate to when media is activated (i.e. clicked).
+	LinkAsset link					= 1;
+
+	/// Duration, in seconds, of playback media.
+	uint64 dur						= 2;
+
+	/// Offset, in seconds, after which skip controls are made available.
+	uint64 skipoff					= 3;
+
+	/// Creative assets.
+	repeated LinearAsset asset		= 4;
+
+	/// Icon overlay assets.
+	repeated IconAsset icon			= 5;
+
+	/// Event trackers.
+	repeated AdEventTracker event	= 6;
+
+	/// Mapping of universal identifier registry to allocated identifier.
+	map<string, string> univid		= 7;
+}
+
+/// Playback creative media.
+message PlaybackCreative {
+	/// Creative identifier, unique to ad server.
+	string id								= 1;
+
+	/// Sequence, within ad, in which item must be executed.
+	uint32 seq								= 2;
+
+	oneof inner {
+		/// Lineary creative media.
+		LinearCreative linear				= 3;
+
+		/// Overlay creative media.
+		DisplayAd overlay					= 4;
+	}
+
+	/// Companion ad media execution requirement.
+	CompanionRequirementType compreq		= 5;
+
+	/// Companion ads.
+	repeated CompanionAd comp				= 6;
+}
+
+/// Playback ad media.
+message PlaybackAd {
+	/// Ad title.
+	string title						= 1;
+
+	/// Human-readable description of ad.
+	string desc							= 2;
+
+	/// Ad event trackers.
+	repeated AdEventTracker event		= 3;
+
+	/// Creative media.
+	repeated PlaybackCreative creative	= 4;
+}
+
+/// Video advertising media.
+message VideoAd {
+	/// MIME types of creative assets.
+	repeated string mime			= 1;
+
+	/// APIs required to execute creative.
+	repeated AdApiCode api			= 2;
+
+	/// Creative type.
+	PlaybackCreativeType ctype		= 3;
+
+	/// Duration, in seconds, of creative.
+	uint64 dur						= 4;
+
+	oneof inner {
+		/// Creative markup.
+		string adm					= 5;
+
+		/// Creative markup URL.
+		string curl					= 6;
+
+		/// Structured ad media.
+		PlaybackAd playback			= 500;
+	}
+}
+
+/// Audio advertising media.
+message AudioAd {
+	/// MIME types of creative assets.
+	repeated string mime			= 1;
+
+	/// APIs required to execute creative.
+	repeated AdApiCode api			= 2;
+
+	/// Creative type.
+	PlaybackCreativeType ctype		= 3;
+
+	/// Duration, in seconds, of creative.
+	uint64 dur						= 4;
+
+	oneof inner {
+		/// Creative markup.
+		string adm					= 5;
+
+		/// Creative markup URL.
+		string curl					= 6;
+
+		/// Structured creative.
+		PlaybackAd playback			= 500;
+	}
+}
+
+/// Native creative title asset.
+message NativeTitleAsset {
+	/// Title text.
+	string text	= 1;
+	reserved 2; // uint32 len
+}
+
+/// Native creative data asset.
+message NativeDataAsset {
+	/// Data text.
+	string value				= 1;
+	reserved 2; // uint32 len
+	NativeDataAssetType type	= 3;
+}
+
+/// Native creative image asset.
+message NativeImageAsset {
+	/// Image URL.
+	string url					= 1;
+
+	/// Width, in device independent pixels, of image.
+	uint32 w					= 2;
+
+	/// Height, in device independent pixels, of image.
+	uint32 h					= 3;
+
+	/// Image asset type
+	NativeImageAssetType type	= 4;
+}
+
+/// Native creative video asset.
+message NativeVideoAsset {
+	oneof inner {
+		/// Video markup.
+		string adm					= 1;
+
+		/// Video markup URL.
+		string curl					= 2;
+
+		/// Structured playback ad.
+		PlaybackAd playback			= 500;
+	}
+}
+
+/// Native creative asset.
+message NativeAsset {
+	/// Native asset format identifier this asset is for, if any.
+	uint32 id						= 1;
+
+	/// Asset is required.
+	bool req						= 2;
+
+	/// Asset specialization.
+	oneof inner {
+		/// Title text asset.
+		NativeTitleAsset title		= 3;
+
+		/// Image asset.
+		NativeImageAsset image		= 4;
+
+		/// Video asset.
+		NativeVideoAsset video		= 5;
+
+		/// Data asset.
+		NativeDataAsset data		= 6;
+	}
+
+	/// Link to navigate user to when asset is activated (i.e. clicked).
+	LinkAsset link					= 7;
+}
+
+/// Native advertising media.
+message NativeAd {
+	/// Link to navigate user to when an asset, which does not have a link, is activated
+	/// (i.e. clicked).
+	LinkAsset link				= 1;
+
+	/// Creative assets.
+	repeated NativeAsset asset	= 2;
+}
+
+/// Static banner advertising media.
+message StaticBannerAd {
+	/// Creative image URL.
+	string img		= 1;
+
+	/// Link to navigate user to when creative is activated (i.e. clicked).
+	LinkAsset link	= 2;
+}
+
+/// Display advertising media.
+message DisplayAd {
+	/// Creative MIME type.
+	string mime							=  1;
+
+	/// APIs required to execute creative.
+	repeated AdApiCode api				=  2;
+
+	/// Creative type.
+	DisplayCreativeType ctype			=  3;
+
+	/// Absolute width, in device independent pixels, of creative.
+	uint32 w							=  4;
+
+	/// Absolute height, in device independent pixels, of creative.
+	uint32 h							=  5;
+
+	/// Relative width, expressed as a ratio, of creative.
+	uint32 wratio						=  6;
+
+	/// Relative height, expressed as a ratio, of creative.
+	uint32 hratio						=  7;
+
+	/// Buyer privacy policy URL.
+	string priv							=  8;
+
+	/// Media specialization.
+	oneof inner {
+		/// Creative markup.
+		string adm						=  9;
+
+		/// URL of creative markup.
+		string curl						= 10;
+
+		/// Static banner media.
+		StaticBannerAd banner			= 11;
+
+		/// Native media.
+		NativeAd native					= 12;
+	}
+
+	/// Event trackers.
+	repeated AdEventTracker event		= 13;
+
+	/// Suggested minimum duration, in seconds, ad should be displayed.
+	uint64 minshowdur					= 500;
+
+	/// Mapping of universal identifier registry to allocated identifier.
+	map<string, string> univid			= 501;
+
+	/// Icon overlay assets.
+	repeated IconAsset icon				= 502;
+}
+
+/// Advertising media audit.
+message AdAudit {
+	/// Audit status.
+	AdAuditStatusCode status	= 1;
+
+	/// Human-readable feedback messages.
+	repeated string feedback	= 2;
+
+	/// Timestamp, in milliseconds since UNIX epoch, of when audit was instantiated.
+	fixed64 init				= 3;
+
+	/// Timestamp, in milliseconds since UNIX epoch, of when audit was last modified.
+	fixed64 lastmod				= 4;
+
+	/// Auditor specified ad corrections.
+	Ad corr						= 5;
+}
+
+// Advertising media.
+message Ad {
+	/// Creative identifier, unique to vendor.
+	string id						=  1;
+
+	/// Top-level domain names of advertisers whose product or service is promoted by media.
+	repeated string adomain			=  2;
+
+	/// Application bundle identifiers promoted by media.
+	repeated string bundle			=  3;
+
+	/// Media preview image URL.
+	string iurl						=  4;
+
+	/// Categories describing media.
+	repeated string cat				=  5;
+
+	/// Code of taxonomy in which [categories](Ad::cat) are defined.
+	CategoryTaxonomyCode cattax		=  6;
+
+	/// ISO-639-1-alpha-2 or BCP-47 code of language used in media.
+	string lang						=  7;
+
+	/// Attributes describing creative.
+	repeated CreativeAttribute attr	=  8;
+
+	/// Creative assets are delivered securely via HTTPS.
+	bool secure						=  9;
+
+	/// Audience media is rated for.
+	MediaAudienceRating mrating		= 10;
+
+	/// Timestamp, in milliseconds since UNIX epoch, of when ad was instantiated.
+	fixed64 init					= 11;
+
+	/// Timestamp, in milliseconds since UNIX epoch, of when ad was last modified.
+	fixed64 lastmod					= 12;
+
+	/// Advertising media specialization.
+	oneof inner {
+		/// Display media.
+		DisplayAd display			= 13;
+
+		/// Video media.
+		VideoAd video				= 14;
+
+		/// Audio media.
+		AudioAd audio				= 15;
+	}
+
+	/// Audit description of ad.
+	AdAudit audit					= 16;
+
+	/// Serving identifier of ad.
+	string serveid					= 500;
+
+	/// Name of ad server which provides ad.
+	string servername				= 501;
+
+	/// Version of ad server which provides ad.
+	string serverver				= 502;
+}

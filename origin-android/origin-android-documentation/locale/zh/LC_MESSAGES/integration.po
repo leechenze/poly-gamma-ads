@@ -1,0 +1,1118 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022-2025, Poly-Gamma
+# This file is distributed under the same license as the Origin Android SDK
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Origin Android SDK 1.2.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-07 02:25+0000\n"
+"PO-Revision-Date: 2025-12-08 22:45+0800\n"
+"Last-Translator: \n"
+"Language-Team: zh <LL@li.org>\n"
+"Language: zh\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.8\n"
+
+#: ../../integration/ads/display.rst:4
+msgid "Display"
+msgstr "展示"
+
+#: ../../integration/ads/display.rst:6
+msgid ""
+"All outstream ad formats supported by Origin SDK are renderable "
+"using :code:`DisplayPlacementView`. By default, a :code:`DisplayPlacementView` "
+"will automatically render ad media for any format which has been 1) enabled on "
+"the |vendor_name| Origin Platform Console for the respective placement and, 2) "
+"is supported by the device on which the SDK is executing. Certain ad formats, "
+"such as interstitial, do require SDK configuration; however, most are enabled "
+"and used by default whenever available."
+msgstr ""
+"Origin SDK 支持的所有外播广告格式均可通过 "
+":code:`DisplayPlacementView` 进行渲染。默认情况下，"
+":code:`DisplayPlacementView` 会自动渲染满足以下条件的广告媒体格式："
+"1）已在 |vendor_name| Origin Platform Console 中针对对应广告位启用；"
+"2）SDK 当前运行所在设备支持该广告格式。"
+"某些广告格式（例如插屏广告）需要额外进行 SDK 配置；"
+"但大多数广告格式在可用时均会默认启用并使用。"
+
+#: ../../integration/ads/display.rst:13
+msgid ""
+"The size of display placement views is controlled, when not configured "
+"explicitly, through the size constraints of the view when it undergoes the "
+"`layout pass <layout_pass_>`_. When an ad is available for a display placement view, the view "
+"will automatically attempt to resize itself, either shrinking or expanding, "
+"based on the size constraints of the available ad."
+msgstr ""
+"当未进行显式配置时，展示广告位视图的大小由视图执行 "
+"`布局阶段 <layout_pass_>`_ 时的尺寸约束决定。当某个广告可用于展示广告位视图时，"
+"该视图会根据可用广告的尺寸约束，自动尝试调整自身大小，包括缩小或扩展。"
+
+#: ../../integration/ads/display.rst:20
+msgid ""
+"When ad media is rendered by a display placement view, and the view, after a "
+"subsequent layout pass, cannot meet the size constraints of the rendered ad "
+"media, the ads module *will* attempt to replace the ad media with any other ad "
+"media available which fits within the size constraints of the view. This is "
+"done since ad media whose size constraints cannot be met, cannot be impressed. "
+"In order to reduce revenue loss, replacing ad media is preferred whenever "
+"possible, in such situations."
+msgstr ""
+"当广告媒体由展示广告位视图进行渲染，并且该视图在后续 "
+"`布局阶段 <layout_pass_>`_ 后无法满足已渲染广告媒体的尺寸约束时，"
+"广告模块将尝试使用其他满足该视图尺寸约束的可用广告媒体替换当前广告媒体。"
+"这样做是因为无法满足尺寸约束的广告媒体无法产生曝光。"
+"在这种情况下，为减少收入损失，只要条件允许，优先选择替换广告媒体。"
+
+#: ../../integration/ads/display.rst:30
+msgid "Lifecycle"
+msgstr "生命周期"
+
+#: ../../integration/ads/display.rst:32
+msgid ""
+"Display placement views begin requesting ads whenever they are attached to a "
+"display. For so long as a view is attached to a display, it will follow the "
+"usual cycle of loading and reloading ads, based on the :ref:`ad rendering "
+"schedule <integration_ads_scheduling>` for the placement the view renders ad "
+"media for."
+msgstr ""
+"展示广告位视图在被添加到显示层级时，会开始请求广告。"
+"只要该视图仍处于显示层级中，它就会根据该视图所渲染广告媒体对应广告位的 "
+":ref:`广告渲染计划 <integration_ads_scheduling>`，"
+"按照正常流程进行广告加载和重新加载。"
+
+#: ../../integration/ads/display.rst:37
+msgid ""
+"Ads may be requested manually, using :code:`beginRequestingAds()`, however, the "
+"view will *not* actually render any ad media until it is attached to a display. "
+"Note, however, invoking :code:`beginRequestingAds()` before setting the "
+"supported ad media size will result in an error being thrown. Additionally, as "
+"soon as the view is detached from its display, ad requests will stop and must "
+"be restarted either manually using :code:`beginRequestingAds()` *or* attaching "
+"the view to a display."
+msgstr ""
+"可以使用 :code:`beginRequestingAds()` 手动请求广告，但是在该视图附加到展示区域之前，"
+"视图*不会*实际渲染任何广告媒体。请注意，在设置支持的广告媒体尺寸之前调用 "
+":code:`beginRequestingAds()` 将导致错误。此外，一旦视图从其展示区域中移除，广告请求"
+"将停止，并且必须通过手动调用 :code:`beginRequestingAds()` *或* 将视图重新附加到展示"
+"区域来重新启动广告请求。"
+
+#: ../../integration/ads/display.rst:44
+msgid "Manually requesting ads"
+msgstr "手动请求广告"
+
+#: ../../integration/ads/display.rst:80
+msgid "Sizing"
+msgstr "尺寸设置"
+
+#: ../../integration/ads/display.rst:82
+msgid ""
+"Display placement views automatically determine their maximum supported ad "
+"media size based on the measurement from its layout passes. Supported size "
+"constraints can, however, be set explicitly "
+"using :code:`setSupportedAdMediaSize()`. The final supported size is still "
+"calculated based on measurements from layout passes, however, the explicitly "
+"set supported size constraints are used as lower and upper limits for the final "
+"measurements from layout passes."
+msgstr ""
+"展示广告位视图会根据布局测量阶段获取的尺寸信息，自动确定其支持的最大广告媒体尺寸。"
+"不过，也可以通过 :code:`setSupportedAdMediaSize()` 显式设置支持的尺寸约束。最终支持"
+"的尺寸仍然会根据布局测量阶段的结果计算，但显式设置的尺寸约束会作为最终测量结果的"
+"下限和上限。"
+
+#: ../../integration/ads/display.rst:88
+msgid "Explicit width and height"
+msgstr "显式指定宽度和高度"
+
+#: ../../integration/ads/display.rst:118
+msgid "Explicit height and minimum width"
+msgstr "显式指定高度和最小宽度"
+
+#: ../../integration/ads/display.rst:148
+msgid "Explicit width and minimum height"
+msgstr "显式指定宽度和最小高度"
+
+#: ../../integration/ads/display.rst:178 ../../integration/ads/placement.rst:42
+msgid "Flexible size"
+msgstr "自适应尺寸"
+
+#: ../../integration/ads/display.rst:209
+msgid "Modal"
+msgstr "模态模式"
+
+#: ../../integration/ads/display.rst:211
+msgid ""
+"Modality may be enabled for display placement views to enable support for "
+"interstitial, full screen expandable, rewarded, and splash ad formats."
+msgstr ""
+"可以为展示广告位视图启用模态模式，以支持插页式广告、全屏可扩展广告、激励广告以及"
+"开屏广告等广告格式。"
+
+#: ../../integration/ads/display.rst:215
+msgid "Full Screen Expandable"
+msgstr "全屏可扩展广告"
+
+#: ../../integration/ads/display.rst:251 ../../integration/ads/index.rst:18
+#: ../../integration/ads/placement.rst:28 ../../integration/ads/placement.rst:46
+msgid "Interstitial"
+msgstr "插页式广告"
+
+#: ../../integration/ads/display.rst:299
+msgid ""
+"If rewarded ads are enabled, in the |vendor_name| Origin Platform Console, for "
+"the interstitial placement, then rewarded ads *may* be shown within the "
+"interstitial placement. In such cases, ensure the :code:`EVENT_USER_REWARD` "
+"event is handled appropriately. To test whether a rewarded ad is rendered "
+"within an interstitial placement, the :code:`AdInstance::isRewarded()` method "
+"can be used."
+msgstr ""
+"如果在 |vendor_name| Origin 平台控制台中为插页式广告位启用了激励广告，则激励广告"
+"*可能*会在该插页式广告位中展示。在这种情况下，请确保正确处理 "
+":code:`EVENT_USER_REWARD` 事件。可以使用 :code:`AdInstance::isRewarded()` 方法"
+"检测插页式广告位中当前渲染的广告是否为激励广告。"
+
+#: ../../integration/ads/events.rst:4
+msgid "Events"
+msgstr "事件"
+
+#: ../../integration/ads/events.rst:6
+msgid ""
+"Advertising events are generated on a per-placement basis. These events can be "
+"listened for using a specific placement renderer, or across all placements "
+"which have a renderer active. The :code:`PlacementEvent` class is used to "
+"describe each event."
+msgstr ""
+"广告事件会基于每个广告位单独生成。这些事件可以通过指定广告位的渲染器进行监听，"
+"也可以监听所有已启用渲染器的广告位事件。每个事件均通过 "
+":code:`PlacementEvent` 类进行描述。"
+
+#: ../../integration/ads/events.rst:11
+msgid "Type"
+msgstr "类型"
+
+#: ../../integration/ads/events.rst:11
+msgid "Description"
+msgstr "描述"
+
+#: ../../integration/ads/events.rst:13
+msgid "Error"
+msgstr "Error"
+
+#: ../../integration/ads/events.rst:13
+msgid "Error encountered while loading or rendering an ad."
+msgstr "加载或渲染广告时发生错误"
+
+#: ../../integration/ads/events.rst:15
+msgid "Ad Available"
+msgstr "Ad Available"
+
+#: ../../integration/ads/events.rst:15
+msgid "Ad is available for the placement."
+msgstr "该广告位已有可展示的广告。"
+
+#: ../../integration/ads/events.rst:17
+msgid "Ad Select"
+msgstr "Ad Select"
+
+#: ../../integration/ads/events.rst:17
+msgid "Ad has been selected for rendering."
+msgstr "广告已被选中用于渲染。"
+
+#: ../../integration/ads/events.rst:19
+msgid "Ad Rendered"
+msgstr "Ad Rendered"
+
+#: ../../integration/ads/events.rst:19
+msgid "Ad has been rendered."
+msgstr "广告已完成渲染。"
+
+#: ../../integration/ads/events.rst:21
+msgid "Ad Impression"
+msgstr "Ad Impression"
+
+#: ../../integration/ads/events.rst:21
+msgid ""
+"Ad, rendered within placement, has received a potentially billable impression."
+msgstr "广告位中渲染的广告已产生潜在可计费曝光。"
+
+#: ../../integration/ads/events.rst:23
+msgid "Ad Activated"
+msgstr "Ad Activated"
+
+#: ../../integration/ads/events.rst:23
+msgid "Ad, rendered within placement, has been activated (i.e. clicked)."
+msgstr "广告位中渲染的广告已被激活（例如用户点击广告）。"
+
+#: ../../integration/ads/events.rst:25
+msgid "Ad Navigate"
+msgstr "Ad Navigate"
+
+#: ../../integration/ads/events.rst:25
+msgid ""
+"User is being navigated to the navigation target of an ad rendered within "
+"placement."
+msgstr ""
+"用户正在跳转到广告位中所展示广告的目标页面。"
+
+#: ../../integration/ads/events.rst:28
+msgid "Ad Removed"
+msgstr "Ad Removed"
+
+#: ../../integration/ads/events.rst:28
+msgid "Previously rendered ad, within placement, has been removed."
+msgstr ""
+"之前在广告位中渲染的广告已被移除。"
+
+#: ../../integration/ads/events.rst:31
+msgid "Ad Resized"
+msgstr "Ad Resized"
+
+#: ../../integration/ads/events.rst:31
+msgid "Ad has been resized, for placement, based on user input, such as click."
+msgstr ""
+"广告根据用户操作（例如点击）进行了尺寸调整。"
+
+#: ../../integration/ads/events.rst:33
+msgid "User Reward"
+msgstr "User Reward"
+
+#: ../../integration/ads/events.rst:33
+msgid "Reward associated with placement is available for user."
+msgstr ""
+"与广告位关联的奖励已可供用户领取。"
+
+#: ../../integration/ads/events.rst:36
+msgid "Event Flow"
+msgstr "Event Flow"
+
+#: ../../integration/ads/events.rst:74
+msgid ""
+"Any ad event type is always associated with the ad instance to which it referes "
+"to. The error event specifically may have an ad instance set if an error was "
+"encountered while ad was rendered or being selected for rendering."
+msgstr ""
+"任何广告事件类型始终与其对应的广告实例相关联。对于错误事件，如果在广告渲染过程中"
+"或选择广告进行渲染时发生错误，则该错误事件可能会关联对应的广告实例。"
+
+
+#: ../../integration/ads/events.rst:78
+msgid "Listening to all placement events"
+msgstr "监听所有广告位事件"
+
+#: ../../integration/ads/events.rst:200
+msgid "Listening to single placement events"
+msgstr "监听单个广告位事件"
+
+#: ../../integration/ads/index.rst:4
+msgid "Ads"
+msgstr "Ads"
+
+#: ../../integration/ads/index.rst:6
+msgid ""
+"The ads module is responsible for maintaining active list of placements, "
+"requesting ads for placements, scheduling rendering of ads within placements, "
+"and managing events associated with placements. The ads module itself does not "
+"render ads, instead the module provides two types of placement renderers, which "
+"are used to drive the advertising flow within an application."
+msgstr ""
+"广告模块负责维护当前启用的广告位列表、为广告位请求广告、调度广告在广告位中的渲染，"
+"以及管理与广告位相关的事件。广告模块本身不负责渲染广告，而是提供两种类型的广告位"
+"渲染器，用于驱动应用程序中的广告展示流程。"
+
+
+#: ../../integration/ads/index.rst:12
+msgid "Placement Renderer"
+msgstr "广告位渲染器"
+
+#: ../../integration/ads/index.rst:12
+msgid "Supported Ad Formats"
+msgstr "支持的广告格式"
+
+#: ../../integration/ads/index.rst:14
+msgid ":code:`DisplayPlacementView`"
+msgstr ":code:`DisplayPlacementView`"
+
+#: ../../integration/ads/index.rst:14 ../../integration/ads/placement.rst:24
+msgid "Banner - Fixed size - Flexible size - Resizable"
+msgstr "横幅广告 - 固定尺寸 - 自适应尺寸 - 可调整尺寸"
+
+#: ../../integration/ads/index.rst:19 ../../integration/ads/placement.rst:29
+msgid "Native - Fixed size - Flexible size - Resizable"
+msgstr "原生广告 - 固定尺寸 - 自适应尺寸 - 可调整尺寸"
+
+#: ../../integration/ads/index.rst:23 ../../integration/ads/placement.rst:33
+msgid "Rewarded - Opt-in - Interstitial"
+msgstr "激励广告 - 用户选择加入 - 插页式广告"
+
+#: ../../integration/ads/index.rst:26 ../../integration/ads/placement.rst:36
+msgid "Splash"
+msgstr "开屏广告"
+
+#: ../../integration/ads/index.rst:27 ../../integration/ads/placement.rst:37
+msgid "Outstream - Audio - Video"
+msgstr "流外广告 - 音频 - 视频"
+
+#: ../../integration/ads/index.rst:31
+msgid ":code:`PlaybackPlacementRenderer`"
+msgstr ":code:`PlaybackPlacementRenderer`"
+
+#: ../../integration/ads/index.rst:31
+msgid "Instream audio"
+msgstr "流内音频广告"
+
+#: ../../integration/ads/index.rst:32
+msgid "Instream video"
+msgstr "流内视频广告"
+
+#: ../../integration/ads/index.rst:33
+msgid "Rewarded instream audio"
+msgstr "激励式流内音频广告"
+
+#: ../../integration/ads/index.rst:34
+msgid "Rewarded instream video"
+msgstr "激励式流内视频广告"
+
+#: ../../integration/ads/index.rst:39
+msgid ""
+"Ad formats can be broadly categorized into instream and outstream. Instream ad "
+"formats are rendered by placements which are *interlaced* in between playback "
+"content. Outstream ad formats, however, are rendered by placements which are "
+"*adjacent* to any content. For example, if a user is consuming video content, "
+"such as a movie, any placements *interlaced* within the video content would be "
+"rendering some instream ad format. Consider, on the other hand, a placement "
+"which exists alongside some textual or playback content, such as a news website "
+"which a user is consuming the contents of, in this case the placement displays "
+"ad media alongside content the user is consuming, in which case the respective "
+"placement will be rendering outstream ad formats."
+msgstr ""
+"广告格式通常可以分为流内广告和流外广告。流内广告格式由位于播放内容之间、"
+"*插入* 内容流中的广告位进行渲染。而流外广告格式则由位于内容之外、与内容"
+"*相邻* 的广告位进行渲染。"
+"例如，如果用户正在观看视频内容（如电影），那么嵌入视频内容中的广告位将"
+"渲染流内广告格式。另一方面，如果某个广告位与文本内容或播放内容并列存在，"
+"例如用户正在浏览新闻网站内容，此时该广告位会在用户正在消费的内容旁边展示"
+"广告媒体，因此该广告位将渲染流外广告格式。"
+
+#: ../../integration/ads/index.rst:48
+msgid ""
+"With this, it should be clear then that :code:`DisplayPlacementView` "
+"and :code:`PlaybackPlacementRenderer` support outstream and instream ad "
+"formats, respectively."
+msgstr ""
+"因此可以明确，:code:`DisplayPlacementView` 和 "
+":code:`PlaybackPlacementRenderer` 分别支持流外广告格式和流内广告格式。"
+
+
+#: ../../integration/ads/placement.rst:4
+msgid "Placements"
+msgstr "广告位"
+
+#: ../../integration/ads/placement.rst:6
+msgid ""
+"A placement is a unique location, within an application, through which ad media "
+"is distributed. Placements are composed of a specification and a renderer. The "
+"specification of a placement defines the types and constraints of ad formats "
+"that it supports. Placement renderers are components which render ad media that "
+"adheres to the specification of a placement."
+msgstr ""
+"广告位是应用程序中用于展示和分发广告媒体的唯一位置。广告位由配置定义和渲染器组成。"
+"广告位配置定义了其支持的广告格式类型及相关约束条件。广告位渲染器是负责渲染符合"
+"广告位配置要求的广告媒体组件。"
+
+#: ../../integration/ads/placement.rst:13
+msgid ""
+"Each placement within an application is identified by an identifier, unique to "
+"the |vendor_name| Origin Platform. While it is technically possible to share "
+"placement ids across different logical placements, this should be avoided. Many "
+"advertising optimizations are bound to a placement id. If the same placement id "
+"is used across different logical placements, optimizations for a specific "
+"logical placement will suffer, and overall cost-per-milli (CPM) will be lower "
+"for the placement."
+msgstr ""
+"应用程序中的每个广告位都通过一个标识符进行识别，该标识符在 |vendor_name| Origin "
+"平台中具有唯一性。虽然技术上可以在不同逻辑广告位之间共享广告位 ID，但不建议这样"
+"做。许多广告优化策略都与广告位 ID 绑定。如果同一个广告位 ID 被用于不同的逻辑广告"
+"位，则针对特定逻辑广告位的优化效果会受到影响，并且该广告位整体的千次展示成本（CPM）"
+"会降低。"
+
+#: ../../integration/ads/placement.rst:19
+msgid ""
+"The following placement identifiers can be used during development and testing:"
+msgstr ""
+"以下广告位标识符可用于开发和测试阶段："
+
+#: ../../integration/ads/placement.rst:22
+msgid "Id"
+msgstr "ID"
+
+#: ../../integration/ads/placement.rst:22
+msgid "Enabled Ad Formats"
+msgstr "启用的广告格式"
+
+#: ../../integration/ads/placement.rst:24
+msgid ":code:`test`"
+msgstr ":code:`test`"
+
+#: ../../integration/ads/placement.rst:41
+msgid ":code:`test-banner`"
+msgstr ":code:`test-banner`"
+
+#: ../../integration/ads/placement.rst:41
+msgid "Fixed size"
+msgstr "固定尺寸"
+
+#: ../../integration/ads/placement.rst:43
+msgid "Resizable"
+msgstr "可调整尺寸"
+
+#: ../../integration/ads/placement.rst:45
+msgid ":code:`test-rewarded`"
+msgstr ":code:`test-rewarded`"
+
+#: ../../integration/ads/placement.rst:45
+msgid "Opt-in"
+msgstr "用户选择加入"
+
+#: ../../integration/ads/placement.rst:48
+msgid ":code:`test-outstream`"
+msgstr ":code:`test-outstream`"
+
+#: ../../integration/ads/placement.rst:48
+msgid "Audio"
+msgstr "音频"
+
+#: ../../integration/ads/placement.rst:49
+msgid "Video"
+msgstr "视频"
+
+#: ../../integration/ads/placement.rst:52
+msgid ""
+"The ads module of the Origin SDK exports only placement renderers. Placement "
+"renderers are integrated within an application. The combination of rendering "
+"constraints and placement constraints defined in the |vendor_name| Origin "
+"Platform Console define the full placement constraints for the respective "
+"placement instance on the user's device. This simplifies the rendering, "
+"integration, and placement management pipeline, as a majority of placement "
+"constraints can be updated remotely, without requiring an application-side "
+"update."
+msgstr ""
+"Origin SDK 的广告模块仅提供广告位渲染器。广告位渲染器需要集成到应用程序中。"
+"|vendor_name| Origin 平台控制台中定义的渲染约束和广告位约束共同决定了用户设备"
+"上对应广告位实例的完整约束配置。这样可以简化广告渲染、集成以及广告位管理流程，"
+"因为大部分广告位约束都可以通过远程方式更新，而无需更新应用程序端代码。"
+
+#: ../../integration/ads/placement.rst:59
+msgid "Placement Flow"
+msgstr "广告位流程"
+
+#: ../../integration/ads/scheduling.rst:6
+msgid "Scheduling"
+msgstr "调度"
+
+#: ../../integration/ads/scheduling.rst:8
+msgid ""
+"The ads module supports preloading and caching ads on a per-placement basis. As "
+"such, at any given point in time, there may be multiple ads available for a "
+"placement, even across application restarts, without making a network request. "
+"In order to facilitate selecting between multiple different possible cached "
+"ads, the ads module maintains a schedule for when cached ads will be rendered."
+msgstr ""
+"广告模块支持基于广告位进行广告预加载和缓存。因此，在任意时间点，即使应用程序重新"
+"启动后，某个广告位仍可能存在多个可用广告，而无需重新发起网络请求。为了便于从多个"
+"可能的缓存广告中进行选择，广告模块会维护缓存广告的渲染调度策略。"
+
+#: ../../integration/ads/scheduling.rst:13
+msgid ""
+"Ads returned by |vendor_name| Origin Platform, for a placement, specify three "
+"necessary fields which are used when scheduling ads: price :math:`p`, minimum "
+"exposure duration :math:`d`, and expiration timestamp :math:`t`. The price of "
+"an ad is the price, in cost-per-milli (CPM) or CPM per second (for playback "
+"media), the buyer is willing to pay for the ad to be rendered. The minimum "
+"exposure duration and expiration timestamp define the minimum duration the ad "
+"must be rendered for and the timestamp after which the buyer will not consider "
+"any ad impression billable, respectively. When scheduling a set of "
+"ads :math:`A`, then, the algorithm is as follows:"
+msgstr ""
+"|vendor_name| Origin Platform 针对广告位返回的广告包含三个用于广告调度的必要字段："
+"价格 :math:`p`、最小曝光时长 :math:`d` 以及过期时间戳 :math:`t`。广告价格指买方"
+"愿意为广告完成渲染所支付的价格，单位为千次展示成本（CPM），对于播放类媒体则为"
+"每秒 CPM。最小曝光时长和过期时间戳分别定义了广告必须持续渲染的最短时间，以及超过"
+"该时间戳后买方不再认为该广告曝光可计费的时间点。对于一组广告 :math:`A` 进行调度时，"
+"算法如下："
+
+#: ../../integration/ads/scheduling.rst:21
+msgid "For every ad :math:`A_i`, sort by :math:`\\alpha = t - d`."
+msgstr "对于每个广告 :math:`A_i`，按照 :math:`\\alpha = t - d` 进行排序。"
+
+#: ../../integration/ads/scheduling.rst:22
+msgid ""
+"Any :math:`A_i` whose :math:`\\alpha` is less or equal to :math:`0` is removed."
+msgstr ""
+"移除所有满足 :math:`\\alpha \\leq 0` 的广告 :math:`A_i`。"
+
+#: ../../integration/ads/scheduling.rst:23
+msgid ""
+"Any :math:`A_i` whose immediate preceeding or succeeding ad has "
+"an :math:`\\alpha` equal to the :math:`\\alpha` of :math:`A_i` are sorted "
+"by :math:`p`, in decending order."
+msgstr ""
+"如果广告 :math:`A_i` 的前一个或后一个广告具有与 :math:`A_i` 相同的 "
+":math:`\\alpha` 值，则这些广告按照价格 :math:`p` 降序排序。"
+
+#: ../../integration/ads/scheduling.rst:25
+msgid ""
+"Begin preloading :math:`A_i` when its scheduled placement renderer is not "
+"currently rendering any ad media *or* the media currently rendered within the "
+"placement has reached :math:`80\\%` of its minimum exposure duration :math:`d`."
+msgstr ""
+"当其对应的广告位渲染器当前未渲染任何广告媒体，或者当前广告媒体的展示时间已经达到"
+"其最小曝光时长 :math:`d` 的 :math:`80\\%` 时，开始预加载广告 :math:`A_i`。"
+
+#: ../../integration/ads/scheduling.rst:29
+msgid ""
+"Through this, ad media is served as quickly as possible, without waiting on any "
+"delays introduced by the network connection of the device. In addition, certain "
+"placement renderers, such as :code:`DisplayPlacementView` permit rendering "
+"multiple different ads at the same time. Through this the effective ad request "
+"count remains stable, while the impression fill rate should remain close to the "
+"theoretical fill rate given demand for the respective placement."
+msgstr ""
+"通过这种方式，广告媒体可以尽可能快速地展示，而无需等待设备网络连接造成的延迟。"
+"此外，某些广告位渲染器（例如 :code:`DisplayPlacementView`）支持同时渲染多个不同"
+"广告。这样可以保持有效广告请求数量稳定，同时广告曝光填充率应保持接近在对应广告位"
+"需求情况下的理论填充率。"
+
+#: ../../integration/antifraud.rst:4 ../../integration/prerequisites.rst:224
+msgid "Antifraud"
+msgstr "反欺诈"
+
+#: ../../integration/antifraud.rst:6
+msgid ""
+"The antifraud module is responsible for protecting applications against invalid "
+"traffict (IVT), as defined by the `MRC Invalid Traffic Standards`_. This "
+"includes, but is not limited to, both device and application integrity."
+msgstr ""
+"反欺诈模块负责根据 `MRC Invalid Traffic Standards`_ 的定义，保护应用程序免受无效"
+"流量（IVT）的影响。其中包括但不限于设备完整性和应用程序完整性检测。"
+
+#: ../../integration/antifraud.rst:10
+msgid ""
+"Security tests are performed, by the antifraud module, on both the device and "
+"the application. The result of these security tests is forwarded to an "
+"attestation server. The attestation server evaluates the security test results "
+"and produces a *signed* verdict digest. This signed verdict digest can then "
+"used by remote backend processes to 1) verify the antifraud verdict and 2) "
+"verify the antifraud verdict signature."
+msgstr ""
+"反欺诈模块会分别对设备和应用程序执行安全检测。这些安全检测结果会被发送至远程证明"
+"服务器。远程证明服务器会评估安全检测结果，并生成一个*签名的*判定摘要。该签名判定"
+"摘要随后可由远程后端服务用于：1）验证反欺诈判定结果；2）验证反欺诈判定结果的签名。"
+
+
+#: ../../integration/antifraud.rst:16
+msgid "Antifraud Architecture"
+msgstr "反欺诈架构"
+
+#: ../../integration/antifraud.rst:60
+msgid ""
+"With this attestation based architecture, the remote backend processes, which "
+"may be serving ads, performing monitoring, or performing some expensive "
+"operation, can validate any request it receives from the device are not "
+"fraudulent. If a request is fraudulent, then it may skip any expensive "
+"processing, or monetary processing."
+msgstr ""
+"通过这种基于远程证明的架构，负责广告服务、监控或执行高成本操作的远程后端服务，"
+"可以验证其从设备接收到的请求是否存在欺诈行为。如果请求被判定为欺诈请求，则可以"
+"跳过高成本处理或涉及资金的处理流程。"
+
+#: ../../integration/antifraud.rst:66
+msgid "Accessing Security Verdict"
+msgstr "访问安全判定结果"
+
+#: ../../integration/antifraud.rst:68
+msgid ""
+"Through the SDK, the antifraud module can be used to retrieve the signed "
+"security verdict, along with fraud rating and confidence. The signed verdict "
+"may be used by application backend servers to ensure a device is valid before "
+"processing its request, or restrict services to the device. The fraud rating "
+"and confidence can be used on the device, by application code, to determine "
+"whether functionality should be locally restricted."
+msgstr ""
+"通过 SDK，反欺诈模块可以获取签名的安全判定结果，以及欺诈等级和置信度。应用程序"
+"后端服务器可以使用该签名判定结果，在处理设备请求之前验证设备是否有效，或限制该"
+"设备访问相关服务。应用程序代码也可以在设备端使用欺诈等级和置信度，判断是否需要"
+"在本地限制部分功能。"
+
+#: ../../integration/antifraud.rst:74
+msgid ""
+"As these verdicts are expensive to compute on attestation servers, they are "
+"provided lazily through the SDK's event bus."
+msgstr ""
+"由于这些判定结果在远程证明服务器上的计算成本较高，因此 SDK 会通过事件总线以"
+"延迟方式提供这些结果。"
+
+#: ../../integration/index.rst:5
+msgid "Integration"
+msgstr "集成"
+
+#: ../../integration/index.rst:7
+msgid ""
+"Origin Android SDK interacts with the |vendor_name| Origin Platform, allowing "
+"developers to monetize, monitor, and protect applications for the Android "
+"platform. The SDK is designed to be simple and easy to implement, with a focus "
+"on performance and low footprint."
+msgstr ""
+"Origin Android SDK 与 |vendor_name| Origin Platform 进行交互，使开发者能够针对"
+"Android 平台应用实现变现、监控和保护。该 SDK 设计简洁、易于集成，并注重性能和"
+"低资源占用。"
+
+#: ../../integration/initializing.rst:4
+msgid "Initializing"
+msgstr "初始化"
+
+#: ../../integration/initializing.rst:6
+msgid ""
+"The Origin SDK is organized into 3 modules, *antifraud*, *ads*, and *monitor* "
+"for device validation, monetization, and monitoring, respectively. During "
+"initialization, one or more of these modules can be loaded. If a module is not "
+"loaded during initialization, its capability is disabled. Additionally, with "
+"compile-time optimizations, its likely that the code for the respective unused "
+"modules will be removed."
+msgstr ""
+"Origin SDK 由三个模块组成，分别为 *antifraud*、*ads* 和 *monitor*，分别用于"
+"设备验证、应用变现和监控。在初始化过程中，可以加载其中一个或多个模块。如果某个"
+"模块未在初始化阶段加载，则该模块对应的能力将被禁用。此外，通过编译时优化，未使用"
+"模块对应的代码可能会被移除。"
+
+#: ../../integration/initializing.rst:12
+msgid ""
+"Before any module can be used, the SDK must be initialized "
+"using :code:`Origin::initialize()`. This method must be invoked within the main "
+"application thread. It should be invoked only once. If it is invoked more than "
+"once with different capabilities, the union of capabilities for all invocations "
+"is what will be available."
+msgstr ""
+"在使用任何模块之前，必须通过 :code:`Origin::initialize()` 初始化 SDK。该方法"
+"必须在应用程序主线程中调用，并且只应调用一次。如果使用不同能力参数多次调用"
+"该方法，则所有调用所请求能力的并集将作为最后一次初始化时的可用能力。"
+
+#: ../../integration/initializing.rst:19
+msgid ""
+"The :code:`Origin::initialize()` method returns quickly. It primarily setups "
+"base structures required by the SDK. Module logic is initialized in the "
+"background."
+msgstr ""
+":code:`Origin::initialize()` 方法会快速返回。该方法主要用于初始化 SDK 所需的"
+"基础结构，而模块逻辑会在后台完成初始化。"
+
+#: ../../integration/initializing.rst:22
+msgid ""
+"The SDK may be initialized early during application startup, within the "
+"application entry-point, or if the main and user-interface (UI) threads of the "
+"application are the same, within an activity of the application."
+msgstr ""
+"SDK 可以在应用启动早期阶段、应用程序入口点中完成初始化；如果应用程序主线程与"
+"用户界面（UI）线程相同，也可以在应用程序的某个 Activity 中进行初始化。"
+
+#: ../../integration/initializing.rst:26
+msgid "Initializing within application entry-point."
+msgstr "在应用程序入口中初始化。"
+
+#: ../../integration/initializing.rst:53
+msgid "Initialize within an activity."
+msgstr "在 Activity 中初始化。"
+
+#: ../../integration/initializing.rst:81
+msgid ""
+"To initialize all modules implicitly, :code:`Origin::initialize()` may be "
+"invoked with only the application "
+"context, :code:`Origin.initialize(appContext)`."
+msgstr ""
+"要隐式初始化所有模块，可以仅传入应用程序上下文调用 "
+":code:`Origin::initialize()`，即 :code:`Origin.initialize(appContext)`。"
+
+#: ../../integration/initializing.rst:85
+msgid "Device Id"
+msgstr "设备标识符"
+
+#: ../../integration/initializing.rst:87
+msgid ""
+"Device id is usually preferred by each capability the SDK is initialized with. "
+"There are three possible identifier initialization methods supported, depending "
+"on region and availability. See the sections below for description of each "
+"method."
+msgstr ""
+"SDK 初始化时启用的每项能力通常都会优先使用设备标识符。根据地区和可用情况，SDK"
+"支持三种设备标识符初始化方式。有关每种方式的说明，请参阅以下章节。"
+
+#: ../../integration/initializing.rst:92
+msgid "Google Advertising Identifier"
+msgstr "Google 广告标识符"
+
+#: ../../integration/initializing.rst:94
+msgid ""
+"If the application is executing on a device with Google Mobile Services (GMS), "
+"and an advertising identifier is sanctioned, then the Google Advertising "
+"Identifier (GAID) is used automatically."
+msgstr ""
+"如果应用程序运行在支持 Google Mobile Services（GMS）的设备上，并且广告标识符"
+"访问权限可用，则会自动使用 Google 广告标识符（GAID）。"
+
+#: ../../integration/initializing.rst:99
+msgid ""
+"If GAID is not :ref:`configured <integration_prereq_gaid>`, GAID will *not* be "
+"available at all."
+msgstr ""
+"如果 GAID 未按照 :ref:`配置要求 <integration_prereq_gaid>` 完成配置，则 GAID "
+"*完全不可用*。"
+
+#: ../../integration/initializing.rst:102 ../../integration/prerequisites.rst:234
+msgid "Open Anonymous Device Identifier"
+msgstr "开放匿名设备标识符"
+
+#: ../../integration/initializing.rst:104
+msgid ""
+"If the application is executing on a device which supports Open Anonymous "
+"Device Identifier (OAID), and an OAID is available, then the OAID is used "
+"automatically. Any application targeting the China market will always use the "
+"OAID."
+msgstr ""
+"如果应用程序运行在支持开放匿名设备标识符（OAID）的设备上，并且 OAID 可用，则"
+"会自动使用 OAID。任何面向中国市场的应用程序都会始终使用 OAID。"
+
+#: ../../integration/initializing.rst:110
+msgid ""
+"If OAID is not :ref:`configured <integration_prereq_oaid>`, OAID will *not* be "
+"available at all."
+msgstr ""
+"如果 OAID 未按照 :ref:`配置要求 <integration_prereq_oaid>` 完成配置，则 OAID "
+"*完全不可用*。"
+
+#: ../../integration/initializing.rst:113
+msgid "Custom Identifier"
+msgstr "自定义标识符"
+
+#: ../../integration/initializing.rst:115
+msgid ""
+"When the application executes on a device which does not support any of the "
+"standard device identifiers, a custom identifier may be supplied during SDK "
+"initialization using the :code:`Origin::initializeWithOptions()` method."
+msgstr ""
+"当应用程序运行在不支持任何标准设备标识符的设备上时，可以在 SDK 初始化过程中通过 "
+":code:`Origin::initializeWithOptions()` 方法提供自定义标识符。"
+
+#: ../../integration/initializing.rst:151
+msgid ""
+"Replace :code:`DEVICE_ID_TYPE` and :code:`DEVICE_ID` with the device identifier "
+"type and device identifier value, respectively. The identifier type should be a "
+"unique type name of the identifier type. For example, the identifier type of "
+"Google Advertiser Identifier is :code:`\"gaid\"`."
+msgstr ""
+"将 :code:`DEVICE_ID_TYPE` 和 :code:`DEVICE_ID` 分别替换为设备标识符类型和设备"
+"标识符值。标识符类型应为该标识符类型对应的唯一名称。例如，Google 广告标识符的"
+"标识符类型为 :code:`\"gaid\"`。"
+
+#: ../../integration/initializing.rst:155
+msgid ""
+"Two types of custom identifiers are supported, *dynamic* and *static*, "
+"specified using :code:`addDynamicDeviceId` and :code:`addStaticDeviceId`, "
+"respectively. Dynamic device identifiers may change during the lifecycle of an "
+"application execution, and are provided using a provider function, which is "
+"invoked, on a worker thread, with the application context. Static device "
+"identifiers, however, do not change during the lifecycle of an application "
+"execution."
+msgstr ""
+"支持两种类型的自定义标识符：*动态标识符* 和 *静态标识符*，分别通过 "
+":code:`addDynamicDeviceId` 和 :code:`addStaticDeviceId` 指定。动态设备标识符"
+"可能会在应用程序运行生命周期内发生变化，并通过提供者函数提供。该函数会在工作"
+"线程中调用，并接收应用程序上下文作为参数。而静态设备标识符在应用程序运行生命"
+"周期内不会发生变化。"
+
+#: ../../integration/initializing.rst:163
+msgid ""
+"Multiple custom device identifiers may be specified by "
+"invoking :code:`addDynamicDeviceId` or :code:`addStaticDeviceId` more than once."
+msgstr ""
+"可以通过多次调用 :code:`addDynamicDeviceId` 或 :code:`addStaticDeviceId` "
+"指定多个自定义设备标识符。"
+
+#: ../../integration/initializing.rst:168
+msgid ""
+"When providing custom device identifiers, ensure the identifiers do have some "
+"form of stability. In other words, an identifier which changes each time the "
+"application is restarted will likely result in poor performance."
+msgstr ""
+"提供自定义设备标识符时，请确保这些标识符具有一定的稳定性。换句话说，如果某个"
+"标识符在每次应用程序重新启动时都会发生变化，可能会导致较差的性能表现。"
+
+#: ../../integration/prerequisites.rst:4
+msgid "Prerequisites"
+msgstr "前置条件"
+
+#: ../../integration/prerequisites.rst:6
+msgid "Before integrating, the following steps must be performed."
+msgstr "在进行集成之前，必须完成以下步骤。"
+
+#: ../../integration/prerequisites.rst:9
+msgid "Android API Level"
+msgstr "Android API Level"
+
+#: ../../integration/prerequisites.rst:11
+msgid ""
+"Ensure :code:`minSdk` and :code:`targetSdk` is :code:`19` or higher, "
+"and, :code:`35` or higher, respectively."
+msgstr ""
+"确保 :code:`minSdk` 和 :code:`targetSdk` 分别为 :code:`19` 及以上和 "
+":code:`35` 及以上。"
+
+#: ../../integration/prerequisites.rst:33
+msgid "Configuring Project"
+msgstr "项目配置"
+
+#: ../../integration/prerequisites.rst:35
+msgid "Include the `Maven central repository`_ within your Gradle settings."
+msgstr "在 Gradle 设置中添加 `Maven Central 仓库 <Maven central repository_>`_。"
+
+#: ../../integration/prerequisites.rst:61
+msgid "Add the dependency for |vendor_name| Origin SDK to your Gradle build file."
+msgstr "将 |vendor_name| Origin SDK 的依赖添加到 Gradle 构建文件中。"
+
+#: ../../integration/prerequisites.rst:74
+msgid ""
+"We use a version range as minor versions are guaranteed to be backwards "
+"compatible. Using a version range here ensures any new feature, bug fixes, or "
+"new platform support can be included automatically. If a fixed version is "
+"preferred, then the version range can be replaced with |version_current|."
+msgstr ""
+"我们使用版本范围，因为小版本号版本保证向后兼容。使用版本范围可以确保自动包含"
+"新的功能、错误修复以及新的平台支持。如果希望使用固定版本，则可以将版本范围替换"
+"为 |version_current|。"
+
+#: ../../integration/prerequisites.rst:81
+msgid ""
+"When including the Origin SDK as a dependency from a precompiled AAR, the Maven "
+"coordinates above may be ignored, instead the AAR flat-file can be included "
+"directly, with the following additional dependencies."
+msgstr ""
+"当通过预编译 AAR 方式将 Origin SDK 作为依赖引入时，可以忽略上述 Maven 坐标，"
+"而直接添加 AAR 文件，同时添加以下额外依赖。"
+
+#: ../../integration/prerequisites.rst:100
+msgid "`Synchronize Gradle changes`_ by clicking **Sync Now**."
+msgstr "点击 **Sync Now** 执行 `同步 Gradle 更改 <Synchronize Gradle changes_>`_。"
+
+#: ../../integration/prerequisites.rst:104
+msgid "Update the application manifest as required."
+msgstr "根据需要更新Application Manifest文件。"
+
+#: ../../integration/prerequisites.rst:124
+msgid ""
+"Replace :code:`ORIGIN-APPLICATION-ID` or :code:`ORIGIN-PUBLISHER-ID` with the "
+"distribution channel or publisher id allocated through the |vendor_name| Origin "
+"Platform. During testing and development, the special id :code:`test` can be "
+"used."
+msgstr ""
+"将 :code:`ORIGIN-APPLICATION-ID` 或 :code:`ORIGIN-PUBLISHER-ID` 替换为通过 "
+"|vendor_name| Origin Platform 分配的分发渠道 ID 或发布者 ID。在测试和开发阶段，"
+"可以使用特殊 ID :code:`test`。"
+
+#: ../../integration/prerequisites.rst:130
+msgid ""
+"Only one of :code:`application-id` or :code:`publisher-id` meta-data entry is "
+"required. When :code:`publisher-id` is set, the combination of :code:`publisher-"
+"id` and application bundle is used to identify the application. "
+"Using :code:`application-id` should be preferred wherever possible."
+msgstr ""
+"只需要配置 :code:`application-id` 或 :code:`publisher-id` 其中一个元数据项。"
+"当设置 :code:`publisher-id` 时，将使用 :code:`publisher-id` 与应用包的组合作为"
+"应用程序身份标识。在可能的情况下，应优先使用 :code:`application-id`。"
+
+#: ../../integration/prerequisites.rst:137
+msgid ""
+"When integrating the Origin SDK for only ads, :code:`application-id` "
+"and :code:`publisher-id` are optional as placement ids are used to identify the "
+"application. Even so, specifying at least one should be preferred in order to "
+"ensure integration failures are recognized by the |vendor_name| Origin Platform."
+msgstr ""
+"当仅为广告功能集成 Origin SDK 时，:code:`application-id` 和 "
+":code:`publisher-id` 是可选的，因为 placement id 会用于标识应用程序。"
+"即便如此，仍建议至少指定其中一个，以确保集成失败能够被 |vendor_name| Origin "
+"Platform 识别。"
+
+#: ../../integration/prerequisites.rst:143
+msgid "Region Specific"
+msgstr "区域特定配置"
+
+#: ../../integration/prerequisites.rst:145
+msgid ""
+"If the application build, in which the SDK is being integrated, is targeting a "
+"specific region for legal purposes ensure the :code:`region` meta-data entry is "
+"also specified to the respective region."
+msgstr ""
+"如果集成 SDK 的应用构建版本因法律合规要求面向特定区域，请确保 :code:`region` "
+"元数据项也设置为对应区域。"
+
+#: ../../integration/prerequisites.rst:165
+msgid "See the table below for supported region specializations."
+msgstr "支持的区域配置如下表所示。"
+
+#: ../../integration/prerequisites.rst:168
+msgid "Code"
+msgstr "代码"
+
+#: ../../integration/prerequisites.rst:168
+msgid "Region"
+msgstr "地区"
+
+#: ../../integration/prerequisites.rst:170
+msgid ":code:`cn`"
+msgstr ":code:`cn`"
+
+#: ../../integration/prerequisites.rst:170
+msgid "China"
+msgstr "中国"
+
+#: ../../integration/prerequisites.rst:172
+msgid ":code:`eu`"
+msgstr ":code:`eu`"
+
+#: ../../integration/prerequisites.rst:172
+msgid "European Union"
+msgstr "欧盟"
+
+#: ../../integration/prerequisites.rst:174
+msgid ":code:`global` (default)"
+msgstr ":code:`global`\ （默认）"
+
+#: ../../integration/prerequisites.rst:174
+msgid "Any region"
+msgstr "任意区域"
+
+#: ../../integration/prerequisites.rst:176
+msgid ":code:`us`"
+msgstr ":code:`us`"
+
+#: ../../integration/prerequisites.rst:176
+msgid "United States"
+msgstr "美国"
+
+#: ../../integration/prerequisites.rst:182
+msgid "Google Mobile Service Ad Identifier"
+msgstr "Google 移动服务广告标识符"
+
+#: ../../integration/prerequisites.rst:184
+msgid ""
+"If the application is distributed with Google Mobile Services (GMS), then the "
+"Google Advertising Identifier (GAID) should be used to identify an instance of "
+"the application. To query the GAID for a device, the GAID permission needs to "
+"be declared."
+msgstr ""
+"如果应用程序通过 Google Mobile Services（GMS）进行分发，则应使用 Google 广告"
+"标识符（GAID）来识别应用实例。要查询设备的 GAID，需要声明 GAID 相关权限。"
+
+#: ../../integration/prerequisites.rst:188
+msgid ""
+"Add the dependency for :code:`play-services-ads-identifier` to your Gradle "
+"build file."
+msgstr ""
+"将 :code:`play-services-ads-identifier` 依赖添加到 Gradle 构建文件中。"
+
+#: ../../integration/prerequisites.rst:199
+msgid "Declare the permission in the application manifest."
+msgstr "在Application Manifest中声明权限。"
+
+#: ../../integration/prerequisites.rst:218
+msgid ""
+"When uploading the application APK to Play Console answer questions regarding "
+"GAID usage according to the Origin SDK capabilities used."
+msgstr ""
+"将应用 APK 上传到 Play Console 时，请根据所使用的 Origin SDK 功能，如实填写 GAID 使用情况的相关声明。"
+
+#: ../../integration/prerequisites.rst:222
+msgid "SDK Capability"
+msgstr "SDK 能力"
+
+#: ../../integration/prerequisites.rst:222
+msgid "Analytics"
+msgstr "分析"
+
+#: ../../integration/prerequisites.rst:222
+msgid "Personalization"
+msgstr "个性化"
+
+#: ../../integration/prerequisites.rst:224 ../../integration/prerequisites.rst:226
+#: ../../integration/prerequisites.rst:228
+msgid "☑"
+msgstr "☑"
+
+#: ../../integration/prerequisites.rst:224 ../../integration/prerequisites.rst:226
+#: ../../integration/prerequisites.rst:228
+msgid "☐"
+msgstr "☐"
+
+#: ../../integration/prerequisites.rst:226
+msgid "Advertising"
+msgstr "广告"
+
+#: ../../integration/prerequisites.rst:228
+msgid "Monitoring"
+msgstr "监控"
+
+#: ../../integration/prerequisites.rst:236
+msgid ""
+"Android Open Anonymous Device Identifier (OAID) is a user-resettable unique "
+"identifier for Android devices, introduced by the Mobile Security Alliance "
+"(MSA) and China Information and Communication Research Institute. OAID is "
+"supported by the Origin SDK, and should be used when the application is "
+"targeting the Chinese market, as OAID is the primary id sanctioned for "
+"advertising within China."
+msgstr ""
+"Android 开放匿名设备标识符（OAID）是由移动安全联盟（MSA）和中国信息通信研究院"
+"推出的一种适用于 Android 设备的用户可重置唯一标识符。Origin SDK 支持 OAID，"
+"当应用程序面向中国市场时，应使用 OAID，因为 OAID 是中国广告场景中主要认可的"
+"设备标识符。"
+
+#: ../../integration/prerequisites.rst:243
+msgid ""
+"These instructions assume shell commands are executed from the directory the "
+"MSA SDK and artifacts are unzipped in. Replace :code:`/<path>/<to>/<project>` "
+"with the path to the application project."
+msgstr ""
+"以下说明假设 shell 命令在 MSA SDK 及相关文件解压后的目录中执行。请将 "
+":code:`/<path>/<to>/<project>` 替换为应用程序项目所在路径。"
+
+#: ../../integration/prerequisites.rst:246
+msgid "Get MSA SDK from `Mobile Security Alliance`_."
+msgstr "从 `移动安全联盟(MSA) <Mobile Security Alliance_>`_ 获取 MSA SDK。"
+
+#: ../../integration/prerequisites.rst:248
+msgid "Copy MSA SDK AAR flat-file into a local folder."
+msgstr "将 MSA SDK 的 AAR 文件复制到本地文件夹中。"
+
+#: ../../integration/prerequisites.rst:254
+msgid ""
+"Copy :code:`supplierconfig.json` into the :code:`assets` folder of the "
+"application project."
+msgstr ""
+"将 :code:`supplierconfig.json` 复制到应用程序项目的 :code:`assets` 文件夹中。"
+
+#: ../../integration/prerequisites.rst:260
+msgid ""
+"Copy :code:`<app-bundle>.cert.pem` into the :code:`assets` folder of the "
+"application project."
+msgstr ""
+"将 :code:`<app-bundle>.cert.pem` 复制到应用程序项目的 :code:`assets` 文件夹中。"
+
+#: ../../integration/prerequisites.rst:266
+msgid "Add the dependency for MSA SDK to your Gradle build file."
+msgstr "将 MSA SDK 依赖添加到 Gradle 构建文件中。"
+
+#: ../../integration/prerequisites.rst:290
+msgid "Update Proguard release rules."
+msgstr "更新 ProGuard 发布规则。"

@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+plugins {
+	id("java-library")
+}
+
+group = "org.poly-gamma.android.origin"
+version = "local"
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+
+	withSourcesJar()
+	withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs += [
+		// Enable all warnings, and treat warnings as errors
+		"-Xlint:all", "-Xdoclint:all/protected", "-Werror", "-Xmaxerrs", "10",
+		// We need access to `com.sun.tools.javac`
+		"--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+		"--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+		"--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+	]
+	options.encoding = "utf-8"
+}

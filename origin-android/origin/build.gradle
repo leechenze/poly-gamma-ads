@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+import java.nio.file.Files
+
+plugins {
+	id("origin-library")
+}
+
+description = "Origin Android SDK."
+
+android {
+	sourceSets {
+		main {
+			// Copy sources from the modules we want to include.
+			[
+				"origin-adcom",
+				"origin-ads",
+				"origin-antifraud",
+				"origin-core",
+				"origin-gppstring",
+				"origin-protobuf",
+				"origin-util",
+				"origin-crypt",
+			].forEach {
+				def genDir = project.layout.buildDirectory.dir("generated").get()
+				def symDir = genDir.dir(it).asFile
+
+				if (!symDir.exists()) {
+					if (!genDir.asFile.exists())
+						genDir.asFile.mkdirs()
+					Files.createSymbolicLink(
+						symDir.toPath(),
+						project(":${it}").layout
+							.projectDirectory
+							.dir("src")
+							.dir("main")
+							.asFile
+							.toPath()
+					)
+				}
+				java.srcDir(new File(symDir, "java"))
+
+				def resDir = new File(symDir, "res")
+
+				if (resDir.exists())
+					res.srcDir(resDir)
+			}
+		}
+	}
+
+	buildFeatures.buildConfig = true
+	// See `../origin-core/build.gradle`:
+	defaultConfig {
+		[
+			"CHINA_RPC_HOST": getProperty("origin.rpc.host.cn"),
+			"GLOBAL_RPC_HOST": getProperty("origin.rpc.host"),
+			"SDK_NAME": "origin",
+			"SDK_REGION": project.ext.originRegion,
+			"SDK_VENDOR": project.ext.originVendorName.toLowerCase().replace('-', '_'),
+			"SDK_VERSION": project.version
+		].forEach { name, val -> buildConfigField(
+			"@SuppressWarnings(\"doclint:missing\") String",
+			"ORIGIN_${name}",
+			"\"${val}\""
+		) }
+	}
+}
+
+dependencies {
+	api(libs.androidx.core)
+	api(libs.guava.listenablefuture)
+
+	compileOnly(libs.gms.ads.identifier)
+	compileOnly(libs.hms.ads.identifier)
+	compileOnly(project(":origin-msasdk-stub"))
+}

@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+plugins {
+	id("origin-library")
+}
+
+description = "Utility definitions."
+
+dependencies {
+	api(libs.androidx.core)
+	api(libs.guava.listenablefuture)
+}

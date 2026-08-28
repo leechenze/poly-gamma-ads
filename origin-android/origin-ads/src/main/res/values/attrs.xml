@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<resources>
+	<!-- #### Placement attributes: -->
+
+	<!-- Id of placement (required). -->
+	<attr name="origin_displayPlacement_id" format="string" />
+
+	<!--
+	Id of native ad format layout. This layout is used when rendering a native ad. It must
+	be inflate to an instance of `org.polygamma.android.origin.ads.NativeAdLayout`.
+	-->
+	<attr name="origin_displayPlacement_nativeAdLayoutId" format="reference" />
+
+	<!-- Modality of placement. -->
+	<attr name="origin_displayPlacement_modality" format="enum">
+		<!-- Placement is not modal. -->
+		<enum name="none" value="0" />
+		<!-- Placement is interstitial. -->
+		<enum name="interstitial" value="1" />
+		<!-- Placement can expand into a modal interstitial. -->
+		<enum name="expandable" value="2" />
+	</attr>
+
+	<!-- #### Native attributes: -->
+
+	<!-- Positive non-zero id of format native asset adheres to (required). -->
+	<attr name="origin_nativeAdAsset_formatId" format="integer" />
+	<!--
+	Asset is required, when `false` and the asset is not provided, the respective asset view
+	will be hidden.
+	-->
+	<attr name="origin_nativeAdAsset_required" format="boolean" />
+	<!-- Maximum length of text asset. -->
+	<attr name="origin_nativeAdAsset_maxTextLength" format="integer" />
+
+	<!-- #### Views -->
+
+	<declare-styleable name="DisplayPlacementView">
+		<attr name="origin_displayPlacement_id" />
+		<attr name="origin_displayPlacement_nativeAdLayoutId" />
+		<attr name="origin_displayPlacement_modality" />
+	</declare-styleable>
+
+	<declare-styleable name="NativeAdTextView">
+		<attr name="origin_nativeAdAsset_formatId" />
+		<attr name="origin_nativeAdAsset_required" />
+		<attr name="origin_nativeAdAsset_maxTextLength" />
+	</declare-styleable>
+
+	<declare-styleable name="NativeAdMediaView">
+		<attr name="origin_nativeAdAsset_formatId" />
+		<attr name="origin_nativeAdAsset_required" />
+	</declare-styleable>
+</resources>

@@ -1,0 +1,1415 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+syntax="proto3";
+package org.polygamma.origin.adcom;
+
+/// Enumeration of activation (i.e. click) behaviors.
+enum ActivationBehavior {
+	/// Ad media cannot be activated.
+	ActivationNone				= 0;
+
+	/// Ad media can be activated and behavior is unknown.
+	ActivationUnknown			= 1;
+
+	/// Activating ad media results in embedded browser being opened.
+	ActivationEmbeddedBrowser	= 2;
+
+	/// Activating ad media results in native browser being opened.
+	ActivationNativeBrowser		= 3;
+}
+
+/// Enumeration of advertising API codes.
+enum AdApiCode {
+	/// Unknown advertising API.
+	AdApiUnknown	= 0;
+
+	/// VPAID, version 1.0.
+	AdApiVpaid10	= 1;
+
+	/// VPAID, version 2.0.
+	AdApiVpaid20	= 2;
+
+	/// MRAID, version 1.0.
+	AdApiMraid10	= 3;
+
+	/// ORMMA.
+	AdApiOrmma		= 4;
+
+	/// MRAID, version 2.0.
+	AdApiMraid20	= 5;
+
+	/// MRAID, version 3.0.
+	AdApiMraid30	= 6;
+
+	/// OMID, version 1.0.
+	AdApiOmid10		= 7;
+
+	/// SIMID, version 1.0.
+	AdApiSimid10	= 8;
+
+	/// SIMID, version 1.1.
+	AdApiSimid11	= 9;
+}
+
+/// Enumeration of ad audit status codes.
+enum AdAuditStatusCode {
+	/// Unknown audit status.
+	AdAuditStatusUnknown		= 0;
+
+	/// Audit pending.
+	AdAuditStatusPending		= 1;
+
+	/// Audit pending, but ad is recommended for use.
+	AdAuditStatusPreapproved	= 2;
+
+	/// Audit complete and ad is approved for use.
+	AdAuditStatusApproved		= 3;
+
+	/// Audit complete and ad is denied for use.
+	AdAuditStatusDenied		= 4;
+
+	/// Ad has materially changed and audit must be reperformed.
+	AdAuditStatusChanged		= 5;
+
+	/// Audit has expired.
+	AdAuditStatusExpired		= 6;
+}
+
+enum AdErrorCode {
+	// These are tied 1-1 with vast error codes. Custom codes go in 10000+.
+
+	/// No error.
+	AdErrorNone							= 0;
+
+	reserved 100; // parsing error
+	reserved 101; // schema validation error
+	reserved 102; // response version not supported
+
+	/// Unsupported ad type.
+	AdErrorUnsupportedType				= 200;
+
+	/// Unsupported ad linearity.
+	AdErrorUnsupportedLinearity			= 201;
+
+	/// Playback ad duration is unsupported.
+	AdErrorUnsupportedDuration			= 202;
+
+	/// Ad size is unsupported.
+	AdErrorUnsupportedSize				= 203;
+
+	/// Ad does not specify categories.
+	AdErrorCatMissing					= 204;
+
+	reserved 205; // inline category violates wrapper BlockedAdCategories
+
+	/// Ad was not served due to non-erroneous reason.
+	AdErrorIgnored						= 206;
+
+	reserved 300; // general wrapper error
+	reserved 301; // wrapper uri timeout
+	reserved 302; // wrapper limit reached
+	reserved 303; // no vast response after one or more wrappers
+
+	/// Ad failed to render within timeout.
+	AdErrorRenderTimeout				= 304;
+
+	/// General playback ad error.
+	AdErrorPlayback						= 400;
+
+	/// Playback ad media file not found.
+	AdErrorPlaybackMediaNotFound		= 401;
+
+	/// Playback ad media file timed out.
+	AdErrorPlaybackMediaTimeout			= 402;
+
+	/// No supported playback file was found.
+	AdErrorUnsupportedPlaybackMedia		= 403;
+
+	reserved 404;
+
+	/// Failed to render playback ad file.
+	AdErrorPlaybackMediaError			= 405;
+
+	reserved 406;
+	reserved 407;
+	reserved 408;
+
+	/// Interactive asset of a playback ad was not executed.
+	AdErrorPlaybackInteractiveIgnored	= 409;
+
+	reserved 410;
+	reserved 411;
+
+	/// General error while executing overlay creative of a playback ad.
+	AdErrorPlaybackOverlay				= 500;
+
+	/// Overlay creative size does not fit.
+	AdErrorPlaybackOverlaySize			= 501;
+
+	/// Failed to fetch overlay creative asset.
+	AdErrorPlaybackOverlayFetch			= 502;
+
+	/// Supported overlay creative was not found.
+	AdErrorUnsupportedPlaybackOverlay	= 503;
+
+	/// General error while executing companion ad.
+	AdErrorCompanion					= 600;
+
+	/// Companion ad size does not fit.
+	AdErrorCompanionSize				= 601;
+
+	/// Error while rendering companion ad.
+	AdErrorCompanionRender				= 602;
+
+	/// Failed to fetch companion ad assets.
+	AdErrorCompanionFetch				= 603;
+
+	/// Supported companion ad was not found.
+	AdErrorUnsupportedCompanion			= 604;
+
+	/// An undefined error.
+	AdErrorUndefined					= 900;
+
+	reserved 901;
+
+	/// General error while executing interactive creative.
+	AdErrorPlaybackInteractive			= 902;
+
+	/// General error while executing display ad.
+	AdErrorDisplay						= 10000;
+
+	/// Failed to fetch display ad assets.
+	AdErrorDisplayFetch					= 10001;
+
+	/// Failed to load display ad.
+	AdErrorDisplayLoad					= 10002;
+}
+
+/// Enumeration of ad event tracker error codes.
+enum AdEventTrackerErrorCode {
+	// These are tied 1-1 with vast verification error codes.
+
+	/// Unknown error code.
+	AdEventTrackerErrorNone			= 0;
+
+	/// Tracker URL was rejected.
+	AdEventTrackerErrorRejected		= 1;
+
+	/// Tracker type is not supported.
+	AdEventTrackerErrorUnsupported	= 2;
+
+	/// Tracker failed to load.
+	AdEventTrackerErrorLoad			= 3;
+}
+
+/// Enumeration of ad media event types.
+enum AdEventType {
+	/// Unknown event type.
+	AdEventUnknown					= 0;
+
+	/// Ad media has loaded.
+	AdEventLoaded					= 1;
+
+	/// Ad media has received an impression.
+	AdEventImpression				= 2;
+
+	/// Ad media was 50% in view for 1 continuous second.
+	AdEventViewableMrc50			= 3;
+
+	/// Ad media was 100% in view for 1 continuous second.
+	AdEventViewableMrc100			= 4;
+
+	/// Ad media was 50% in view for 2 continuous seconds.
+	AdEventViewableVideo50			= 5;
+
+	/// Error encountered while executing ad media.
+	AdEventError					= 500;
+
+	/// Ad media was not selected for execution.
+	AdEventIgnored					= 501;
+
+	/// Ad media received impression but viewability was undetermined for the lifetime of its
+	/// execution.
+	AdEventViewUndetermined			= 502;
+
+	/// Ad media received impression but was not viewable for the lifetime of its execution.
+	AdEventNotViewable				= 503;
+
+	/// Non-navigable asset of ad media activated (i.e. clicked).
+	AdEventActivated				= 504;
+
+	/// Navigable asset of ad media activated (i.e. clicked).
+	AdEventActivatedLink			= 505;
+
+	/// Ad media was interacted (non-activation) with by user.
+	AdEventInteracted				= 506;
+
+	/// User activated skip button to skip creative.
+	AdEventSkipped					= 507;
+
+	/// User activated mute button on media player, used to playback ad media, and creative was
+	/// muted.
+	AdEventMediaPlayerMuted			= 508;
+
+	/// User activated unmute button on media player, used to playback ad media, and creative was
+	/// unmuted.
+	AdEventMediaPlayerUnmuted		= 509;
+
+	/// User activated pause button on media player, used to playback ad media, and creative
+	/// playback was paused.
+	AdEventMediaPlayerPaused		= 510;
+
+	/// User activated resume button on media player, used to playback ad media, and creative
+	/// playback was resumed.
+	AdEventMediaPlayerUnpaused		= 511;
+
+	/// User activated rewind controls on media player, used to playback ad media, and creative
+	/// playhead was moved to an earlier point.
+	AdEventMediaPlayerRewind		= 512;
+
+	/// User activated expand controls on media player, used to playback ad media.
+	AdEventMediaPlayerExpand		= 513;
+
+	/// User activated collapse controls on media player, used to playback ad media.
+	AdEventMediaPlayerCollapse		= 514;
+
+	/// Playback ad media progress.
+	AdEventPlaybackProgress			= 515;
+
+	/// User activated controls to terminate ad media playback.
+	AdEventPlaybackTerminated		= 516;
+
+	/// Interactive asset of a playback ad was started.
+	AdEventPlaybackInteractiveStart	= 517;
+
+	/// User activated control used to pause streaming content, which either expands the ad overlay
+	/// within the media player's viewable area or takes over streaming content area by launching
+	/// an additional portion of the overlay creative.
+	AdEventPlaybackOverlayAccept	= 518;
+
+	/// Time that initial ad is displayed.
+	AdEventPlaybackOverlayViewDur	= 519;
+
+	/// User activated control to expand display or playback overlay ad.
+	AdEventExpanded					= 520;
+
+	/// User activated control to collapse display or playback overlay ad.
+	AdEventCollapsed				= 521;
+
+	/// User activated control to minimize display or playback overlay ad.
+	AdEventMinimized				= 522;
+
+	/// User activated control to close display or playback overlay ad.
+	AdEventClosed					= 523;
+}
+
+/// Enumeration of ad media event tracker types.
+enum AdEventTrackerType {
+	/// Unknown tracker type.
+	AdEventTrackerUnknown				= 0;
+
+	/// Image pixel tracker.
+	AdEventTrackerPixel					= 1;
+
+	/// JavaScript tracker.
+	AdEventTrackerJavaScript			= 2;
+
+	/// JavaScript tracker which may be executed within a restricted sandbox.
+	AdEventTrackerJavaScriptSandbox		= 500;
+}
+
+/// Enumeration of ad linearity modes.
+enum AdLinearityMode {
+	/// Both linear and non-linear.
+	AdLinearityBoth			= 0;
+
+	/// Linear ad.
+	AdLinearityLinear		= 1;
+
+	/// Non-linear ad.
+	AdLinearityNonlinear	= 2;
+}
+
+/// Enumeration of ad pod deduplication methods.
+enum AdPodDedupMethod {
+	/// Unknown deduplication method.
+	AdPodDedupUnknown		= 0;
+
+	/// Deduplicated on advertiser domain.
+	AdPodDedupAdomain		= 1;
+
+	/// Deduplicated on categories.
+	AdPodDedupCategory		= 2;
+
+	/// Deduplicated on creative identifier.
+	AdPodDedupCreativeId	= 3;
+
+	/// Deduplicated on ad media URL.
+	AdPodDedupMediaUrl		= 4;
+}
+
+/// Ad pod sequence.
+enum AdPodSequence {
+	/// Any pod in content stream.
+	AdPodAny	= 0;
+
+	/// Last pod in content stream.
+	AdPodLast	= -1;
+
+	/// First pod in content stream.
+	AdPodFirst	= 1;
+}
+
+/// Enumeration of ad media resize types.
+enum AdResizeType {
+	/// Unknown resize type.
+	AdResizeUnknown				= 0;
+
+	/// Expand left-ward.
+	AdResizeExpandLeft			= 1;
+
+	/// Expand right-ward.
+	AdResizeExpandRight			= 2;
+
+	/// Expand upward.
+	AdResizeExpandUp			= 3;
+
+	/// Expand downward.
+	AdResizeExpandDown			= 4;
+
+	/// Expand to full screen.
+	AdResizeExpandFullscreen	= 5;
+
+	/// Resize down.
+	AdResizeCollapse			= 6;
+}
+
+/// Enumeration of ad slot positions within ad pod.
+enum AdSlotPosition {
+	/// Any ad in pod.
+	AdSlotAny			= 0;
+
+	/// Last ad in pod.
+	AdSlotLast			= -1;
+
+	/// First ad in pod.
+	AdSlotFirst			= 1;
+
+	/// First or last ad in pod.
+	AdSlotFirstOrLast	= 2;
+}
+
+/// Enumeration of substitutable ad tracker URL macro types.
+enum AdTrackerUrlMacroType {
+	/// Unknown macro.
+	AdTrackerUrlMacroUnknown					=  0;
+
+	/// Random 8-digit integer.
+	AdTrackerUrlMacroCacheBust					=  1;
+
+	/// ISO 8601 formatted timestamp of when tracker was fired.
+	AdTrackerUrlMacroTimestamp					=  2;
+
+	/// Limit ad tracking.
+	///
+	/// A value of `1` if limit ad tracking has been requested; otherwise, `0`.
+	AdTrackerUrlMacroLmt						=  3;
+
+	/// Comma delimited list of applicable regulations.
+	AdTrackerUrlMacroRegs						=  4;
+
+	/// Base-64 GDPR consent string.
+	AdTrackerUrlMacroGdprConsent				=  5;
+
+	/// GPP consent string.
+	AdTrackerUrlMacroGppString					=  6;
+
+	/// Comma delimited list of applicable GPP section identifiers.
+	AdTrackerUrlMacroGppSectionIds				=  7;
+
+	/// App store assigned identifier of app for which tracker is being fired.
+	AdTrackerUrlMacroAppStoreId					=  8;
+
+	/// App store URL of app for which tracker is being fired.
+	AdTrackerUrlMacroAppStoreUrl				=  9;
+
+	/// Bundle identifier of app for which tracker is being fired.
+	AdTrackerUrlMacroAppBundle					= 10;
+
+	/// Top-level domain name of website for which tracker is being fired.
+	AdTrackerUrlMacroSiteDomain					= 11;
+
+	/// URL of website page for which tracker is being fired.
+	AdTrackerUrlMacroSitePageUrl				= 12;
+
+	/// Number of ads that have been executed, including current ad, by placement for an ad break.
+	AdTrackerUrlMacroExecutedAdCount			= 13;
+
+	/// Type of ad tracker is being fired for.
+	///
+	/// Substitution value may be `audio`, `display`, or `video`.
+	AdTrackerUrlMacroAdType						= 14;
+
+	/// Duration, in seconds, of ad break.
+	AdTrackerUrlMacroAdBreakDuration			= 15;
+
+	/// Position of ad break within underlying content.
+	///
+	/// For playback content, this may be `1`, `2`, or `3` for pre, mid, or post -roll,
+	/// respectively. Otherwise, `0` or `4` for none/other or standalone, respectively.
+	AdTrackerUrlMacroAdBreakPosition			= 16;
+
+	/// Playhead position, formatted as `HH:MM:SS.mmm`, of underlying playback content.
+	AdTrackerUrlMacroContentPlayhead			= 17;
+
+	/// Placement type.
+	AdTrackerUrlMacroPlacementType				= 18;
+
+	/// Identifier of transaction from which ad was sourced.
+	AdTrackerUrlMacroTransactionId				= 19;
+
+	/// Comma delimited list of universal ad identifiers.
+	///
+	/// Each universal ad identifier is formatted from the identifier registry and identifier
+	/// value, respectively, delimited with a space.
+	AdTrackerUrlMacroUniversalAdId				= 20;
+
+	/// User-agent string of media player used to play playback media.
+	///
+	/// Formatted as `<player-name>/<player-version> <sdk-name>/<sdk-version>`
+	AdTrackerUrlMacroMediaPlayerUa				= 21;
+
+	/// IP address of device on which tracker is fired.
+	AdTrackerUrlMacroDeviceIp					= 22;
+
+	/// User-agent string of device on which tracker is fired.
+	AdTrackerUrlMacroDeviceUa					= 23;
+
+	/// Advertising sanctioned identifier of device on which tracker is fired.
+	AdTrackerUrlMacroDeviceIfa					= 24;
+
+	/// Advertising sanctioned identifier type of device on which tracker is fired.
+	AdTrackerUrlMacroDeviceIfaType				= 25;
+
+	/// Latitude and longitude, delimited by comma, of end user.
+	AdTrackerUrlMacroGeoLatLon					= 26;
+
+	/// Tracker is fired on client or server -side.
+	///
+	/// Value of `0`, `1`, or `2` may be used to represent client-side, server-side firing on
+	/// behalf of client device, or server-side firing on behalf of another server.
+	AdTrackerUrlMacroServerSide					= 27;
+
+	/// User-agent string of server.
+	///
+	/// Formatted as `<server-name>/<server-version> (<server-vendor-url>)`
+	AdTrackerUrlMacroServerUa					= 28;
+
+	/// Supported clickthrough mode.
+	///
+	/// This may be `0`, `1`, `2`, or `3` for no click support, entire placement is clickable,
+	/// placement has a clickable button, or placement allows clicking with a confirmation dialog,
+	/// respectively.
+	AdTrackerUrlMacroClickType					= 29;
+
+	/// Supported OMID partner identifier.
+	///
+	/// Formatted as `<partner-name>/<partner-version>`.
+	AdTrackerUrlMacroOmidPartner				= 30;
+
+	/// Comma delimited list of media player, used for playback media, capabilities.
+	///
+	/// Each element in list must be `skip`, `mute`, `autoplay`, `mautoplay`, `fullscreen`, or
+	/// `icon` for player allows skipping, muting, unmuted autoplay, muted autoplay, full-screen,
+	/// and icon rendering, respectively.
+	AdTrackerUrlMacroMediaPlayerCaps			= 31;
+
+	/// Playback ad media playhead position, formatted as `HH:MM:SS.mmm`.
+	AdTrackerUrlMacroAdPlayhead					= 32;
+
+	/// Serving identifier of currently executing ad.
+	///
+	/// This is formatted as `<server-name>-<serve-id>`.
+	AdTrackerUrlMacroAdServeId					= 33;
+
+	/// URL of ad asset currently being executed.
+	AdTrackerUrlMacroAdAssetUrl					= 34;
+
+	/// Comma delimited list of ad state.
+	///
+	/// Each item must be one of `skippable`, `autoplayed`, `mautoplayed`, or `optin` for
+	/// whether ad can be skipped, is autoplayed, is autoplayed without audio, or user interaction
+	/// is required to start playback, respectively.
+	AdTrackerUrlMacroAdState					= 35;
+
+	/// Width and height, delimited by comma, of ad as currently executed.
+	AdTrackerUrlMacroAdSize						= 36;
+
+	/// Comma delimited states of media player, rendering currently executing ad.
+	///
+	/// Each item must be either `muted` or `fullscreen` for whether playback is muted or player
+	/// is taking over full screen of device, respectively.
+	AdTrackerUrlMacroMediaPlayerState			= 37;
+
+	/// X and Y coordinates, delimited by comma, of where ad was activated.
+	AdTrackerUrlMacroClickPosition				= 38;
+
+	/// Code describing error encountered while executing current ad.
+	AdTrackerUrlMacroAdErrorCode				= 39;
+
+	/// Code describing error encountered while executing an event tracker.
+	AdTrackerUrlMacroAdEventTrackerErrorCode	= 40;
+}
+
+/// Enumeration of AMP rendering modes.
+enum AmpRenderMode {
+	/// Unknown AMP render mode.
+	AmpRenderUnknown	= 0;
+
+	/// Early AMP render mode.
+	AmpRenderEarly		= 1;
+
+	/// Standard AMP render mode.
+	AmpRenderStandard	= 2;
+}
+
+/// Enumeration of audio feed types.
+enum AudioFeedType {
+	/// Unknown audio feed.
+	AudioFeedUnknown		= 0;
+
+	/// Music streaming service.
+	AudioFeedMusicStream	= 1;
+
+	/// Live content broadcast over the air.
+	AudioFeedRadioBroadcast	= 2;
+
+	/// Original, pre-recorded content distributed as episodes in a series.
+	AudioFeedPodcast		= 3;
+
+	/// Recorded segment of a radio show, originally broadcasted live.
+	AudioFeedCatchupRadio	= 4;
+
+	/// Live content only available via online streaming.
+	AudioFeedWebRadio		= 5;
+
+	/// Background audio in video games.
+	AudioFeedVideoGame		= 6;
+
+	/// Text-to-speech.
+	AudioFeedTextToSpeech	= 7;
+}
+
+/// Enumeration of category taxonomy codes.
+enum CategoryTaxonomyCode {
+	/// Unknown category taxonomy.
+	CategoryTaxonomyUnknown		= 0;
+
+	/// IAB Content Category Taxonomy, version 1.0.
+	CategoryTaxonomyIabContent10	= 1;
+
+	/// IAB Content Category Taxonomy, version 2.0.
+	CategoryTaxonomyIabContent20	= 2;
+
+	/// IAB Ad Product Taxonomy, version 1.0.
+	CategoryTaxonomyIabAdProduct10	= 3;
+
+	/// IAB Audience Taxonomy, version 1.1.
+	CategoryTaxonomyIabAudience11	= 4;
+
+	/// IAB Content Taxonomy, version 2.1.
+	CategoryTaxonomyIabContent21	= 5;
+
+	/// IAB Content Taxonomy, version 2.2.
+	CategoryTaxonomyIabContent22	= 6;
+
+	/// IAB Content Taxonomy, version 3.0.
+	CategoryTaxonomyIabContent30	= 7;
+
+	/// IAB Ad Product Taxonomy, version 2.0.
+	CategoryTaxonomyIabAdProduct20	= 8;
+
+	/// IAB Content Taxonomy, version 3.1.
+	CategoryTaxonomyIabContent31	= 9;
+}
+
+/// Enumeration of playback ad companion creative types.
+enum CompanionCreativeType {
+	/// Unknown companion creative type.
+	CompanionCreativeUnknown	= 0;
+
+	/// Static (image) companion creative.
+	CompanionCreativeStatic		= 1;
+
+	/// HTML snippet companion creative.
+	CompanionCreativeHtml		= 2;
+
+	/// `IFRAME` URL companion creative.
+	CompanionCreativeIframe		= 3;
+}
+
+/// Enumeration of companion execution requirement types.
+enum CompanionRequirementType {
+	/// No requirement on companion execution.
+	CompanionRequirementNone	= 0;
+
+	/// All companion ad media must be executed.
+	CompanionRequirementAll		= 1;
+
+	/// Any companion ad media may be executed.
+	CompanionRequirementAny		= 2;
+}
+
+/// Enumeration of device network connection type.
+enum ConnectionType {
+	/// Unknown connection type.
+	ConnectionUnknown		= 0;
+
+	/// Wired (i.e. ethernet) connection type.
+	ConnectionWired			= 1;
+
+	/// WiFi connection type.
+	ConnectionWifi			= 2;
+
+	/// Cellular, unknown generation, connection type.
+	ConnectionCell			= 3;
+
+	/// Cellular, 2nd generation, connection type.
+	ConnectionCell2G		= 4;
+
+	/// Cellular, 3rd generation, connection type.
+	ConnectionCell3G		= 5;
+
+	/// Cellular, 4th generation, connection type.
+	ConnectionCell4G		= 6;
+
+	/// Cellular, 5th generation, connection type.
+	ConnectionCell5G		= 7;
+
+	/// VPN connection.
+	ConnectionVpn			= 500;
+
+	/// WiMAX connection.
+	ConnectionWiMax			= 501;
+
+	/// Bluetooth connection.
+	ConnectionBluetooth		= 502;
+}
+
+/// Enumeration of content, used or consumed by user, contexts in which ad media may be distributed.
+enum ContentContextType {
+	/// Undefined content context.
+	ContentContextUndefined		= 0;
+
+	/// Primarily video content.
+	ContentContextVideo		= 1;
+
+	/// Interactive game.
+	ContentContextGame		= 2;
+
+	/// Primarily audio content.
+	ContentContextAudio		= 3;
+
+	/// Interactive software application.
+	ContentContextApplication	= 4;
+
+	/// Primarily textual content.
+	ContentContextText		= 5;
+
+	/// Other content context.
+	ContentContextOther		= 6;
+
+	/// Unknown content context.
+	ContentContextUnknown		= 7;
+}
+
+/// Enumeration of content production qualities.
+enum ContentProductionQuality {
+	/// Unknown production quality.
+	ContentProductionUnknown		= 0;
+
+	/// Professional production quality.
+	ContentProductionProfessional	= 1;
+
+	/// Prosumer production quality.
+	ContentProductionProsumer		= 2;
+
+	/// Consumer production quality.
+	ContentProductionConsumer		= 3;
+}
+
+/// Enumeration of creative attributes.
+enum CreativeAttribute {
+	/// Unknown creative attribute.
+	CreativeAttributeUnknown	=  0;
+
+	/// Creative has user-initiated audio.
+	CreativeHasAudioUser		=  1;
+
+	/// Creative has auto-play audio.
+	CreativeHasAudioAuto		=  2;
+
+	/// Creative auto expands.
+	CreativeAutoExpands		=  3;
+
+	/// Creative expands on click.
+	CreativeExpandOnClick		=  4;
+
+	/// Creative expands on hover.
+	CreativeExpandOnHover		=  5;
+
+	/// Creative has auto-play video.
+	CreativeHasVideoAuto		=  6;
+
+	/// Creative has user-initiated video.
+	CreativeHasVideoUser		=  7;
+
+	/// Creative pops over, under, or upon exit.
+	CreativePops			=  8;
+
+	/// Creative has provocative imagery.
+	CreativeIsProvocative		=  9;
+
+	/// Creative has extreme animation.
+	CreativeHasExtremeAnimation	= 10;
+
+	/// Creative has survey content.
+	CreativeHasSurvey		= 11;
+
+	/// Creative contains only text.
+	CreativeIsTextOnly		= 12;
+
+	/// Creative is interactive.
+	CreativeIsInteractive		= 13;
+
+	/// Creative has dialog theme.
+	CreativeHasDialogTheme		= 14;
+
+	/// Creative has mute button.
+	CreativeHasMuteButton		= 15;
+
+	/// Creative has skip button.
+	CreativeHasSkipButton		= 16;
+
+	/// Creative requires Adobe Flash.
+	CreativeRequiresAdobeFlash	= 17;
+
+	/// Creative has responsive size.
+	CreativeIsResponsive		= 18;
+}
+
+/// Enumeration of device types.
+enum DeviceType {
+	/// Unknown device type.
+	DeviceUnknown			= 0;
+
+	/// Mobile phone or tablet device.
+	DeviceMobile			= 1;
+
+	/// Personal computer.
+	DevicePc			= 2;
+
+	/// Connected TV.
+	DeviceCtv			= 3;
+
+	/// Mobile phone.
+	DevicePhone			= 4;
+
+	/// Tablet.
+	DeviceTablet			= 5;
+
+	/// Connected device.
+	DeviceCd			= 6;
+
+	/// Set-top-box.
+	DeviceStb			= 7;
+
+	/// Out-of-home device.
+	DeviceOoh			= 8;
+}
+
+/// Enumeration of dimension measurement units.
+enum DimensionUnit {
+	/// Unknown measurement unit.
+	DimensionUnknown	= 0;
+
+	/// Device independent pixels.
+	DimensionDp			= 1;
+
+	/// Inches.
+	DimensionIn			= 2;
+
+	/// Centimeters.
+	DimensionCm			= 3;
+}
+
+/// Enumeration of contexts in which display ad media may be delivered.
+enum DisplayContextType {
+	/// Unknown display context.
+	DisplayContextUnknown		=  0;
+
+	/// Content-centric context.
+	DisplayContextContentCentric	= 10;
+
+	/// Primarily article context.
+	DisplayContextArticle		= 11;
+
+	/// Primarily video context.
+	DisplayContextVideo		= 12;
+
+	/// Primarily audio context.
+	DisplayContextAudio		= 13;
+
+	/// Primarily image context.
+	DisplayContextImage		= 14;
+
+	/// Primarily user-generated content context.
+	DisplayContextUserGenerated	= 15;
+
+	/// Social-centric context.
+	DisplayContextSocialCentric	= 20;
+
+	/// Primarily email context.
+	DisplayContextEmail		= 21;
+
+	/// Primarily chat/IM context.
+	DisplayContextChat		= 22;
+
+	/// Product-centric context.
+	DisplayContextProductCentric	= 30;
+
+	/// Primarily product marketplace context.
+	DisplayContextMarketplace	= 31;
+
+	/// Primarily product review context.
+	DisplayContextProductReview	= 32;
+}
+
+/// Enumeration of display creative types.
+enum DisplayCreativeType {
+	/// Unknown display creative type.
+	DisplayCreativeUnknown		= 0;
+
+	/// HTML creative.
+	DisplayCreativeHtml		= 1;
+
+	/// AMP HTML creative.
+	DisplayCreativeAmpHtml		= 2;
+
+	/// Static image creative.
+	DisplayCreativeImage		= 3;
+
+	/// Native creative.
+	DisplayCreativeNative		= 4;
+}
+
+/// Enumeration of DOOH multiplier measurement source types.
+enum DoohMultiplierMeasurementSourceType {
+	/// Unknown multiplier measurement source.
+	DoohMultiplierMeasurementSourceUnknown		= 0;
+
+	/// Measurements sourced from measurement vendor.
+	DoohMultiplierMeasurementSourceVendor		= 1;
+
+	/// Measurement sourced directly from publisher.
+	DoohMultiplierMeasurementSourcePublisher	= 2;
+
+	/// Measurement sourced from exchanged.
+	DoohMultiplierMeasurementSourceExchange		= 3;
+}
+
+/// Enumeration of DOOH venue taxonomy codes.
+enum DoohVenueTaxonomyCode {
+	/// AdCOM DOOH Venue Types.
+	DoohVenueTaxonomyAdCom		= 0;
+
+	/// OpenOOH Venue Taxonomy, version 1.0.
+	DoohVenueTaxonomyOpenOoh10	= 1;
+
+	/// DPAA Device Venue Types.
+	DoohVenueTaxonomyDpaa		= 2;
+
+	/// DMI Categorization of Venues, version 1.1
+	DoohVenueTaxonomyDmi11		= 3;
+
+	/// OMA Taxonomy, released January 2022.
+	DoohVenueTaxonomyOma202201	= 4;
+
+	/// OpenOOH venue taxonomy, version 1.1.
+	DoohVenueTaxonomyOpenOoh11	= 5;
+}
+
+/// Enumeration of IP based geolocation lookup services.
+enum GeoIpLookupService {
+	/// Unknown lookup service.
+	GeoIpLookupUnknown		= 0;
+
+	/// ip2location
+	GeoIpLookupIp2Location	= 1;
+
+	/// Neustar (Quova)
+	GeoIpLookupNeustar		= 2;
+
+	/// MaxMind
+	GeoIpLookupMaxMind		= 3;
+
+	/// NetAcuity
+	GeoIpLookupNetAcuity	= 4;
+
+	/// 51Degrees (High Confidence)
+	GeoIpLookup51DegreesHc	= 511;
+
+	/// 51Degrees (Medium Confidence)
+	GeoIpLookup51DegreesMc	= 512;
+}
+
+/// Enumeration of sources geolocation information is derived from.
+enum GeoSourceType {
+	/// Geolocation source unknown.
+	GeoSourceUnknown	= 0;
+
+	/// Geolocation information sourced from device (i.e. GPS or location services).
+	GeoSourceDevice		= 1;
+
+	/// Geolocation information derived from device IP address.
+	GeoSourceIp			= 2;
+
+	/// Geolocation information provided by user.
+	GeoSourceUser		= 3;
+}
+
+/// Enumeration of audience ratings for media.
+enum MediaAudienceRating {
+	/// Unknown audience rating.
+	MediaAudienceUnknown	= 0;
+
+	/// Media rated for all audiences.
+	MediaAudienceAll		= 1;
+
+	/// Media rated for teenage audiences.
+	MediaAudienceTeenage	= 2;
+
+	/// Media rated for mature audiences.
+	MediaAudienceMature		= 3;
+}
+
+/// Enumeration of native creative data asset types.
+enum NativeDataAssetType {
+	/// Unknown data asset type.
+	NativeDataAssetUnknown			= 0;
+
+	/// Brand name of ad sponsor.
+	NativeDataAssetSponsored		= 1;
+
+	/// Description of advertised product or service.
+	NativeDataAssetDesc				= 2;
+
+	/// Numerical rating of advertised product or service.
+	NativeDataAssetRating			= 3;
+
+	/// Number of social ratings of advertised product or service.
+	NativeDataAssetLikes			= 4;
+
+	/// Number of downloads or installs of advertised product.
+	NativeDataAssetDownloads		= 5;
+
+	/// Price of advertised product or service, in localized format, with currency symbol.
+	NativeDataAssetPrice			= 6;
+
+	/// Sale price of advertised product or service, in localized format, with currency symbol.
+	NativeDataAssetSalePrice		= 7;
+
+	/// Localized formatted phone number.
+	NativeDataAssetPhone			= 8;
+
+	/// Localized formatted physical address.
+	NativeDataAssetAddress			= 9;
+
+	/// Additional description of advertised product or service.
+	NativeDataAssetDesc2			= 10;
+
+	/// Displayable URL of product or service.
+	NativeDataAssetDisplayUrl		= 11;
+
+	/// Call-to-action text.
+	NativeDataAssetCtaText			= 12;
+}
+
+/// Enumeration of native creative image asset types.
+enum NativeImageAssetType {
+	/// Unknown image asset type.
+	NativeImageAssetUnknown		= 0;
+
+	/// Icon image.
+	NativeImageAssetIcon		= 1;
+
+	/// Primary, or main image.
+	NativeImageAssetMain		= 3;
+}
+
+/// Enumeration of operating-system codes.
+enum OsCode {
+	/// Unknown operating-system.
+	OsUnknown			= 0;
+
+	/// Nintendo's 3DS.
+	OsNintendo3Ds		= 1;
+
+	/// Google's Android.
+	OsGoogleAndroid		= 2;
+
+	/// Apple's AppleTV.
+	OsAppleTv			= 3;
+
+	/// Nokia's Asha.
+	OsNokiaAsha			= 4;
+
+	/// Samsung's Bada.
+	OsSamsungBada		= 5;
+
+	/// BlackBerry.
+	OsBlackBerry		= 6;
+
+	/// Qualcomm's BREW.
+	OsQualcommBrew		= 7;
+
+	/// Google's ChromeOS.
+	OsGoogleChromeOs	= 8;
+
+	/// Apple's Drawin.
+	OsAppleDarwin		= 9;
+
+	/// Amazon's FireOS.
+	OsAmazonFireOs		= 10;
+
+	/// Mozilla's FirefoxOS.
+	OsMozillaFirefoxOs	= 11;
+
+	/// HelenOS.
+	OsHelenOs			= 12;
+
+	/// Apple's iOS.
+	OsAppleIos			= 13;
+
+	/// Linux-kernel based operating-system.
+	OsLinux				= 14;
+
+	/// Apple's macOS.
+	OsAppleMacOs		= 15;
+
+	/// MeeGo.
+	OsMeeGo				= 16;
+
+	/// MorphOS.
+	OsMorphOs			= 17;
+
+	/// NetBSD.
+	OsNetBsd			= 18;
+
+	/// NucleusPLUS.
+	OsNucleusPlus		= 19;
+
+	/// Sony's PlayStation Vita.
+	OsSonyPsVita		= 20;
+
+	/// Sony's PlayStation 3.
+	OsSonyPs3			= 21;
+
+	/// Sony's PlayStation 4.
+	OsSonyPs4			= 22;
+
+	/// Sony's PlayStation Portable.
+	OsSonyPsp			= 23;
+
+	/// Symbian.
+	OsSymbian			= 24;
+
+	/// Samsung's Tizen.
+	OsSamsungTizen		= 25;
+
+	/// Apple's watchOS.
+	OsAppleWatchOs		= 26;
+
+	/// LG's webOS.
+	OsLgWebOs			= 27;
+
+	/// Microsoft's Windows.
+	OsMicrosoftWindows	= 28;
+}
+
+/// Enumeration of placement ad stitching types.
+enum PlacementAdStitchType {
+	/// Unknown ad stitching type.
+	PlacementAdStitchUnknown			= 0;
+
+	/// Ad stitching and tracker firing is performed on client-side.
+	PlacementAdStitchClient				= 1;
+
+	/// Ad stitching and tracker firing are performed on server and client -side, respectively.
+	PlacementAdStitchServerTrackClient	= 2;
+
+	/// Ad stitching and tracker firing is performed on server-side.
+	PlacementAdStitchServer				= 3;
+}
+
+/// Enumeration of locations in which display media for a placement may be distributed.
+enum PlacementDisplayType {
+	/// Unknown placement position.
+	PlacementDisplayUnknown		= 0;
+
+	/// Placement in feed of content.
+	PlacementDisplayInFeed		= 1;
+
+	/// Placement in atomic unit of content.
+	PlacementDisplayInContent	= 2;
+
+	/// Placement outside of content.
+	PlacementDisplayOutContent	= 3;
+
+	/// Placement inside of widget accompanying content.
+	PlacementDisplayWidget		= 4;
+}
+
+/// Enumeration of placement refresh triggers.
+enum PlacementRefreshTrigger {
+	/// Unknown refresh trigger.
+	PlacementRefreshUnknown		= 0;
+
+	/// Placement refreshes based on user interaction.
+	PlacementRefreshUser		= 1;
+
+	/// Placement refreshes based on event-driven content change.
+	PlacementRefreshEvent		= 2;
+
+	/// Placement refreshes based on time.
+	PlacementRefreshTime		= 3;
+}
+
+/// Enumeration of placement positions on screen.
+enum PlacementScreenPosition {
+	/// Unknown position of placement on screen.
+	PlacementScreenUnknown		= 0;
+
+	/// Above the fold.
+	PlacementScreenAboveFold	= 1;
+
+	/// Fixed position on screen.
+	PlacementScreenFixed		= 2;
+
+	/// Below the fold.
+	PlacementScreenBelowFold	= 3;
+
+	/// Header.
+	PlacementScreenHeader		= 4;
+
+	/// Footer.
+	PlacementScreenFooter		= 5;
+
+	/// Sidebar.
+	PlacementScreenSidebar		= 6;
+
+	/// Fullscreen.
+	PlacementScreenFullscreen	= 7;
+}
+
+/// Enumeration of video placement types.
+enum PlacementVideoType {
+	/// Unknown video placement type.
+	PlacementVideoUnknown		= 0;
+
+	/// Pre, mid, and post -roll video ads interlaced with streaming content.
+	PlacementVideoInstream		= 1;
+
+	/// Video ads accompanying otherwise non-video content.
+	PlacementVideoIncontent		= 2;
+
+	/// Video ads overtaking majority of viewport.
+	PlacementVideoInterstitial	= 3;
+
+	/// Standalone video ads.
+	PlacementVideoStandalone	= 4;
+}
+
+/// Enumeration of playback creative types.
+enum PlaybackCreativeType {
+	/// Unknown playback creative type.
+	PlaybackCreativeUnknown			=  0;
+
+	/// VAST, version 1.0.
+	PlaybackCreativeVast10			=  1;
+
+	/// VAST, version 2.0.
+	PlaybackCreativeVast20			=  2;
+
+	/// VAST, version 3.0.
+	PlaybackCreativeVast30			=  3;
+
+	/// VAST, version 1.0, with wrapper support.
+	PlaybackCreativeVast10Wrapper	=  4;
+
+	/// VAST, version 2.0, with wrapper support.
+	PlaybackCreativeVast20Wrapper	=  5;
+
+	/// VAST, version 3.0, with wrapper support.
+	PlaybackCreativeVast30Wrapper	=  6;
+
+	/// VAST, version 4.0.
+	PlaybackCreativeVast40			=  7;
+
+	/// VAST, version 4.0, with wrapper support.
+	PlaybackCreativeVast40Wrapper	=  8;
+
+	/// DAAST, version 1.0.
+	PlaybackCreativeDaast10			=  9;
+
+	/// DAAST, version 1.0, with wrapper support.
+	PlaybackCreativeDaast10Wrapper	= 10;
+
+	/// VAST, version 4.1.
+	PlaybackCreativeVast41			= 11;
+
+	/// VAST, version 4.1, with wrapper support.
+	PlaybackCreativeVast41Wrapper	= 12;
+
+	/// VAST, version 4.2.
+	PlaybackCreativeVast42			= 13;
+
+	/// VAST, version 4.2, with wrapper support.
+	PlaybackCreativeVast42Wrapper	= 14;
+
+	/// VAST, version 4.3.
+	PlaybackCreativeVast43			= 15;
+
+	/// VAST, version 4.3, with wrapper support.
+	PlaybackCreativeVast43Wrapper	= 16;
+
+	/// Structured playback creative.
+	PlaybackCreativeStructured		= 500;
+}
+
+/// Enumeration of playback content delivery methods.
+enum PlaybackDeliveryMethod {
+	/// Unknown playback content delivery method.
+	PlaybackDeliveryUnknown		= 0;
+
+	/// Streaming playback delivery.
+	PlaybackDeliveryStreaming	= 1;
+
+	/// Progressive playback delivery.
+	PlaybackDeliveryProgressive	= 2;
+
+	/// Download playback delivery.
+	PlaybackDeliveryDownload	= 3;
+}
+
+/// Enumeration of playback end modes.
+enum PlaybackEndMode {
+	/// Playback end mode unknown.
+	PlaybackEndUnknown				= 0;
+
+	/// Playback ends on completion or user interaction.
+	PlaybackEndOnCompletion			= 1;
+
+	/// Playback ends when placement exits viewport or on user interaction.
+	PlaybackEndOnExitViewport		= 2;
+
+	/// Playback ends on completion, and if placement exits viewport playback continues in a
+	/// floating unit.
+	PlaybackEndFloatOnExitViewport	= 3;
+}
+
+/// Enumeration of playback methods.
+enum PlaybackMethod {
+	/// Playback method unknown.
+	PlaybackUnknown				= 0;
+
+	/// Playback begins on page load.
+	PlaybackOnPageLoad			= 1;
+
+	/// Playback begins on page load, without audio.
+	PlaybackOnPageLoadMute		= 2;
+
+	/// Playback begins on click.
+	PlaybackOnClick				= 3;
+
+	/// Playback begins on hover.
+	PlaybackOnHover				= 4;
+
+	/// Playback begins when placement enters viewport.
+	PlaybackOnEnterViewport		= 5;
+
+	/// Playback begins, without audio, when placement enters viewport.
+	PlaybackOnEnterViewportMute	= 6;
+
+	/// Playback is continuous and does not require user interaction.
+	PlaybackContinuous			= 7;
+}
+
+/// Enumeration of user-agent types a user identifier may be sourced from.
+enum UidAgentType {
+	/// Unknown agent type.
+	UidAgentUnknown	= 0;
+
+	/// Id sourced from web browser or device.
+	UidAgentBrowser	= 1;
+
+	/// Id sourced from device.
+	UidAgentApp	= 2;
+
+	/// Person-based id.
+	UidAgentPerson	= 3;
+}
+
+/// Enumeration of user id matching methods.
+enum UidMatchMethod {
+	/// Unknown user id match method.
+	UidMatchUnknown			= 0;
+
+	/// No user id match.
+	UidMatchNone			= 1;
+
+	/// Browser cookie-sync based user id match.
+	UidMatchCookieSync		= 2;
+
+	/// User id matched based on user authentication.
+	UidMatchAuthentication	= 3;
+
+	/// User id matched based on first-party observation.
+	UidMatchObserved		= 4;
+
+	/// User id matched based on probabalistic inference.
+	UidMatchInference		= 5;
+}
+
+/// Enumeration of sources a user-agent is parsed from.
+enum UserAgentSourceType {
+	/// Unknown user-agent source.
+	UserAgentSourceUnknown			= 0;
+
+	/// Low-entropy user-agent client hints.
+	UserAgentSourceLeClientHints	= 1;
+
+	/// High-entropy user-agent client hints.
+	UserAgentSourceHeClientHints	= 2;
+
+	/// HTTP `User-Agent` header.
+	UserAgentSourceHeader			= 3;
+}
+
+/// Enumeration of volume normalization modes.
+enum VolumeNormalizationMode {
+	/// No volume normalization.
+	VolumeNormalizationNone			= 0;
+
+	/// Ad volume average normalized to content.
+	VolumeNormalizationAverage		= 1;
+
+	/// Ad volume peak normalized to content.
+	VolumeNormalizationPeak			= 2;
+
+	/// Ad loudness normalized to content.
+	VolumeNormalizationLoudness		= 3;
+
+	/// Custom volume normalization.
+	VolumeNormalizationCustom		= 4;
+}

@@ -1,0 +1,70 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+package org.polygamma.android.origin.protobuf;
+
+/**
+ * {@code varint} coding test cases.
+ */
+final class VarintTestCase {
+
+	static final VarintTestCase[] INSTANCES = {
+		new VarintTestCase(0,              0x00),
+		new VarintTestCase(1,              0x01),
+
+		new VarintTestCase((1L << 7) - 1,  0x7f),
+		new VarintTestCase((1L << 7),      0x80, 0x01),
+		new VarintTestCase(0x12cL,         0xac, 0x02),
+
+		new VarintTestCase((1L << 14) - 1, 0xff, 0x7f),
+		new VarintTestCase((1L << 14),     0x80, 0x80, 0x01),
+
+		new VarintTestCase((1L << 21) - 1, 0xff, 0xff, 0x7f),
+		new VarintTestCase((1L << 21),     0x80, 0x80, 0x80, 0x01),
+
+		new VarintTestCase((1L << 28) - 1, 0xff, 0xff, 0xff, 0x7f),
+		new VarintTestCase((1L << 28),     0x80, 0x80, 0x80, 0x80,
+										   0x01),
+
+		new VarintTestCase((1L << 35) - 1, 0xff, 0xff, 0xff, 0xff,
+										   0x7f),
+		new VarintTestCase((1L << 35),     0x80, 0x80, 0x80, 0x80,
+										   0x80, 0x01),
+
+		new VarintTestCase((1L << 42) - 1, 0xff, 0xff, 0xff, 0xff,
+										   0xff, 0x7f),
+		new VarintTestCase((1L << 42),     0x80, 0x80, 0x80, 0x80,
+										   0x80, 0x80, 0x01),
+
+		new VarintTestCase((1L << 49) - 1, 0xff, 0xff, 0xff, 0xff,
+										   0xff, 0xff, 0x7f),
+		new VarintTestCase((1L << 49),     0x80, 0x80, 0x80, 0x80,
+										   0x80, 0x80, 0x80, 0x01),
+
+		new VarintTestCase((1L << 56) - 1, 0xff, 0xff, 0xff, 0xff,
+										   0xff, 0xff, 0xff, 0x7f),
+		new VarintTestCase((1L << 56),     0x80, 0x80, 0x80, 0x80,
+										   0x80, 0x80, 0x80, 0x80,
+										   0x01),
+
+		new VarintTestCase((1L << 63) - 1, 0xff, 0xff, 0xff, 0xff,
+										   0xff, 0xff, 0xff, 0xff,
+										   0x7f),
+		new VarintTestCase((1L << 63),     0x80, 0x80, 0x80, 0x80,
+										   0x80, 0x80, 0x80, 0x80,
+										   0x80, 0x01),
+
+		new VarintTestCase(~0L,            0xff, 0xff, 0xff, 0xff,
+										   0xff, 0xff, 0xff, 0xff,
+										   0xff, 0x01)
+	};
+
+	final long decoded;
+	final byte[] encoded;
+
+	private VarintTestCase(long decoded, int... encoded) {
+		this.decoded = decoded;
+		this.encoded = new byte[encoded.length];
+		for (int i = 0; i < encoded.length; i++)
+			this.encoded[i] = (byte) (encoded[i] & 0xff);
+	}
+}

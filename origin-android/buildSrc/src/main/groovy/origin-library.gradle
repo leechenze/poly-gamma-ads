@@ -1,0 +1,350 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+/*
+ * Origin library conventions.
+ *
+ * This extends `origin-common` with library specific conventions.
+ *
+ * # Proguard
+ *
+ * Shared consumer and release Proguard rules, `buildSrc/shared/library-consumer-rules.pro` and
+ * `buildSrc/shared/library-release-rules.pro`, are included for each project, respectively.
+ * Project specific consumer and release Proguard rules can be specified in `consumer-rules.pro`
+ * and `release-rules.pro`, respectively, within the project directory.
+ */
+
+
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
+
+plugins {
+	id("origin-common")
+	id("com.android.library")
+	id("maven-publish")
+	id("signing")
+}
+
+/**
+ * Poly-Gamma is the SDK vendor.
+ */
+def VENDOR_IS_PG = (project.ext.originVendorNamespace == "org.polygamma.android.origin")
+
+/**
+ * Generate Proguard file under vendor namespace.
+ *
+ * @param srcFile Proguard file to transform
+ * @return path to transformed Proguard file
+ */
+def frobProguardFile(srcFile) {
+	def srcPath = project.projectDir.toPath().resolve(srcFile)
+	def dstPath = project.layout.buildDirectory.get().asFile
+		.toPath()
+		.resolve("generated")
+		.resolve("origin-library-gradle-plugin")
+		.resolve(srcPath.fileName)
+
+	Files.createDirectories(dstPath.parent)
+	if (
+		Files.exists(dstPath) &&
+		Files.getLastModifiedTime(dstPath) >= Files.getLastModifiedTime(srcPath)
+	) {
+		return dstPath
+	}
+
+	try (
+		def src = Files.lines(srcPath, StandardCharsets.UTF_8)
+		def dst = Files.newBufferedWriter(
+			dstPath,
+			StandardCharsets.UTF_8,
+			StandardOpenOption.CREATE,
+			StandardOpenOption.TRUNCATE_EXISTING
+		)
+	) {
+		dst.writeLine("# AUTO-GENERATED; DO **NOT** MODIFY")
+		src.forEach { line ->
+			def fileRefGroup =
+				(line =~ /^-(?<cmd>(class)?obfuscationdictionary|include)\s+(?<path>.+)$/)
+
+			if (fileRefGroup.matches()) {
+				def cmd = fileRefGroup.group("cmd")
+				def path = project.projectDir.toPath().resolve(fileRefGroup.group("path"))
+
+				if (!(path.fileName.toString() =~ /^(\.\/)?(consumer|release)-rules\.pro$/))
+					line = "-${cmd} ${dstPath.parent.resolve(path)}"
+			} else {
+				while (true) {
+					def pos = line.indexOf("org.polygamma.android.origin")
+
+					if (pos == -1)
+						break
+
+					def prefix = line.substring(0, pos)
+					def suffix = line.substring(pos + "org.polygamma.android.origin".length())
+
+					line = "${prefix}${project.ext.originVendorNamespace}${suffix}"
+				}
+			}
+			dst.writeLine(line)
+		}
+	}
+	return dstPath
+}
+
+/**
+ * Resolve release or consumer Proguard files for project.
+ *
+ * @param which Proguard file to resolve, either `"consumer"` or `"release"`
+ * @return array of resolved files
+ */
+def resolveProguardFiles(which) {
+	def files = []
+
+	if (!Boolean.parseBoolean(project.findProperty(
+		"origin-library.exclude-shared-${which}-proguard-rules"
+	))) {
+		files.push(project.projectDir.toPath().relativize(
+			project.rootDir.toPath()
+				.resolve("buildSrc")
+				.resolve("shared")
+				.resolve("library-${which}-rules.pro")
+		).toString())
+	}
+	if (Files.exists(project.projectDir.toPath().resolve("${which}-rules.pro")))
+		files.push("${which}-rules.pro")
+	return project.ext.originVendorNamespace == "org.polygamma.android.origin" ?
+		files : files.collect { frobProguardFile(it) }
+}
+
+android {
+	namespace = project.ext.originNamespace
+	compileSdk = 36
+
+	buildFeatures {
+		buildConfig = false
+	}
+
+	defaultConfig {
+		minSdk = 19
+		targetSdk = 36
+		multiDexEnabled = true
+		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+		testInstrumentationRunnerArgument("clearPackageData", "true")
+		resolveProguardFiles("consumer").forEach { consumerProguardFile(it) }
+	}
+
+	testOptions {
+		execution = "ANDROIDX_TEST_ORCHESTRATOR"
+
+		managedDevices {
+			localDevices {
+				pixel2api27 {
+					device = "Pixel 2"
+					apiLevel = 27
+					systemImageSource = "aosp"
+				}
+				pixel2api34 {
+					device = "Pixel 2"
+					apiLevel = 34
+					systemImageSource = "aosp"
+				}
+				pixel2api35 {
+					device = "Pixel 2"
+					apiLevel = 35
+					systemImageSource = "aosp"
+				}
+			}
+
+			groups {
+				phones {
+					targetDevices.add(devices.pixel2api27)
+					targetDevices.add(devices.pixel2api34)
+					targetDevices.add(devices.pixel2api35)
+				}
+			}
+		}
+	}
+
+	buildTypes {
+		release {
+			minifyEnabled = true
+			resolveProguardFiles("release").forEach { proguardFile(it) }
+		}
+	}
+
+	compileOptions {
+		sourceCompatibility = JavaVersion.VERSION_1_8
+		targetCompatibility = JavaVersion.VERSION_1_8
+	}
+
+	publishing {
+		singleVariant("release") {
+			if (!project.ext.originVersionDevelopment)
+				withSourcesJar()
+		}
+	}
+}
+
+dependencies {
+	annotationProcessor(project(":origin-javac-plugin"))
+	testAnnotationProcessor(project(":origin-javac-plugin"))
+	androidTestAnnotationProcessor(project(":origin-javac-plugin"))
+
+	compileOnly(libs.androidx.annotation)
+
+	testImplementation(libs.junit)
+
+	androidTestImplementation(libs.androidx.test.junit)
+	androidTestImplementation(libs.androidx.test.espresso.core)
+	androidTestUtil(libs.androidx.test.orchestrator)
+}
+
+tasks.withType(JavaCompile).configureEach {
+	if (!(it.name =~ /^compile(Debug|Release)(Android|Unit)TestJava.*$/)) {
+		options.compilerArgs += [
+			// Enable all warnings.
+			"-Xlint:all",
+			/*
+			 * Disable lint warnings when non-PG vendor, `origin-javac-plugin` will mess up
+			 * doclinks
+			 */
+			VENDOR_IS_PG ? "-Xdoclint:all/protected" : "-Xdoclint:none",
+			// Disable annotation processing warnings.
+			"-Xlint:-processing"
+		]
+	}
+	options.compilerArgs += [
+		"-Xplugin:PgOrigin ${project.ext.originVendorNamespace} org.polygamma.android.origin",
+		// JDK 21 considers `{source,target}Compatibility` for `1.8` deprecated
+		"-Xlint:-options"
+	]
+
+	// required since `origin-javac-plugin` modifies the AST
+	options.fork = true
+	options.forkOptions.jvmArgs +=
+		"--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
+}
+
+def javadocTask = tasks.register("javadoc", Javadoc) {
+	def buildCfgTask = null
+
+	try {
+		buildCfgTask = tasks.named("generateReleaseBuildConfig").orNull
+	} catch (UnknownTaskException ignored) {
+	}
+
+	if (buildCfgTask != null) {
+		dependsOn(buildCfgTask)
+	}
+	group = "documentation"
+
+	options.encoding = "utf-8"
+	options.links(
+		"https://developer.android.com/reference/",
+		"https://developer.android.com/reference/androidx/"
+	)
+	options.memberLevel = JavadocMemberLevel.PROTECTED
+
+	destinationDir = project.layout.buildDirectory.dir("docs/javadoc").get().asFile
+	javadocTool.set(javaToolchains.javadocToolFor {
+		languageVersion = JavaLanguageVersion.of(21)
+	})
+	source = android.sourceSets.main.java.srcDirs
+	if (buildCfgTask != null) {
+		source += buildCfgTask.getOutputs().files.asPath
+	}
+	classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+	android.libraryVariants.all {
+		if (it.name == "release")
+			owner.classpath += it.javaCompileProvider.get().classpath
+	}
+}
+
+def javadocJarTask = tasks.register("javadocJar", Jar) {
+	group = "documentation"
+
+	dependsOn(javadocTask)
+	archiveClassifier.set("javadoc")
+	from(javadocTask.get().destinationDir)
+}
+
+def emptyJavadocJarTask = tasks.register("emptyJavadocJar", Jar) {
+	group = "other"
+
+	archiveClassifier.set("javadoc")
+}
+
+def emptySourcesJarTask = tasks.register("emptySourcesJar", Jar) {
+	group = "other"
+
+	archiveClassifier.set("sources")
+}
+
+publishing {
+	publications {
+		release(MavenPublication) {
+			groupId = project.group
+			artifactId = project.name
+			version = project.version
+
+			afterEvaluate {
+				from(components.release)
+				artifact(VENDOR_IS_PG ? javadocJarTask : emptyJavadocJarTask)
+				if (project.ext.originVersionDevelopment)
+					artifact(emptySourcesJarTask)
+
+				pom {
+					name = project.name
+					description = project.description
+					url = "https://codeberg.org/Poly-Gamma/origin-android"
+
+					licenses {
+						license {
+							name = "Apache License, version 2.0"
+							url = "https://codeberg.org/Poly-Gamma/origin-android/LICENSES/Apache-2.0"
+						}
+						license {
+							name = "MIT License"
+							url = "https://codeberg.org/Poly-Gamma/origin-android/LICENSES/MIT"
+						}
+					}
+
+					developers {
+						developer {
+							id = "pg-engineering"
+							name = "Poly-Gamma Engineering"
+							email = "engineering@poly-gamma.com"
+						}
+					}
+
+					scm {
+						connection = "scm:git:git:git@codeberg.org/Poly-Gamma/origin-android.git"
+						url = "https://codeberg.org/Poly-Gamma/origin-android"
+					}
+				}
+			}
+		}
+	}
+
+	repositories {
+		maven {
+			name = "buildMavenRelease"
+			url = project.layout.buildDirectory.dir("mavenRelease/${project.version}")
+		}
+	}
+}
+
+signing {
+	sign(publishing.publications)
+}
+
+tasks.register("zipMavenRelease", Zip) {
+	group = "publishing"
+	archiveFileName = "${project.name}-${project.version}.zip"
+	destinationDirectory = project.layout.buildDirectory.dir("mavenRelease")
+	dependsOn("publishReleasePublicationToBuildMavenReleaseRepository")
+
+	from(project.layout.buildDirectory.dir("mavenRelease/${project.version}"))
+	include("**/*")
+}

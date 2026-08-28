@@ -1,0 +1,17 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+plugins {
+	id("origin-library")
+}
+
+description = "Advertising Origin SDK module."
+
+dependencies {
+	api(project(":origin-core"))
+	api(libs.androidx.core)
+	api(libs.guava.listenablefuture)
+
+	implementation(project(":origin-adcom"))
+	implementation(project(":origin-antifraud"))
+	implementation(project(":origin-protobuf"))
+}

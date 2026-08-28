@@ -1,0 +1,13 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+plugins {
+	id("origin-library")
+}
+
+description = "Small Protobuf implementation specialized for Android."
+
+dependencies {
+	implementation(project(":origin-util"))
+
+	androidTestImplementation(libs.protobuf.lite)
+}
