@@ -72,6 +72,6 @@ build/
 .build/
 .idea/
 
-/_build/
+_build/
 texput.log
 .DS_Stores
