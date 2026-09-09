@@ -37,7 +37,7 @@ public class SplashAdActivity extends Activity {
         closeTopIcon = findViewById(R.id.btn_close_icon);
         landingPageBtn = findViewById(R.id.btn_landing_page);
 
-        DisplayPlacementView adView = DisplayPlacementView.ofPlacementId(this, "FgUtQqop18uf1I2fwDie");
+        DisplayPlacementView adView = DisplayPlacementView.ofPlacementId(this, "test-banner");
 
         splashAdContainer.addView(adView);
 

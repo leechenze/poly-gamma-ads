@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-
     <!-- Necessary permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Necessary permissions -->
@@ -13,6 +12,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Optional, only for advertising installation conversions -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
 
     <application
         android:name=".MyApplication"
@@ -25,6 +25,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Adsdemo"
         tools:replace="android:allowBackup">
+
+        <meta-data
+            android:name="poly-gamma.origin.publisher-id"
+            android:value="test" />
+        <meta-data
+            android:name="poly-gamma.origin.region"
+            android:value="cn" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
