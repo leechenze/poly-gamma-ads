@@ -2,7 +2,9 @@
 
 package org.polygamma.android.origin.adcom.placement;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
 
@@ -13,9 +15,10 @@ import androidx.annotation.IntRange;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.NativeDataAssetType;
 import org.polygamma.android.origin.adcom.enums.NativeImageAssetType;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 import org.polygamma.android.origin.util.Preconditions;
 
@@ -38,29 +41,29 @@ import java.util.List;
  */
 public final class NativeAssetFormat implements ProtobufSerializable {
 
-	private static final @Tag int ID				= ofInt32(  1);
-	private static final @Tag int REQ				= ofBool(   2);
-	private static final @Tag int TITLE				= ofMessage(3);
-	private static final @Tag int IMG				= ofMessage(4);
-	private static final @Tag int VIDEO				= ofMessage(5);
-	private static final @Tag int DATA				= ofMessage(6);
+	private static final @FieldTag int ID				= fieldTagOf(1, WIRE_VARINT);
+	private static final @FieldTag int REQ				= fieldTagOf(2, WIRE_VARINT);
+	private static final @FieldTag int TITLE			= fieldTagOf(3, WIRE_LEN);
+	private static final @FieldTag int IMG				= fieldTagOf(4, WIRE_LEN);
+	private static final @FieldTag int VIDEO			= fieldTagOf(5, WIRE_LEN);
+	private static final @FieldTag int DATA				= fieldTagOf(6, WIRE_LEN);
 
 	// `NativeTitleAssetFormat`
-	private static final @Tag int TITLE_LEN			= ofInt32(1);
+	private static final @FieldTag int TITLE_LEN		= fieldTagOf(1, WIRE_VARINT);
 
 	// `NativeDataAssetFormat`
-	private static final @Tag int DATA_TYPE			= ofInt32(1);
-	private static final @Tag int DATA_LEN			= ofInt32(2);
+	private static final @FieldTag int DATA_TYPE		= fieldTagOf(1, WIRE_VARINT);
+	private static final @FieldTag int DATA_LEN			= fieldTagOf(2, WIRE_VARINT);
 
 	// `NativeImageAssetFormat`
-	private static final @Tag int IMAGE_TYPE		= ofInt32( 1);
-	private static final @Tag int IMAGE_MIME		= ofString(2);
-	private static final @Tag int IMAGE_W			= ofInt32( 3);
-	private static final @Tag int IMAGE_H			= ofInt32( 4);
-	/*private static final @Tag int IMAGE_WMIN		= ofInt32( 5);*/
-	/*private static final @Tag int IMAGE_HMIN		= ofInt32( 6);*/
-	/*private static final @Tag int IMAGE_WRATIO	= ofInt32( 7);*/
-	/*private static final @Tag int IMAGE_HRATIO	= ofInt32( 8);*/
+	private static final @FieldTag int IMAGE_TYPE		= fieldTagOf(1, WIRE_VARINT);
+	private static final @FieldTag int IMAGE_MIME		= fieldTagOf(2, WIRE_LEN);
+	private static final @FieldTag int IMAGE_W			= fieldTagOf(3, WIRE_VARINT);
+	private static final @FieldTag int IMAGE_H			= fieldTagOf(4, WIRE_VARINT);
+	/*private static final @FieldTag int IMAGE_WMIN		= fieldTagOf(5, WIRE_VARINT);*/
+	/*private static final @FieldTag int IMAGE_HMIN		= fieldTagOf(6, WIRE_VARINT);*/
+	/*private static final @FieldTag int IMAGE_WRATIO	= fieldTagOf(7, WIRE_VARINT);*/
+	/*private static final @FieldTag int IMAGE_HRATIO	= fieldTagOf(8, WIRE_VARINT);*/
 
 	/**
 	 * Flag set in {@link #idAndRequired} to indicate asset is required.
@@ -206,117 +209,34 @@ public final class NativeAssetFormat implements ProtobufSerializable {
 	}
 
 	/**
-	 * Deserialize native title asset format from Protobuf message.
-	 *
-	 * @param dst format to deserialize into
-	 * @param src reader to deserialize from
-	 * @throws RuntimeException coding is malformed
-	 */
-	private static void deserializeTitleAssetFormat(NativeAssetFormat dst, ProtobufReader src) {
-		dst.widthDpOrMaxLength = 0;
-		dst.setAssetClass(ASSET_TITLE);
-
-		int cookie = src.beginReadLen();
-
-		while (src.hasRemaining()) {
-			if (src.readTag() == TITLE_LEN)
-				dst.widthDpOrMaxLength = src.readInt32();
-		}
-		src.endReadLen(cookie);
-	}
-
-	/**
-	 * Deserialize native data asset format from Protobuf message.
-	 *
-	 * @param dst format to deserialize into
-	 * @param src reader to deserialize from
-	 * @throws RuntimeException coding is malformed
-	 */
-	private static void deserializeDataAssetFormat(NativeAssetFormat dst, ProtobufReader src) {
-		dst.widthDpOrMaxLength = 0;
-		dst.setType(AdComEnums.NativeDataAssetUnknown);
-		dst.setAssetClass(ASSET_DATA);
-
-		int cookie = src.beginReadLen();
-
-		while (src.hasRemaining()) {
-			int tag = src.readTag();
-
-			if (tag == DATA_TYPE) {
-				int type = src.readInt32();
-
-				if (type >= 0 && type <= AdComEnums.MAX_NATIVE_DATA_ASSET_TYPE)
-					dst.setType(type);
-			} else if (tag == DATA_LEN) {
-				dst.widthDpOrMaxLength = src.readInt32();
-			}
-		}
-		src.endReadLen(cookie);
-	}
-
-	/**
-	 * Deserialize native image asset format from Protobuf message.
-	 *
-	 * @param dst format to deserialize into
-	 * @param src reader to deserialize from
-	 * @throws RuntimeException coding is malformed
-	 */
-	private static void deserializeImageAssetFormat(NativeAssetFormat dst, ProtobufReader src) {
-		dst.widthDpOrMaxLength = 0;
-		dst.heightDp = 0;
-		dst.setType(AdComEnums.NativeImageAssetUnknown);
-		dst.setAssetClass(ASSET_IMAGE);
-
-		List<String> mimes = new ArrayList<>();
-		int cookie = src.beginReadLen();
-
-		while (src.hasRemaining()) {
-			int tag = src.readTag();
-
-			if (tag == IMAGE_TYPE) {
-				int type = src.readInt32();
-
-				if (type >= 0 && type <= AdComEnums.MAX_NATIVE_IMAGE_ASSET_TYPE)
-					dst.setType(type);
-			} else if (tag == IMAGE_MIME) {
-				mimes.add(src.readString());
-			} else if (tag == IMAGE_W) {
-				dst.widthDpOrMaxLength = src.readInt32();
-			} else if (tag == IMAGE_H) {
-				dst.heightDp = src.readInt32();
-			}
-		}
-		src.endReadLen(cookie);
-		dst.data = CollectionsCompat.toStringArrayOrEmpty(mimes);
-	}
-
-	/**
 	 * Deserialize native asset format from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized format
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static NativeAssetFormat ofProtobuf(ProtobufReader reader) {
+	public static NativeAssetFormat ofProtobuf(ProtobufDecoder dec) {
 		NativeAssetFormat rv = new NativeAssetFormat();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == ID) {
-				rv.setId(reader.readInt32());
+				rv.setId(dec.decodeUint32());
 			} else if (tag == REQ) {
-				rv.setRequired(reader.readBool());
+				rv.setRequired(dec.decodeBool());
 			} else if (tag == TITLE) {
-				deserializeTitleAssetFormat(rv, reader);
+				dec.decodeLen(rv, NativeAssetFormat::mergeTitleAssetFormatProtobuf);
 			} else if (tag == IMG) {
-				deserializeImageAssetFormat(rv, reader);
+				dec.decodeLen(rv, NativeAssetFormat::mergeImageAssetFormatProtobuf);
 			} else if (tag == VIDEO) {
 				rv.setAssetClass(ASSET_VIDEO);
-				rv.data = reader.readLen(PlaybackAdFormat::ofVideoAdProtobuf);
+				rv.data = dec.decodeLen(PlaybackAdFormat::ofVideoAdProtobuf);
 			} else if (tag == DATA) {
-				deserializeDataAssetFormat(rv, reader);
+				dec.decodeLen(rv, NativeAssetFormat::mergeDataAssetFormatProtobuf);
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		return rv;
@@ -338,6 +258,76 @@ public final class NativeAssetFormat implements ProtobufSerializable {
 	private Object data;
 
 	private NativeAssetFormat() {
+	}
+
+	// Deserialize native title asset format from Protobuf message.
+	private NativeAssetFormat mergeTitleAssetFormatProtobuf(ProtobufDecoder src) {
+		this.widthDpOrMaxLength = 0;
+		this.setAssetClass(ASSET_TITLE);
+
+		while (src.hasRemaining()) {
+			int tag = src.decodeFieldTag();
+
+			if (tag == TITLE_LEN)
+				this.widthDpOrMaxLength = src.decodeUint32();
+			else
+				src.skipFieldValue(tag);
+		}
+		return this;
+	}
+
+	// Deserialize native image asset format from Protobuf message.
+	private NativeAssetFormat mergeImageAssetFormatProtobuf(ProtobufDecoder src) {
+		this.widthDpOrMaxLength = 0;
+		this.heightDp = 0;
+		this.setType(AdComEnums.NativeImageAssetUnknown);
+		this.setAssetClass(ASSET_IMAGE);
+
+		List<String> mimes = new ArrayList<>();
+
+		while (src.hasRemaining()) {
+			int tag = src.decodeFieldTag();
+
+			if (tag == IMAGE_TYPE) {
+				int type = src.decodeUint32();
+
+				if (type >= 0 && type <= AdComEnums.MAX_NATIVE_IMAGE_ASSET_TYPE)
+					this.setType(type);
+			} else if (tag == IMAGE_MIME) {
+				mimes.add(src.decodeString());
+			} else if (tag == IMAGE_W) {
+				this.widthDpOrMaxLength = src.decodeUint32();
+			} else if (tag == IMAGE_H) {
+				this.heightDp = src.decodeUint32();
+			} else {
+				src.skipFieldValue(tag);
+			}
+		}
+		this.data = CollectionsCompat.toStringArrayOrEmpty(mimes);
+		return this;
+	}
+
+	// Deserialize native data asset format from Protobuf message.
+	private NativeAssetFormat mergeDataAssetFormatProtobuf(ProtobufDecoder src) {
+		this.widthDpOrMaxLength = 0;
+		this.setType(AdComEnums.NativeDataAssetUnknown);
+		this.setAssetClass(ASSET_DATA);
+
+		while (src.hasRemaining()) {
+			int tag = src.decodeFieldTag();
+
+			if (tag == DATA_TYPE) {
+				int type = src.decodeUint32();
+
+				if (type >= 0 && type <= AdComEnums.MAX_NATIVE_DATA_ASSET_TYPE)
+					this.setType(type);
+			} else if (tag == DATA_LEN) {
+				this.widthDpOrMaxLength = src.decodeUint32();
+			} else {
+				src.skipFieldValue(tag);
+			}
+		}
+		return this;
 	}
 
 	/**
@@ -604,35 +594,39 @@ public final class NativeAssetFormat implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		long cookie;
-
-		writer.writeInt32(ID, this.id());
-		writer.writeBool(REQ, this.required());
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeUnsignedIntField(ID, this.id())
+			.encodeBoolField(REQ, this.required());
 
 		switch (this.typeAndClass & ASSET_CLASS_MASK) {
 		case ASSET_DATA:
-			cookie = writer.beginWriteLen(DATA);
-			writer.writeInt32(DATA_TYPE, this.typeAndClass & ~ASSET_CLASS_MASK);
-			writer.writeInt32(DATA_LEN, this.widthDpOrMaxLength);
+			enc.encodeLenField(
+				DATA, this,
+				(data, dataEnc) ->
+					dataEnc.encodeUnsignedIntField(DATA_TYPE, data.typeAndClass & ~ASSET_CLASS_MASK)
+						.encodeUnsignedIntField(DATA_LEN, data.widthDpOrMaxLength)
+			);
 			break;
 		case ASSET_IMAGE:
-			cookie = writer.beginWriteLen(IMG);
-			writer.writeInt32(IMAGE_TYPE, this.typeAndClass & ~ASSET_CLASS_MASK);
-			writer.writeRepeatString(IMAGE_MIME, (String[]) this.data);
-			writer.writeInt32(IMAGE_W, this.widthDpOrMaxLength);
-			writer.writeInt32(IMAGE_H, this.heightDp);
+			enc.encodeLenField(IMG, this, (img, imgEnc) -> {
+				imgEnc.encodeUnsignedIntField(IMAGE_TYPE, img.typeAndClass & ~ASSET_CLASS_MASK)
+					.encodeUnsignedIntField(IMAGE_W, img.widthDpOrMaxLength)
+					.encodeUnsignedIntField(IMAGE_H, img.heightDp);
+				for (String mime : (String[]) img.data)
+					imgEnc.encodeStringField(IMAGE_MIME, mime);
+			});
 			break;
 		case ASSET_TITLE:
-			cookie = writer.beginWriteLen(TITLE);
-			writer.writeInt32(TITLE_LEN, this.widthDpOrMaxLength);
+			enc.encodeLenField(TITLE, this, (title, titleEnc) -> titleEnc.encodeUnsignedIntField(
+				TITLE_LEN,
+				title.widthDpOrMaxLength
+			));
 			break;
 		case ASSET_VIDEO:
-			writer.writeLen(VIDEO, (PlaybackAdFormat) this.data);
-			return;
+			enc.encodeMessageField(VIDEO, (PlaybackAdFormat) this.data);
+			break;
 		default:
-			return;
+			break;
 		}
-		writer.endWriteLen(cookie);
 	}
 }

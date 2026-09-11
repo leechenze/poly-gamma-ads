@@ -118,7 +118,7 @@ def resolveProguardFiles(which) {
 
 android {
 	namespace = project.ext.originNamespace
-	compileSdk = 36
+	compileSdk = 37
 
 	buildFeatures {
 		buildConfig = false

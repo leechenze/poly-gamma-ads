@@ -8,13 +8,10 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 import java.util.Arrays;
@@ -132,7 +129,7 @@ public class AdTest {
 	}
 
 	@Test
-	public void testAudioAd() throws InvalidProtocolBufferException {
+	public void testAudioAd() {
 		PlaybackAd exp = PlaybackAd.ofAudioAdBuilder()
 			.id("ad-id")
 			.serveId("serve-id")
@@ -142,11 +139,12 @@ public class AdTest {
 			.descriptionText("description")
 			.creatives(EXPECT_CREATIVES)
 			.build();
-		Ad got = Ad.ofProtobuf(new ProtobufReader(
-			AdcomMedia.Ad.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		Ad got = TestUtil.encodeAndDecode(
+			exp,
+			Ad::toProtobuf,
+			Ad::ofProtobuf,
+			AdcomMedia.Ad::parseFrom
+		);
 
 		assertTrue(got instanceof PlaybackAd);
 
@@ -161,7 +159,7 @@ public class AdTest {
 	}
 
 	@Test
-	public void testDisplayAd() throws InvalidProtocolBufferException {
+	public void testDisplayAd() {
 		DisplayAd exp = DisplayAd.ofDisplayAdBuilder()
 			.id("ad-id")
 			.serveId("serve-id")
@@ -176,11 +174,12 @@ public class AdTest {
 			.eventTrackers(EXPECT_EVENT_TRACKERS)
 			.minShowDurationSeconds(789)
 			.build();
-		Ad got = Ad.ofProtobuf(new ProtobufReader(
-			AdcomMedia.Ad.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		Ad got = TestUtil.encodeAndDecode(
+			exp,
+			Ad::toProtobuf,
+			Ad::ofProtobuf,
+			AdcomMedia.Ad::parseFrom
+		);
 
 		assertTrue(got instanceof DisplayAd);
 
@@ -203,7 +202,7 @@ public class AdTest {
 	}
 
 	@Test
-	public void testVideoAd() throws InvalidProtocolBufferException {
+	public void testVideoAd() {
 		PlaybackAd exp = PlaybackAd.ofVideoAdBuilder()
 			.id("ad-id")
 			.serveId("serve-id")
@@ -213,11 +212,12 @@ public class AdTest {
 			.descriptionText("description")
 			.creatives(EXPECT_CREATIVES)
 			.build();
-		Ad got = Ad.ofProtobuf(new ProtobufReader(
-			AdcomMedia.Ad.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		Ad got = TestUtil.encodeAndDecode(
+			exp,
+			Ad::toProtobuf,
+			Ad::ofProtobuf,
+			AdcomMedia.Ad::parseFrom
+		);
 
 		assertTrue(got instanceof PlaybackAd);
 

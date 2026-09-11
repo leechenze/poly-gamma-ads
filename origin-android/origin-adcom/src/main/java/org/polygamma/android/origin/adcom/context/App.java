@@ -2,7 +2,7 @@
 
 package org.polygamma.android.origin.adcom.context;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.*;
 
 import android.annotation.SuppressLint;
 
@@ -10,8 +10,8 @@ import androidx.annotation.ReturnThis;
 
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.CategoryTaxonomyCode;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.util.ArrayList;
@@ -27,20 +27,20 @@ import java.util.List;
  */
 public final class App extends DistributionChannel {
 
-	/*private static final @Tag int DOMAIN		= ofString(  1);*/
-	/*private static final @Tag int CAT			= ofString(  2);*/
-	private static final @Tag int SECTCAT		= ofString(  3);
-	private static final @Tag int PAGECAT		= ofString(  4);
-	private static final @Tag int CATTAX		= ofInt32(   5);
-	/*private static final @Tag int PRIVPOLICY	= ofBool(    6);*/
-	/*private static final @Tag int KWARRAY		= ofString(  7);*/
-	/*private static final @Tag int BUNDLE		= ofString(  8);*/
-	private static final @Tag int STOREID		= ofString(  9);
-	/*private static final @Tag int STOREURL	= ofString( 10);*/
-	private static final @Tag int VER			= ofString( 11);
-	private static final @Tag int PAID			= ofBool(   12);
-	private static final @Tag int DEBUG			= ofBool(  500);
-	private static final @Tag int SYSTEM		= ofBool(  501);
+	/*private static final @FieldTag int DOMAIN		= fieldTagOf(  1, WIRE_LEN);*/
+	/*private static final @FieldTag int CAT		= fieldTagOf(  2, WIRE_LEN);*/
+	private static final @FieldTag int SECTCAT		= fieldTagOf(  3, WIRE_LEN);
+	private static final @FieldTag int PAGECAT		= fieldTagOf(  4, WIRE_LEN);
+	private static final @FieldTag int CATTAX		= fieldTagOf(  5, WIRE_VARINT);
+	/*private static final @FieldTag int PRIVPOLICY	= fieldTagOf(  6, WIRE_VARINT);*/
+	/*private static final @FieldTag int KWARRAY	= fieldTagOf(  7, WIRE_LEN);*/
+	/*private static final @FieldTag int BUNDLE		= fieldTagOf(  8, WIRE_LEN);*/
+	private static final @FieldTag int STOREID		= fieldTagOf(  9, WIRE_LEN);
+	/*private static final @FieldTag int STOREURL	= fieldTagOf( 10, WIRE_LEN);*/
+	private static final @FieldTag int VER			= fieldTagOf( 11, WIRE_LEN);
+	private static final @FieldTag int PAID			= fieldTagOf( 12, WIRE_VARINT);
+	private static final @FieldTag int DEBUG		= fieldTagOf(500, WIRE_VARINT);
+	private static final @FieldTag int SYSTEM		= fieldTagOf(501, WIRE_VARINT);
 
 	private static final int FLAG_PAID		= 0x01;
 	private static final int FLAG_DEBUG		= 0x02;
@@ -266,58 +266,22 @@ public final class App extends DistributionChannel {
 	/**
 	 * Deserialize app from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized app
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static App ofProtobuf(ProtobufReader reader) {
+	public static App ofProtobuf(ProtobufDecoder dec) {
 		App rv = new App();
-		List<String> sectCats = new ArrayList<>();
-		List<String> pageCats = new ArrayList<>();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
-			if (tag == ID) {
-				rv.id = reader.readString();
-			} else if (tag == NAME) {
-				rv.name = reader.readString();
-			} else if (tag == PUB) {
-				int cookie = reader.beginReadLen();
-
-				while (reader.hasRemaining()) {
-					if (reader.readTag() == PUB_ID)
-						rv.publisherId = reader.readString();
-				}
-				reader.endReadLen(cookie);
-			} else if (tag == APP) {
-				int cookie = reader.beginReadLen();
-
-				while (reader.hasRemaining()) {
-					tag = reader.readTag();
-					if (tag == SECTCAT)
-						sectCats.add(reader.readString());
-					else if (tag == PAGECAT)
-						pageCats.add(reader.readString());
-					else if (tag == CATTAX)
-						rv.categoryTaxonomy = reader.readInt32();
-					else if (tag == STOREID)
-						rv.storeId = reader.readString();
-					else if (tag == VER)
-						rv.version = reader.readString();
-					else if (tag == PAID && reader.readBool())
-						rv.flags |= FLAG_PAID;
-					else if (tag == DEBUG && reader.readBool())
-						rv.flags |= FLAG_DEBUG;
-					else if (tag == SYSTEM && reader.readBool())
-						rv.flags |= FLAG_SYSTEM;
-				}
-				reader.endReadLen(cookie);
-			}
+			if (tag == APP)
+				dec.decodeLen(rv, App::mergeProtobuf);
+			else
+				DistributionChannel.decodeProtobufField(rv, dec, tag);
 		}
-		rv.sectionCategories = CollectionsCompat.toStringArrayOrEmpty(sectCats);
-		rv.pageCategories = CollectionsCompat.toStringArrayOrEmpty(pageCats);
 		return rv;
 	}
 
@@ -345,6 +309,37 @@ public final class App extends DistributionChannel {
 		this.pageCategories = that.pageCategories;
 		this.categoryTaxonomy = that.categoryTaxonomy;
 		this.flags = that.flags;
+	}
+
+	private App mergeProtobuf(ProtobufDecoder dec) {
+		List<String> sectCats = new ArrayList<>();
+		List<String> pageCats = new ArrayList<>();
+
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
+
+			if (tag == SECTCAT)
+				sectCats.add(dec.decodeString());
+			else if (tag == PAGECAT)
+				pageCats.add(dec.decodeString());
+			else if (tag == CATTAX)
+				this.categoryTaxonomy = dec.decodeUint32();
+			else if (tag == STOREID)
+				this.storeId = dec.decodeString();
+			else if (tag == VER)
+				this.version = dec.decodeString();
+			else if (tag == PAID)
+				this.flags |= dec.decodeBool() ? FLAG_PAID : 0;
+			else if (tag == DEBUG)
+				this.flags |= dec.decodeBool() ? FLAG_DEBUG : 0;
+			else if (tag == SYSTEM)
+				this.flags |= dec.decodeBool() ? FLAG_SYSTEM : 0;
+			else
+				dec.skipFieldValue(tag);
+		}
+		this.sectionCategories = CollectionsCompat.toStringArrayOrEmpty(sectCats);
+		this.pageCategories = CollectionsCompat.toStringArrayOrEmpty(pageCats);
+		return this;
 	}
 
 	/**
@@ -468,19 +463,19 @@ public final class App extends DistributionChannel {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		super.toProtobuf(writer);
-
-		long cookie = writer.beginWriteLen(DistributionChannel.APP);
-
-		writer.writeString(STOREID, this.storeId);
-		writer.writeString(VER, this.version);
-		writer.writeRepeatString(SECTCAT, this.sectionCategories);
-		writer.writeRepeatString(PAGECAT, this.pageCategories);
-		writer.writeInt32(CATTAX, this.categoryTaxonomy);
-		writer.writeBool(PAID, this.paid());
-		writer.writeBool(DEBUG, this.debuggable());
-		writer.writeBool(SYSTEM, this.system());
-		writer.endWriteLen(cookie);
+	public void toProtobuf(ProtobufEncoder enc) {
+		super.toProtobuf(enc);
+		enc.encodeLenField(APP, this, (app, appEnc) -> {
+			appEnc.encodeStringField(STOREID, app.storeId)
+				.encodeStringField(VER, app.version)
+				.encodeUnsignedIntField(CATTAX, app.categoryTaxonomy)
+				.encodeBoolField(PAID, app.paid())
+				.encodeBoolField(DEBUG, app.debuggable())
+				.encodeBoolField(SYSTEM, app.system());
+			for (String cat : app.sectionCategories)
+				appEnc.encodeStringField(SECTCAT, cat);
+			for (String cat : app.pageCategories)
+				appEnc.encodeStringField(PAGECAT, cat);
+		});
 	}
 }

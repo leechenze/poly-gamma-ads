@@ -5,9 +5,9 @@ package org.polygamma.android.origin.ads;
 import androidx.annotation.AnyThread;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
-import androidx.core.util.Consumer;
 
 import org.polygamma.android.origin.core.OriginModuleEventCallback;
+import org.polygamma.android.origin.util.Consumer;
 
 /**
  * Ad media renderer of a placement.

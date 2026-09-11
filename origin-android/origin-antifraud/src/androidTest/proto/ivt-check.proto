@@ -1,0 +1,508 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+syntax="proto3";
+package org.polygamma.origin.antifraud;
+
+/// Enumeration of IVT check session operation codes.
+enum SessionOpcode {
+	SessionUnknown			=   0;
+
+	/// Begin IVT check session.
+	///
+	/// This operation is initiated by the client, with a payload `SessionRequest`. The server is
+	/// expected to respond *eventually* with a `SessionOpcode::End`.
+	SessionBegin			=   1;
+
+	/// Perform device attestation.
+	///
+	/// This operation is initiated by the server, once a session has initiated and before a
+	/// session is terminated by the server via `SessionOpcode::End`. The server and client are
+	/// expected to send payloads `AttestDeviceRequest` and `AttestDeviceResponse`, respectively.
+	SessionAttestDevice		=   2;
+
+	/// Perform tamper machine operations.
+	///
+	/// This operation is initiated by the server, once a session has initiated and before a
+	/// session is terminated by the server via `SessionOpcode::End`. The server and client are
+	/// expected to send payloads `TamperMachineRequest` and `TamperMachineResponse`, respectively.
+	SessionTamperMachine	=   3;
+
+	/// Perform FHE encapsulation for entropy to evaluated within homomorphic space.
+	///
+	/// This operation is initiated by the server, once a session has initiated and before a
+	/// session is terminated by the server via `SessionOpcode::End`. The server and client are
+	/// expected to send payloads `FheEncapsulateRequest` and `FheEncapsulateResponse`,
+	/// respectively. The client must generate a new FHE secret/public key pair and encapsulate the
+	/// ChaCha20 key used to encrypt `SessionRequest::ctent`.
+	SessionFheEncapsulate	=  10;
+
+	/// Peform FHE decryption using key pair generated from last `FheEncapsulate` operation.
+	///
+	/// This operation is initiated by the server, once an encapsulation operation is performed by
+	/// the client. The server and client are expected to send payloads `FheDecryptRequest` and
+	/// `FheDecryptResponse`, respectively. Once decryption is completed, the FHE secret/public key
+	/// pair, and ChaCha20 cipher entropy key are discarded.
+	SessionFheDecrypt		=  11;
+
+	/// End IVT check session.
+	///
+	/// This operation is initiated by the server, in response to a single `SessionOpcode::Begin`,
+	/// with a payload `SessionResult`. Once this is sent, the client will not respond further
+	/// and clear its session.
+	SessionEnd				= 100;
+}
+
+/// Enumeration of sensor types.
+enum SensorType {
+	SensorUnknown			= 0;
+
+	/// Screen-object proximity sensor, measured in centimeters.
+	SensorScreenProxCm		= 1;
+
+	/// Light sensor measuring illumination in SI lux.
+	SensorLightIllumSilux	= 2;
+
+	/// Accelerometer sensor measurement magnitude.
+	SensorAccelMag			= 3;
+
+	/// Battery level sensor, measuring in percentage.
+	SensorBattLevelPct		= 4;
+
+	/// Battery temperature sensor, measuring in celcius.
+	SensorBattTempC			= 5;
+
+	/// Battery voltage sensor, measured in milli-volts.
+	SensorBattVoltMv		= 6;
+
+	/// Battery current sensor, measured in microamperes.
+	SensorBattCurrMua		= 7;
+}
+
+/// Enumeration of tamper machine operation codes.
+enum TamperMachineOpcode {
+	TamperMachineUnknown			= 0;
+
+	/// Pop top value placing it into the result stack.
+	TamperMachinePop				=  1;
+	/// Pop top value and discard it.
+	TamperMachinePopDiscard			=  2;
+	/// Push value onto top.
+	TamperMachinePush				=  3;
+	/// Push background asynchronous value onto top.
+	TamperMachinePushBackAsync		=  4;
+	/// Push foreground asynchronous value onto top.
+	TamperMachinePushFrontAsync		=  5;
+	/// Push application onto top.
+	TamperMachinePushApp			=  6;
+	/// Push current activity onto top.
+	TamperMachinePushActivity		=  7;
+	/// Duplicate `i`-th value onto top.
+	TamperMachineDup				=  8;
+	/// Invoke subroutine.
+	TamperMachineCall				=  9;
+	/// Invoke subroutine asynchronously.
+	TamperMachineCallAsync			= 10;
+	/// Read property.
+	TamperMachineRead				= 11;
+	/// Write property.
+	TamperMachineWrite				= 12;
+}
+
+/// IVT rating enumeration.
+enum IvtRating {
+	/// Unknown whether device is fraudulent or not.
+	IvtRatingUnknown	= 0;
+
+	/// Device is controlled by non-human agent.
+	IvtRatingNonHuman	= 1;
+
+	/// Device is controlled by human user.
+	IvtRatingHuman		= 2;
+}
+
+/// Sensor entropy.
+message SensorEntropy {
+	/// Type of sensor measurements were collected from.
+	SensorType type		= 1;
+
+	/// Number of measurements collected.
+	uint64 count		= 2;
+
+	/// Mean of all measurements.
+	float mu			= 3;
+
+	/// `d` squared of all measurements.
+	float d2			= 4;
+}
+
+/// Android-specific entropy.
+message AndroidEntropy {
+	/// Operating-system boot id.
+	bytes bootid					=  1;
+
+	/// Number of times device has been booted.
+	uint32 bootcnt					=  2;
+
+	/// Id of process in which check is being executed.
+	sint32 pid						=  3;
+
+	/// Id of user under which check is being executed.
+	sint32 uid						=  4;
+
+	/// Device uptime, including deep-sleep, in seconds.
+	uint64 devrealtimesec			=  5;
+
+	/// Number of seconds device has spent in deep-sleep.
+	uint64 devsleeptimesec			=  6;
+
+	/// Number of seconds app has been running, including deep-sleep, in seconds.
+	uint64 appruntimesec			=  7;
+
+	/// Number of seconds app has spent in deep-sleep.
+	uint64 appsleeptimesec			=  8;
+
+	/// Number of CPUs available.
+	uint32 ncpu						= 10;
+
+	/// Advertised RAM size, in bytes.
+	uint64 advrambytes				= 11;
+
+	/// Available RAM size, in bytes.
+	uint64 availrambytes			= 12;
+
+	/// Free RAM size, in bytes.
+	uint64 freerambytes				= 13;
+
+	/// Total RAM size, in bytes.
+	uint64 totalrambytes			= 14;
+
+	/// ADB is enabled.
+	bool adbenabled					= 20;
+
+	/// Airplane mode is enabled.
+	bool airmodeenabled				= 21;
+
+	/// Timezone is automatically assigned.
+	bool autotzenabled				= 22;
+
+	/// Accessibility features are enabled.
+	bool accessibenabled			= 23;
+
+	/// Battery is charging.
+	bool battchrging				= 24;
+
+	/// `android.os.Build::TAGS`
+	string buildtags				= 40;
+
+	/// `android.os.Build::FINGERPRINT`
+	string buildfp					= 41;
+
+	/// `android.os.Build::PRODUCT`
+	string buildprod				= 42;
+
+	/// `android.os.Build::HARDWARE`
+	string buildhw					= 43;
+
+	/// `android.os.Build::DISPLAY`
+	string builddisp				= 44;
+
+	/// `android.os.Build::RADIO`
+	string buildradio				= 45;
+
+	/// `android.os.Build::SOC_MANUFACTURER`
+	string buildsocman				= 46;
+
+	/// `android.os.Build::SOC_MODEL`
+	string buildsocmodel			= 47;
+
+	/// `android.os.Build::SUPPORTED_ABIS`
+	repeated string buildsuppabi	= 48;
+}
+
+/// Plain executing environment entropy.
+message PlainEntropy {
+	/// Description of channel within which entropy was collected.
+	/*DistributionChannel*/ bytes channel =   1;
+
+	/// Laws and regulations applicable to device.
+	/*Regs*/ bytes regs				=   2;
+
+	// ## Platform specific entropy.
+
+	/// Description of device from which entropy was sourced.
+	/*Device*/ bytes device			=  50;
+
+	/// Drift, in seconds, between device's wall clock and GPS clock.
+	sint64 gpsclockdriftsec			=  51;
+
+	/// Drift, in seconds, between device's wall clock and network clock.
+	sint64 netclockdriftsec			=  52;
+
+	/// Entropy collected from device sensors.
+	repeated SensorEntropy sensor	=  53;
+
+	/// Device can perform attestation.
+	bool canattestdevice			=  54;
+
+	/// Android-specific entropy.
+	AndroidEntropy android			= 500;
+}
+
+/// Dynamically typed entropy.
+message DynamicEntropy {
+	/// 1-bit flag values.
+	repeated bool flag		=  1 [packed = false];
+	/// 32-bit integer values.
+	repeated uint32 u32		=  2 [packed = false];
+	/// 64-bit integer values.
+	repeated uint64 u64		=  3 [packed = false];
+	/// 32-bit float values.
+	repeated float f32		=  4 [packed = false];
+	/// 64-bit float values.
+	repeated double f64		=  5 [packed = false];
+	/// Packed 1-bit flag array values.
+	repeated bytes pflag	=  6;
+	/// Packed 32-bit integer array values.
+	repeated bytes pu32		=  7;
+	/// Packed 64-bit integer array values.
+	repeated bytes pu64		=  8;
+	/// Packed 32-bit float array values.
+	repeated bytes pf32		=  9;
+	/// Packed 64-bit float array values.
+	repeated bytes pf64		= 10;
+	/// Binary values.
+	repeated bytes blob		= 11;
+	/// String values.
+	repeated string str		= 12;
+	/// Message values.
+	repeated bytes msg		= 13;
+	/// Sequence values.
+	repeated uint32 listseq	= 14 [packed = false];
+	/// Map sequence values.
+	repeated uint32 mapseq	= 15 [packed = false];
+	/// NIL values.
+	repeated bool nil		= 16 [packed = false];
+}
+
+/// Sensitive entropy enciphered using ChaCha20.
+///
+/// Sensitive entropy is split encoded into `DynamicEntropy`. The entropy plaintext schema and
+/// ciphertext of contents are stored into `schema` and `ctcontent`, respectively. For each
+/// sensitive entropy `i`, its content is enciphered with a `i + 1` nonce and counter equal to
+/// `0`.
+message CipherEntropy {
+	/// Id of entropy.
+	string id				= 1;
+	/// Entropy schema.
+	bytes schema			= 2;
+	/// Ciphertext of entropy content.
+	bytes ctcontent			= 3;
+}
+
+/// IVT check session begin request.
+message SessionRequest {
+	/// AdCOM model version.
+	string adcomver					=  1;
+
+	/// Last IVT check result digest, if any.
+	bytes lastdigest				=  2;
+
+	oneof plain {
+		/// Uncompressed plaintext entropy.
+		PlainEntropy ptent			= 20;
+
+		/// Plaintext entropy compressed using DEFLATE.
+		bytes ptentflate			= 21;
+	}
+
+	/// Sensitive entropy to be evaluated within homomorphic space.
+	repeated CipherEntropy ctent	= 40;
+}
+
+/// IVT check session result.
+message SessionResult {
+	/// Fraud rating.
+	IvtRating rating			= 1;
+
+	/// Confidence, percentage, in rating.
+	uint32 conf					= 2;
+
+	/// Result digest for attestation.
+	bytes digest				= 3;
+
+	/// Timestamp, in seconds since UNIX epoch, to perform recheck at.
+	uint64 recktimestampsec		= 4;
+}
+
+/// Device attestation request.
+message AttestDeviceRequest {
+	/// Attestation challenge.
+	bytes challenge				= 1;
+}
+
+/// Device attestation response.
+message AttestDeviceResponse {
+	/// Certificate chain, with challenge.
+	repeated bytes cert			= 1;
+}
+
+/// Tamper machine operation.
+message TamperMachineOperation {
+	/// Operation code.
+	TamperMachineOpcode code	=  1;
+	oneof value {
+		/// Unsigned 32-bit `varint`.
+		uint32 u32				= 10;
+		/// Signed 32-bit `varint`.
+		sint32 s32				= 11;
+		/// Unsigned 64-bit `varint`.
+		uint64 u64				= 12;
+		/// Signed 64-bit `varint`.
+		sint64 s64				= 13;
+		/// Fixed 32-bit number.
+		float f32				= 14;
+		/// Fixed 64-bit number.
+		double f64				= 15;
+		/// Byte array blob.
+		bytes blob				= 16;
+		/// UTF-8 encoded string.
+		string str				= 17;
+	}
+}
+
+/// Tamper machine operations request.
+message TamperMachineRequest {
+	/// Operations to perform.
+	repeated TamperMachineOperation op = 1;
+}
+
+/// Tamper machine operations response.
+message TamperMachineResponse {
+	/// Result stack.
+	DynamicEntropy stack = 1;
+}
+
+/// FHE parameters.
+message FheParameters {
+	/// LWE encryption dimension.
+	uint32 lwedim		= 1;
+
+	/// Log base-2 of T-Uniform noise bound.
+	uint32 lognoiseb	= 2;
+
+	/// Message modulus.
+	uint32 msgmod		= 3;
+
+	/// Carry modulus.
+	uint32 carrymod		= 4;
+}
+
+/// FHE encapsulation request.
+message FheEncapsulateRequest {
+	/// Parameters to use for generating keypair for encapsulation.
+	///
+	/// If the parameters specified are omitted or do not satisfy minimum requirements of the
+	/// executing SDK, minimum requirements are used instead. The client must encapsulate each
+	/// 32-bit slot of the 256-bit ChaCha20 key slot using radix decomposition over the plaintext
+	/// space of the specified parameters.
+	FheParameters params	= 1;
+}
+
+/// FHE encapsulation response.
+message FheEncapsulateResponse {
+	/// Parameters used for encapsulation.
+	FheParameters params			= 1;
+
+	/// Seed to initialize CSPRNG with to generate public key mask coefficients.
+	bytes pkmaskseed				= 10;
+
+	/// Public key body LWE samples.
+	repeated fixed64 pkbody			= 11;
+
+	/// Encapsulated ciphertext entropy key ciphertext mask.
+	repeated fixed64 ctentkeymask	= 20;
+
+	/// Encapsulated ciphertext entropy key ciphertext body.
+	repeated fixed64 ctentkeybody	= 21;
+}
+
+/// FHE decrypt request.
+///
+/// Clients will decrypt only up to 64 bits of plaintext.
+message FheDecryptRequest {
+	/// Ciphertext mask list.
+	repeated fixed64 ctmask		= 1;
+
+	/// Ciphertext body list.
+	repeated fixed64 ctbody		= 2;
+}
+
+/// FHE decrypt response.
+message FheDecryptResponse {
+	/// Decrypted plaintext list.
+	repeated uint64 pt = 1;
+}
+
+/// IVT check session operation.
+message SessionOperation {
+	/// Operation code.
+	SessionOpcode code			= 1;
+
+	oneof content {
+		/// Operation payload ciphertext.
+		///
+		/// The payload is enciphered using XTEA, with next 128-bit key derived from CSPRNG that
+		/// was initialized with `CheckArguments::sesskeyseed`.
+		bytes payload			= 2;
+
+		/// Operation failure reason.
+		string error			= 3;
+	}
+
+	/// Number of trailing bytes, within `payload`, which were added for padding.
+	uint32 payloadpad			= 4;
+}
+
+/// IVT check procedure arguments.
+message CheckArguments {
+	oneof header {
+		/// Seed to initialize CSPRNG with for ciphering `SessionOperation::payload`.
+		///
+		/// This is expected to be sent *only once* when `op[0].code` is `SessionOpcode::Begin`.
+		/// The seed is used to initialize CSPRNG on both client and server side. Every
+		/// `SessionOperation` instance generated during the session, a new 128-bit XTEA key is
+		/// generated from the CSPRNG and used to encipher `SessionOperation::payload`.
+		bytes sesskeyseed			=  1;
+
+		/// Id of IVT check session, as returned by server in response to `SessionOpcode::Begin`.
+		bytes sessid				=  2;
+	}
+
+	/// Timestamp, in seconds since UNIX epoch, of when request was made.
+	uint64 timestampsec				=  3;
+
+	/// Session operations.
+	///
+	/// If IVT check session is beginning, this will always contain only a single operation with
+	/// opcode `SessionOpcode::Begin`. During the session, this will contain responses for each
+	/// session operation requested by the server in `CheckResult::op`, in the order they were
+	/// defined, save the terminating `SessionOpcode::End`.
+	repeated SessionOperation op	= 10;
+
+	/// Description of error encountered.
+	///
+	/// When set, client is unable to execute operation and session is considered terminated.
+	string error					= 20;
+}
+
+message CheckResult {
+	/// Server assigned IVT check session id.
+	///
+	/// This may be sent in response to any `CheckArguments` sent by the client. The client must
+	/// use this id to identify the session on the server-side. This id may change between
+	/// successive invocations of IVT check procedure.
+	bytes sessid					=  1;
+
+	/// Operations to perform.
+	repeated SessionOperation op	= 10;
+}

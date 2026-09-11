@@ -17,10 +17,10 @@ android {
 				"origin-ads",
 				"origin-antifraud",
 				"origin-core",
+				"origin-crypt",
 				"origin-gppstring",
 				"origin-protobuf",
-				"origin-util",
-				"origin-crypt",
+				"origin-util"
 			].forEach {
 				def genDir = project.layout.buildDirectory.dir("generated").get()
 				def symDir = genDir.dir(it).asFile
@@ -67,7 +67,6 @@ android {
 }
 
 dependencies {
-	api(libs.androidx.core)
 	api(libs.guava.listenablefuture)
 
 	compileOnly(libs.gms.ads.identifier)

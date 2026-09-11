@@ -56,7 +56,6 @@ dependencies {
 
 	implementation(project(":origin-gppstring"))
 	implementation(project(":origin-protobuf"))
-	implementation(libs.androidx.core)
 
 	compileOnly(libs.gms.ads.identifier)
 	compileOnly(libs.hms.ads.identifier)

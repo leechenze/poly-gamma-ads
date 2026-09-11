@@ -2,7 +2,7 @@
 
 package org.polygamma.android.origin.adcom.context;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.*;
 
 import android.location.Location;
 import android.os.Build;
@@ -12,9 +12,9 @@ import androidx.annotation.ReturnThis;
 
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.GeoSourceType;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -27,29 +27,29 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Geo implements ProtobufSerializable {
 
-	private static final @Tag int TYPE				= ofInt32(    1);
-	private static final @Tag int LAT				= ofDouble(   2);
-	private static final @Tag int LON				= ofDouble(   3);
-	/*private static final @Tag int ACCUR			= ofInt32(    4);*/
-	/*private static final @Tag int LASTFIX			= ofInt32(    5);*/
-	/*private static final @Tag int IPSERV			= ofInt32(    6);*/
-	private static final @Tag int COUNTRY			= ofString(   7);
-	/*private static final @Tag int REGION			= ofString(   8);*/
-	/*private static final @Tag int METRO			= ofString(   9);*/
-	/*private static final @Tag int CITY			= ofString(  10);*/
-	/*private static final @Tag int ZIP				= ofString(  11);*/
-	private static final @Tag int UTCOFFSET			= ofSint32(  12);
-	private static final @Tag int TIMESTAMPSEC		= ofFixed64(500);
-	private static final @Tag int PROVIDER			= ofString( 501);
-	private static final @Tag int HORZACCUR			= ofFloat(  502);
-	private static final @Tag int BEARING			= ofDouble( 503);
-	private static final @Tag int BEARINGACCUR		= ofFloat(  504);
-	private static final @Tag int SPEED				= ofDouble( 505);
-	private static final @Tag int SPEEDACCUR		= ofFloat(  506);
-	private static final @Tag int ALTWGS84			= ofDouble( 507);
-	private static final @Tag int ALTWGS84ACCUR		= ofFloat(  508);
-	private static final @Tag int ALTMSL			= ofDouble( 509);
-	private static final @Tag int ALTMSLACCUR		= ofFloat(  510);
+	private static final @FieldTag int TYPE				= fieldTagOf(  1, WIRE_VARINT);
+	private static final @FieldTag int LAT				= fieldTagOf(  2, WIRE_FIXED64);
+	private static final @FieldTag int LON				= fieldTagOf(  3, WIRE_FIXED64);
+	/*private static final @FieldTag int ACCUR			= fieldTagOf(  4, WIRE_VARINT);*/
+	/*private static final @FieldTag int LASTFIX		= fieldTagOf(  5, WIRE_VARINT);*/
+	/*private static final @FieldTag int IPSERV			= fieldTagOf(  6, WIRE_VARINT);*/
+	private static final @FieldTag int COUNTRY			= fieldTagOf(  7, WIRE_LEN);
+	/*private static final @FieldTag int REGION			= fieldTagOf(  8, WIRE_LEN);*/
+	/*private static final @FieldTag int METRO			= fieldTagOf(  9, WIRE_LEN);*/
+	/*private static final @FieldTag int CITY			= fieldTagOf( 10, WIRE_LEN);*/
+	/*private static final @FieldTag int ZIP			= fieldTagOf( 11, WIRE_LEN);*/
+	private static final @FieldTag int UTCOFFSET		= fieldTagOf( 12, WIRE_VARINT);
+	private static final @FieldTag int TIMESTAMPSEC		= fieldTagOf(500, WIRE_FIXED64);
+	private static final @FieldTag int PROVIDER			= fieldTagOf(501, WIRE_LEN);
+	private static final @FieldTag int HORZACCUR		= fieldTagOf(502, WIRE_FIXED32);
+	private static final @FieldTag int BEARING			= fieldTagOf(503, WIRE_FIXED64);
+	private static final @FieldTag int BEARINGACCUR		= fieldTagOf(504, WIRE_FIXED32);
+	private static final @FieldTag int SPEED			= fieldTagOf(505, WIRE_FIXED64);
+	private static final @FieldTag int SPEEDACCUR		= fieldTagOf(506, WIRE_FIXED32);
+	private static final @FieldTag int ALTWGS84			= fieldTagOf(507, WIRE_FIXED64);
+	private static final @FieldTag int ALTWGS84ACCUR	= fieldTagOf(508, WIRE_FIXED32);
+	private static final @FieldTag int ALTMSL			= fieldTagOf(509, WIRE_FIXED64);
+	private static final @FieldTag int ALTMSLACCUR		= fieldTagOf(510, WIRE_FIXED32);
 
 	/**
 	 * Empty geographic location context.
@@ -390,50 +390,51 @@ public final class Geo implements ProtobufSerializable {
 	/**
 	 * Deserialize context from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized context
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static Geo ofProtobuf(ProtobufReader reader) {
+	public static Geo ofProtobuf(ProtobufDecoder dec) {
 		Geo rv = new Geo();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
-			if (tag == LAT) {
-				rv.latitudeDegrees = reader.readDouble();
-			} else if (tag == LON) {
-				rv.longitudeDegrees = reader.readDouble();
-			} else if (tag == BEARING) {
-				rv.bearingDegrees = reader.readDouble();
-			} else if (tag == SPEED) {
-				rv.speedMetersPerSecond = reader.readDouble();
-			} else if (tag == ALTWGS84) {
-				rv.altitudeWgs84Meters = reader.readDouble();
-			} else if (tag == ALTMSL) {
-				rv.altitudeMslMeters = reader.readDouble();
-			} else if (tag == HORZACCUR) {
-				rv.horizontalAccuracyMeters = reader.readFloat();
-			} else if (tag == BEARINGACCUR) {
-				rv.bearingAccuracyDegrees = reader.readFloat();
-			} else if (tag == SPEEDACCUR) {
-				rv.speedAccuracyMetersPerSecond = reader.readFloat();
-			} else if (tag == ALTWGS84ACCUR) {
-				rv.altitudeWgs84AccuracyMeters = reader.readFloat();
-			} else if (tag == ALTMSLACCUR) {
-				rv.altitudeMslAccuracyMeters = reader.readFloat();
-			} else if (tag == TIMESTAMPSEC) {
-				rv.timestampSeconds = reader.readFixed64();
-			} else if (tag == UTCOFFSET) {
-				rv.utcOffsetMinutes = reader.readSint32();
-			} else if (tag == TYPE) {
-				rv.type = reader.readInt32();
-			} else if (tag == COUNTRY) {
-				rv.countryCode = reader.readString();
-			} else if (tag == PROVIDER) {
-				rv.providerName = reader.readString();
-			}
+			if (tag == LAT)
+				rv.latitudeDegrees = dec.decodeDouble();
+			else if (tag == LON)
+				rv.longitudeDegrees = dec.decodeDouble();
+			else if (tag == BEARING)
+				rv.bearingDegrees = dec.decodeDouble();
+			else if (tag == SPEED)
+				rv.speedMetersPerSecond = dec.decodeDouble();
+			else if (tag == ALTWGS84)
+				rv.altitudeWgs84Meters = dec.decodeDouble();
+			else if (tag == ALTMSL)
+				rv.altitudeMslMeters = dec.decodeDouble();
+			else if (tag == HORZACCUR)
+				rv.horizontalAccuracyMeters = dec.decodeFloat();
+			else if (tag == BEARINGACCUR)
+				rv.bearingAccuracyDegrees = dec.decodeFloat();
+			else if (tag == SPEEDACCUR)
+				rv.speedAccuracyMetersPerSecond = dec.decodeFloat();
+			else if (tag == ALTWGS84ACCUR)
+				rv.altitudeWgs84AccuracyMeters = dec.decodeFloat();
+			else if (tag == ALTMSLACCUR)
+				rv.altitudeMslAccuracyMeters = dec.decodeFloat();
+			else if (tag == TIMESTAMPSEC)
+				rv.timestampSeconds = dec.decodeFixed64();
+			else if (tag == UTCOFFSET)
+				rv.utcOffsetMinutes = dec.decodeSint32();
+			else if (tag == TYPE)
+				rv.type = dec.decodeUint32();
+			else if (tag == COUNTRY)
+				rv.countryCode = dec.decodeString();
+			else if (tag == PROVIDER)
+				rv.providerName = dec.decodeString();
+			else
+				dec.skipFieldValue(tag);
 		}
 		return rv;
 	}
@@ -669,22 +670,22 @@ public final class Geo implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeDouble(LAT, this.latitudeDegrees);
-		writer.writeDouble(LON, this.longitudeDegrees);
-		writer.writeDouble(BEARING, this.bearingDegrees);
-		writer.writeDouble(SPEED, this.speedMetersPerSecond);
-		writer.writeDouble(ALTWGS84, this.altitudeWgs84Meters);
-		writer.writeDouble(ALTMSL, this.altitudeMslMeters);
-		writer.writeFloat(HORZACCUR, this.horizontalAccuracyMeters);
-		writer.writeFloat(BEARINGACCUR, this.bearingAccuracyDegrees);
-		writer.writeFloat(SPEEDACCUR, this.speedAccuracyMetersPerSecond);
-		writer.writeFloat(ALTWGS84ACCUR, this.altitudeWgs84AccuracyMeters);
-		writer.writeFloat(ALTMSLACCUR, this.altitudeMslAccuracyMeters);
-		writer.writeFixed64(TIMESTAMPSEC, this.timestampSeconds);
-		writer.writeSint32(UTCOFFSET, this.utcOffsetMinutes);
-		writer.writeInt32(TYPE, this.type);
-		writer.writeString(COUNTRY, this.countryCode);
-		writer.writeString(PROVIDER, this.providerName);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeDoubleField(LAT, this.latitudeDegrees)
+			.encodeDoubleField(LON, this.longitudeDegrees)
+			.encodeDoubleField(BEARING, this.bearingDegrees)
+			.encodeDoubleField(SPEED, this.speedMetersPerSecond)
+			.encodeDoubleField(ALTWGS84, this.altitudeWgs84Meters)
+			.encodeDoubleField(ALTMSL, this.altitudeMslMeters)
+			.encodeFloatField(HORZACCUR, this.horizontalAccuracyMeters)
+			.encodeFloatField(BEARINGACCUR, this.bearingAccuracyDegrees)
+			.encodeFloatField(SPEEDACCUR, this.speedAccuracyMetersPerSecond)
+			.encodeFloatField(ALTWGS84ACCUR, this.altitudeWgs84AccuracyMeters)
+			.encodeFloatField(ALTMSLACCUR, this.altitudeMslAccuracyMeters)
+			.encodeUnsignedLongField(TIMESTAMPSEC, this.timestampSeconds)
+			.encodeSignedIntField(UTCOFFSET, this.utcOffsetMinutes)
+			.encodeUnsignedIntField(TYPE, this.type)
+			.encodeStringField(COUNTRY, this.countryCode)
+			.encodeStringField(PROVIDER, this.providerName);
 	}
 }

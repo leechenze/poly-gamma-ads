@@ -13,8 +13,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class Time {
 
-	private static final String TAG = Time.class.getSimpleName();
-
 	/**
 	 * Current time, in milliseconds since UNIX epoch, from highest quality time provider.
 	 *

@@ -2,13 +2,15 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.util.SparseArray;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.util.ArrayList;
@@ -24,9 +26,9 @@ import java.util.List;
  */
 public final class LinkAsset implements ProtobufSerializable {
 
-	private static final @Tag int URL		= ofString(1);
-	private static final @Tag int URLFB		= ofString(2);
-	private static final @Tag int TRKR		= ofString(3);
+	private static final @FieldTag int URL		= fieldTagOf(1, WIRE_LEN);
+	private static final @FieldTag int URLFB	= fieldTagOf(2, WIRE_LEN);
+	private static final @FieldTag int TRKR		= fieldTagOf(3, WIRE_LEN);
 
 	/**
 	 * Empty navigation link ad asset.
@@ -66,25 +68,27 @@ public final class LinkAsset implements ProtobufSerializable {
 	/**
 	 * Deserialize link ad asset from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized asset instance
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static LinkAsset ofProtobuf(ProtobufReader reader) {
+	public static LinkAsset ofProtobuf(ProtobufDecoder dec) {
 		String purl = "";
 		String furl = "";
 		List<String> trkUrls = new ArrayList<>();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == URL)
-				purl = reader.readString();
+				purl = dec.decodeString();
 			else if (tag == URLFB)
-				furl = reader.readString();
+				furl = dec.decodeString();
 			else if (tag == TRKR)
-				trkUrls.add(reader.readString());
+				trkUrls.add(dec.decodeString());
+			else
+				dec.skipFieldValue(tag);
 		}
 		return of(purl, furl, trkUrls);
 	}
@@ -171,9 +175,10 @@ public final class LinkAsset implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(URL, this.primaryUrl);
-		writer.writeString(URLFB, this.fallbackUrl);
-		writer.writeRepeatString(TRKR, this.trackerUrls);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(URL, this.primaryUrl)
+			.encodeStringField(URLFB, this.fallbackUrl);
+		for (String url : this.trackerUrls)
+			enc.encodeStringField(TRKR, url);
 	}
 }

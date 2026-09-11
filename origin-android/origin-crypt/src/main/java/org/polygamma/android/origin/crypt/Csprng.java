@@ -34,7 +34,21 @@ public class Csprng {
 	public static final int INPUT_ENTROPY_SIZE = ChaCha20.KEY_SIZE;
 
 	/**
-	 * Construct new generator with initial entropy.
+	 * Construct new generator without any initial entropy.
+	 * <p>The resulting generator is not seeded with any entropy, and thus should not be used to
+	 * generate random values until initial entropy is {@linkplain #mixEntropy(byte[], int, int)
+	 * mixed} and the generator is {@linkplain #reseed() reseeded}. See {@link
+	 * #ofSeed(byte[], int, int)} for initial entropy requirements.
+	 *
+	 * @return resulting generator
+	 * @since 1.2
+	 */
+	public static Csprng ofUnseeded() {
+		return new Csprng(ChaCha20.ofEmpty(), Ascon.ofHash());
+	}
+
+	/**
+	 * Construct new generator with initial entropy from subsequence of {@code byte} array.
 	 * <p>The resulting generator is initialized with {@code len} bytes of entropy from {@code
 	 * seed}, starting at position {@code off} (inclusive). When {@code len} is greater than or
 	 * equal to {@link #INPUT_ENTROPY_SIZE}, the resulting generator can be considered secure for
@@ -55,25 +69,33 @@ public class Csprng {
 	 * @since 1.2
 	 */
 	public static Csprng ofSeed(byte[] seed, int off, int len) {
-		Csprng csprng = new Csprng();
+		return ofUnseeded()
+			.mixEntropy(seed, off, len)
+			.reseed();
+	}
 
-		csprng.mixEntropy(seed, off, len);
-		csprng.reseed();
-		return csprng;
+	/**
+	 * Construct new generator with initial entropy from {@code byte} array.
+	 * <p>Shorthand for:
+	 * {@snippet :
+	 * ofSeed(seed, 0, seed.length); // @link substring="ofSeed" target="#ofSeed(byte[], int, int)"
+	 * }
+	 *
+	 * @param seed initial entropy
+	 * @return resulting generator
+	 * @since 1.2
+	 */
+	public static Csprng ofSeed(byte[] seed) {
+		return ofSeed(seed, 0, seed.length);
 	}
 
 	@VisibleForTesting
 	final ChaCha20 extractor;
 	private final Ascon compressor;
 
-	private Csprng() {
-		this.extractor = ChaCha20.ofEmpty();
-		this.compressor = Ascon.ofHash();
-	}
-
-	private Csprng(Csprng that) {
-		this.extractor = that.extractor.split();
-		this.compressor = that.compressor.split();
+	private Csprng(ChaCha20 extractor, Ascon compressor) {
+		this.extractor = extractor;
+		this.compressor = compressor;
 	}
 
 	/**
@@ -86,7 +108,21 @@ public class Csprng {
 	 * @since 1.2
 	 */
 	public Csprng split() {
-		return new Csprng(this);
+		return new Csprng(this.extractor.split(), this.compressor.split());
+	}
+
+	/**
+	 * Reset generator state.
+	 * <p>Upon return, the internal state of {@code this} is guaranteed to equal the state of an
+	 * {@linkplain #ofUnseeded() unseeded} generator.
+	 *
+	 * @return {@code this}
+	 * @since 1.2
+	 */
+	public Csprng reset() {
+		this.extractor.clear();
+		this.compressor.resetHash();
+		return this;
 	}
 
 	// Generate new extractor keystream, consuming first `KEY_SIZE` bytes for new extractor key.
@@ -126,12 +162,14 @@ public class Csprng {
 	 * @param ent entropy to mix
 	 * @param off offset, within {@code ent}, to begin loading from
 	 * @param len number of bytes of entropy to mix
+	 * @return {@code this}
 	 * @throws IndexOutOfBoundsException {@code off} or {@code len} is negative, or {@code
 	 * off + len} is greater than {@code ent.length}
 	 * @since 1.2
 	 */
-	public void mixEntropy(byte[] ent, int off, int len) {
+	public Csprng mixEntropy(byte[] ent, int off, int len) {
 		this.compressor.updateHash(ent, off, len);
+		return this;
 	}
 
 	/**
@@ -140,9 +178,10 @@ public class Csprng {
 	 * #mixEntropy(byte[], int, int) mixed} entropy. When enough entropy is mixed, invoking this
 	 * ensures forward secrecy.
 	 *
+	 * @return {@code this}
 	 * @since 1.2
 	 */
-	public void reseed() {
+	public Csprng reseed() {
 		byte[] key = new byte[ChaCha20.KEY_SIZE];
 
 		/*
@@ -165,6 +204,7 @@ public class Csprng {
 			.setCounter(0)
 			.clearNonce();
 		this.forwardExtractor();
+		return this;
 	}
 
 	/**

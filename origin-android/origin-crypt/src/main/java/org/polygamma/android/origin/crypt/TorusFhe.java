@@ -230,6 +230,7 @@ public final class TorusFhe {
 		 * @return ciphertext mask buffer or {@code null}
 		 * @since 1.2
 		 */
+		@SuppressWarnings("unused")
 		protected final @ScalarVector byte[] currentCiphertextMask() {
 			return this.currentCiphertextMask;
 		}
@@ -241,6 +242,7 @@ public final class TorusFhe {
 		 * @return offset mask coefficients will be stored from
 		 * @since 1.2
 		 */
+		@SuppressWarnings("unused")
 		protected final int currentCiphertextMaskOffset() {
 			return this.currentCiphertextMaskOffset;
 		}
@@ -497,6 +499,7 @@ public final class TorusFhe {
 		 * @return offset mask coefficients will be loaded from
 		 * @since 1.2
 		 */
+		@SuppressWarnings("unused")
 		protected final int currentCiphertextMaskOffset() {
 			return this.currentCiphertextMaskOffset;
 		}
@@ -654,8 +657,8 @@ public final class TorusFhe {
 	 * @return resulting engine
 	 * @throws IllegalArgumentException {@code n} is less than {@link #MIN_DIMENSION}, greater
 	 * than {@link #MAX_DIMENSION}, or is not a power-of-2, {@code msgMod} or {@code carryMod}
-	 * is less than {@code 1} or {@code msgMod * carryMod} overflows, or {@code logNoiseB} is less
-	 * than {@code 1} or greater than {@code 62}
+	 * is less than {@code 2} or {@code 1}, respectively, or {@code msgMod * carryMod} overflows,
+	 * or {@code logNoiseB} is less than {@code 1} or greater than {@code 62}
 	 * @since 1.2
 	 */
 	public static TorusFhe ofDimension(
@@ -697,7 +700,7 @@ public final class TorusFhe {
 
 	// Generator we source noise from.
 	@VisibleForTesting
-	public final Csprng noiseGenerator;
+    public final Csprng noiseGenerator;
 
 	// `TUniform(1, -2^{b_log2}, 2^{b_log2})`
 	@VisibleForTesting
@@ -734,7 +737,7 @@ public final class TorusFhe {
 			 * remaining for our compression to work.
 			 */
 			logNoiseB >= 1 && (logNoiseB + 2) <= BITS_PER_SCALAR &&
-			msgMod > 0 && carryMod > 0 && ptMod >= msgMod && ptMod >= carryMod
+			msgMod > 1 && carryMod > 0 && ptMod >= msgMod && ptMod >= carryMod
 		);
 		this.dimension = n;
 		this.binaryPolyMulNtt0 = binaryPolyMulNtt0;
@@ -816,6 +819,16 @@ public final class TorusFhe {
 	 */
 	public int carryModulus() {
 		return this.carryModulus;
+	}
+
+	/**
+	 * {@code log2} of T-Uniform noise bound.
+	 *
+	 * @return noise bound
+	 * @since 1.2
+	 */
+	public int logNoiseBound() {
+		return this.logNoiseBound;
 	}
 
 	// Load `i`-th scalar from vector `x` at byte position `xOff`.

@@ -26,10 +26,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.VisibleForTesting;
-import androidx.core.util.Consumer;
 
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.util.AndroidContexts;
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.Logger;
 import org.polygamma.android.origin.util.Strings;
 

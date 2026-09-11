@@ -8,7 +8,6 @@ import android.util.ArraySet;
 import android.util.Pair;
 
 import androidx.annotation.Nullable;
-import androidx.core.util.Function;
 
 import java.util.Collection;
 import java.util.Collections;

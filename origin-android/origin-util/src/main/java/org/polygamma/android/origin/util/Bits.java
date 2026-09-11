@@ -4,7 +4,6 @@ package org.polygamma.android.origin.util;
 
 import androidx.annotation.IntRange;
 
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
@@ -170,103 +169,92 @@ public class Bits {
 	}
 
 	/**
-	 * Ensure buffer has a big-endian byte order.
+	 * Load {@code short}, in little-endian byte-order, from byte array.
 	 *
-	 * @param buffer buffer to ensure byte order of
-	 * @throws IllegalArgumentException {@code buff} has a little-endian byte order
+	 * @param x array to load from
+	 * @param off offset, within {@code x}, to begin loading from
+	 * @return loaded value
+	 * @throws ArrayIndexOutOfBoundsException {@code off} is negative, or {@code off + 2} is
+	 * greater than {@code x.length}
 	 * @since 1.2
 	 */
-	public static void checkByteBufferOrderBe(ByteBuffer buffer) {
-		Preconditions.checkArgument(buffer.order() == ByteOrder.BIG_ENDIAN);
+	public static short loadShortLe(byte[] x, int off) {
+		return (short) ((x[off + 0] & 0xff) | ((x[off + 1] & 0xff) << 8));
 	}
 
 	/**
-	 * Ensure buffer has a little-endian byte order.
+	 * Load {@code short}, in big-endian byte-order, from byte array.
 	 *
-	 * @param buffer buffer to ensure byte order of
-	 * @throws IllegalArgumentException {@code buff} has a big-endian byte order
+	 * @param x array to load from
+	 * @param off offset, within {@code x}, to begin loading from
+	 * @return loaded value
+	 * @throws ArrayIndexOutOfBoundsException {@code off} is negative, or {@code off + 2} is
+	 * greater than {@code x.length}
 	 * @since 1.2
 	 */
-	public static void checkByteBufferOrderLe(ByteBuffer buffer) {
-		Preconditions.checkArgument(buffer.order() == ByteOrder.LITTLE_ENDIAN);
+	public static short loadShortBe(byte[] x, int off) {
+		return (short) (((x[off + 0] & 0xff) << 8) | (x[off + 1] & 0xff));
 	}
 
 	/**
-	 * Ensure buffer has a native byte order.
+	 * Load {@code short}, in native byte-order, from byte array.
 	 *
-	 * @param buff buffer to ensure byte order of
-	 * @throws IllegalArgumentException {@code buff} has a non-native byte order
+	 * @param x array to load from
+	 * @param off offset, within {@code x}, to begin loading from
+	 * @return loaded value
+	 * @throws ArrayIndexOutOfBoundsException {@code off} is negative, or {@code off + 2} is
+	 * greater than {@code x.length}
 	 * @since 1.2
 	 */
-	public static void checkByteBufferOrderNe(ByteBuffer buff) {
-		Preconditions.checkArgument(buff.order() == ByteOrder.nativeOrder());
+	public static short loadShort(byte[] x, int off) {
+		return LITTLE_ENDIAN ? loadShortLe(x, off) : loadShortBe(x, off);
 	}
 
 	/**
-	 * Ensure byte buffer is valid for access within a {@code byte} range.
+	 * Store {@code short} into byte array, in little-endian byte-order.
 	 *
-	 * @param buff buffer to validate
-	 * @param size number of bytes to be accessed
-	 * @return {@link ByteBuffer#position() buff.position()}
-	 * @throws IndexOutOfBoundsException {@code buff} has fewer than {@code size} bytes {@linkplain
-	 * ByteBuffer#remaining() remaining}
+	 * @param x array to store into
+	 * @param off offset, within {@code x}, to begin storing into
+	 * @param v value to store
+	 * @throws ArrayIndexOutOfBoundsException {@code off} is negative, or {@code off + 2} is
+	 * greater than {@code x.length}
 	 * @since 1.2
 	 */
-	public static int checkByteBufferAccess(ByteBuffer buff, int size) {
-		int pos = buff.position();
-
-		Preconditions.checkFromIndexSize(pos, size, buff.limit());
-		return pos;
+	public static void storeShortLe(byte[] x, int off, short v) {
+		x[off + 0] = (byte) ((v & 0xffff) & 0xff);
+		x[off + 1] = (byte) ((v & 0xffff) >>> 8);
 	}
 
 	/**
-	 * Ensure buffer is valid for access within a {@code byte} range and has a little-endian
-	 * byte-order.
+	 * Store {@code short} into byte array, in big-endian byte-order.
 	 *
-	 * @param buff buffer to validate
-	 * @param size number of bytes to be accessed
-	 * @return {@link ByteBuffer#position() buff.position()}
-	 * @throws IllegalArgumentException {@code buff} has a big-endian byte-order
-	 * @throws IndexOutOfBoundsException {@code buff} has fewer than {@code size} bytes {@linkplain
-	 * ByteBuffer#remaining() remaining}
+	 * @param x array to store into
+	 * @param off offset, within {@code x}, to begin storing into
+	 * @param v value to store
+	 * @throws ArrayIndexOutOfBoundsException {@code off} is negative, or {@code off + 2} is
+	 * greater than {@code x.length}
 	 * @since 1.2
 	 */
-	public static int checkByteBufferAccessLe(ByteBuffer buff, int size) {
-		checkByteBufferOrderLe(buff);
-		return checkByteBufferAccess(buff, size);
+	public static void storeShortBe(byte[] x, int off, short v) {
+		x[off + 0] = (byte) ((v & 0xffff) >>> 8);
+		x[off + 1] = (byte) ((v & 0xffff) & 0xff);
 	}
 
 	/**
-	 * Ensure buffer is valid for access within a {@code byte} range and has a big-endian
-	 * byte-order.
+	 * Store {@code short} into byte array, in native byte-order.
 	 *
-	 * @param buff buffer to validate
-	 * @param size number of bytes to be accessed
-	 * @return {@link ByteBuffer#position() buff.position()}
-	 * @throws IllegalArgumentException {@code buff} has a little-endian byte-order
-	 * @throws IndexOutOfBoundsException {@code buff} has fewer than {@code size} bytes {@linkplain
-	 * ByteBuffer#remaining() remaining}
+	 * @param x array to store into
+	 * @param off offset, within {@code x}, to begin storing into
+	 * @param v value to store
+	 * @throws ArrayIndexOutOfBoundsException {@code off} is negative, or {@code off + 2} is
+	 * greater than {@code x.length}
 	 * @since 1.2
 	 */
-	public static int checkByteBufferAccessBe(ByteBuffer buff, int size) {
-		checkByteBufferOrderBe(buff);
-		return checkByteBufferAccess(buff, size);
-	}
-
-	/**
-	 * Ensure buffer is valid for access within a {@code byte} range and has a native byte-order.
-	 *
-	 * @param buff buffer to validate
-	 * @param size number of bytes to be accessed
-	 * @return {@link ByteBuffer#position() buff.position()}
-	 * @throws IllegalArgumentException {@code buff} has a non-native byte-order
-	 * @throws IndexOutOfBoundsException {@code buff} has fewer than {@code size} bytes {@linkplain
-	 * ByteBuffer#remaining() remaining}
-	 * @since 1.2
-	 */
-	public static int checkByteBufferAccessNe(ByteBuffer buff, int size) {
-		checkByteBufferOrderNe(buff);
-		return checkByteBufferAccess(buff, size);
+	public static void storeShort(byte[] x, int off, short v) {
+		if (LITTLE_ENDIAN)
+			storeShortLe(x, off, v);
+		else
+			storeShortBe(x, off, v);
 	}
 
 	/**
@@ -461,6 +449,31 @@ public class Bits {
 			storeLongLe(x, off, v);
 		else
 			storeLongBe(x, off, v);
+	}
+
+	/**
+	 * Copy {@code long} values, in native byte-order, from byte array into another with byte-order
+	 * swapped.
+	 * <p>This copies {@code n} {@code long} values loaded from {@code src}, in native byte-order
+	 * starting at position {@code srcOff} (inclusive), into {@code dst}, in swapped
+	 * byte-order starting at position {@code dstOff} (inclusive).
+	 *
+	 * @param dst array to store into
+	 * @param dstOff offset, within {@code dst}, to begin storing into
+	 * @param src array to load from
+	 * @param srcOff offset, within {@code src}, to begin loading from
+	 * @param n number of {@code long} values to copy
+	 * @throws IndexOutOfBoundsException {@code dstOff}, {@code srcOff}, or {@code n} is negative,
+	 * or, {@code dstOff + n * 8} or {@code srcOff + n * 8} is greater than {@code dst.length} or
+	 * {@code src.length}, respectively
+	 * @since 1.2
+	 */
+	public static void copyLongsSwab(byte[] dst, int dstOff, byte[] src, int srcOff, int n) {
+		Preconditions.checkFromIndexSize(dstOff, n * 8, dst.length);
+		Preconditions.checkFromIndexSize(srcOff, n * 8, src.length);
+
+		for (int i = 0; i < n; i++)
+			storeLong(dst, dstOff + i * 8, Long.reverseBytes(loadLong(src, srcOff + i * 8)));
 	}
 
 	/**

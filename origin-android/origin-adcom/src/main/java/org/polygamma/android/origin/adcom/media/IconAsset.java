@@ -2,7 +2,10 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_FIXED32;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import androidx.annotation.Dimension;
 import androidx.annotation.Px;
@@ -10,9 +13,10 @@ import androidx.annotation.ReturnThis;
 
 import org.polygamma.android.origin.adcom.enums.AdApiCode;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.util.ArrayList;
@@ -26,20 +30,20 @@ import java.util.List;
  */
 public final class IconAsset implements ProtobufSerializable {
 
-	private static final @Tag int PROGRAM		= ofString(  1);
-	private static final @Tag int ALT			= ofString(  2);
-	private static final @Tag int TOOLTIP		= ofString(  3);
-	private static final @Tag int PXRATIO		= ofFloat(   4);
-	private static final @Tag int W				= ofInt32(   5);
-	private static final @Tag int H				= ofInt32(   6);
-	private static final @Tag int X				= ofInt32(   7);
-	private static final @Tag int Y				= ofInt32(   8);
-	private static final @Tag int DUR			= ofInt64(   9);
-	private static final @Tag int OFF			= ofInt64(  10);
-	private static final @Tag int API			= ofInt32(  11);
-	private static final @Tag int EVENT			= ofMessage(12);
-	private static final @Tag int LINK			= ofMessage(13);
-	private static final @Tag int DISPLAY		= ofMessage(14);
+	private static final @FieldTag int PROGRAM		= fieldTagOf( 1, WIRE_LEN);
+	private static final @FieldTag int ALT			= fieldTagOf( 2, WIRE_LEN);
+	private static final @FieldTag int TOOLTIP		= fieldTagOf( 3, WIRE_LEN);
+	private static final @FieldTag int PXRATIO		= fieldTagOf( 4, WIRE_FIXED32);
+	private static final @FieldTag int W			= fieldTagOf( 5, WIRE_VARINT);
+	private static final @FieldTag int H			= fieldTagOf( 6, WIRE_VARINT);
+	private static final @FieldTag int X			= fieldTagOf( 7, WIRE_VARINT);
+	private static final @FieldTag int Y			= fieldTagOf( 8, WIRE_VARINT);
+	private static final @FieldTag int DUR			= fieldTagOf( 9, WIRE_VARINT);
+	private static final @FieldTag int OFF			= fieldTagOf(10, WIRE_VARINT);
+	private static final @FieldTag int API			= fieldTagOf(11, WIRE_VARINT);
+	private static final @FieldTag int EVENT		= fieldTagOf(12, WIRE_LEN);
+	private static final @FieldTag int LINK			= fieldTagOf(13, WIRE_LEN);
+	private static final @FieldTag int DISPLAY		= fieldTagOf(14, WIRE_LEN);
 
 	private static final IconAsset DEFAULT = new IconAsset();
 
@@ -301,47 +305,49 @@ public final class IconAsset implements ProtobufSerializable {
 	/**
 	 * Deserialize icon media from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized icon media
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static IconAsset ofProtobuf(ProtobufReader reader) {
+	public static IconAsset ofProtobuf(ProtobufDecoder dec) {
 		IconAsset rv = new IconAsset(DEFAULT);
 		List<AdEventTracker> trkr = new ArrayList<>(0);
 		List<IconDisplayAsset> display = new ArrayList<>(0);
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == PROGRAM) {
-				rv.programName = reader.readString();
+				rv.programName = dec.decodeString();
 			} else if (tag == ALT) {
-				rv.alternativeText = reader.readString();
+				rv.alternativeText = dec.decodeString();
 			} else if (tag == TOOLTIP) {
-				rv.tooltipText = reader.readString();
+				rv.tooltipText = dec.decodeString();
 			} else if (tag == PXRATIO) {
-				rv.pixelRatio = reader.readFloat();
+				rv.pixelRatio = dec.decodeFloat();
 			} else if (tag == W) {
-				rv.widthPx = reader.readInt32();
+				rv.widthPx = dec.decodeUint32();
 			} else if (tag == H) {
-				rv.heightPx = reader.readInt32();
+				rv.heightPx = dec.decodeUint32();
 			} else if (tag == X) {
-				rv.xOffsetDp = reader.readInt32();
+				rv.xOffsetDp = dec.decodeUint32();
 			} else if (tag == Y) {
-				rv.yOffsetDp = reader.readInt32();
+				rv.yOffsetDp = dec.decodeUint32();
 			} else if (tag == DUR) {
-				rv.showDurationSeconds = reader.readInt64();
+				rv.showDurationSeconds = dec.decodeUint64();
 			} else if (tag == OFF) {
-				rv.offsetDurationSeconds = reader.readInt64();
+				rv.offsetDurationSeconds = dec.decodeUint64();
 			} else if (tag == API) {
-				rv.requiredAdApi = reader.readInt32();
+				rv.requiredAdApi = dec.decodeUint32();
 			} else if (tag == EVENT) {
-				trkr.add(reader.readLen(AdEventTracker::ofProtobuf));
+				trkr.add(dec.decodeLen(AdEventTracker::ofProtobuf));
 			} else if (tag == LINK) {
-				rv.link = reader.readLen(LinkAsset::ofProtobuf);
+				rv.link = dec.decodeLen(LinkAsset::ofProtobuf);
 			} else if (tag == DISPLAY) {
-				display.add(reader.readLen(IconDisplayAsset::ofProtobuf));
+				display.add(dec.decodeLen(IconDisplayAsset::ofProtobuf));
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		rv.eventTrackers = CollectionsCompat.toArrayOrEmpty(trkr, DEFAULT.eventTrackers);
@@ -576,20 +582,22 @@ public final class IconAsset implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(PROGRAM, this.programName);
-		writer.writeString(ALT, this.alternativeText);
-		writer.writeString(TOOLTIP, this.tooltipText);
-		writer.writeFloat(PXRATIO, this.pixelRatio);
-		writer.writeInt32(W, this.widthPx);
-		writer.writeInt32(H, this.heightPx);
-		writer.writeInt32(X, this.xOffsetDp);
-		writer.writeInt32(Y, this.yOffsetDp);
-		writer.writeInt64(DUR, this.showDurationSeconds);
-		writer.writeInt64(OFF, this.offsetDurationSeconds);
-		writer.writeInt64(API, this.requiredAdApi);
-		writer.writeRepeatLen(EVENT, this.eventTrackers);
-		writer.writeLen(LINK, this.link);
-		writer.writeRepeatLen(DISPLAY, this.display);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(PROGRAM, this.programName)
+			.encodeStringField(ALT, this.alternativeText)
+			.encodeStringField(TOOLTIP, this.tooltipText)
+			.encodeFloatField(PXRATIO, this.pixelRatio)
+			.encodeUnsignedIntField(W, this.widthPx)
+			.encodeUnsignedIntField(H, this.heightPx)
+			.encodeUnsignedIntField(X, this.xOffsetDp)
+			.encodeUnsignedIntField(Y, this.yOffsetDp)
+			.encodeUnsignedLongField(DUR, this.showDurationSeconds)
+			.encodeUnsignedLongField(OFF, this.offsetDurationSeconds)
+			.encodeUnsignedIntField(API, this.requiredAdApi)
+			.encodeMessageField(LINK, this.link);
+		for (AdEventTracker trkr : this.eventTrackers)
+			enc.encodeMessageField(EVENT, trkr);
+		for (IconDisplayAsset asset : this.display)
+			enc.encodeMessageField(DISPLAY, asset);
 	}
 }

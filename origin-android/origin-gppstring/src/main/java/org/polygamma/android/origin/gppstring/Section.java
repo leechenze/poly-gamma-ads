@@ -8,8 +8,8 @@ import android.util.Pair;
 import android.util.SparseArray;
 
 import androidx.annotation.Nullable;
-import androidx.core.util.Consumer;
 
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.Preconditions;
 
 import java.util.Arrays;

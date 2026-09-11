@@ -13,14 +13,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.WorkerThread;
-import androidx.core.util.Consumer;
-import androidx.core.util.Function;
 
-import org.polygamma.android.origin.protobuf.ProtobufDeserializer;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.Flate;
+import org.polygamma.android.origin.util.Function;
 import org.polygamma.android.origin.util.Logger;
 import org.polygamma.android.origin.util.Preconditions;
 
@@ -376,13 +375,13 @@ public class OriginModule {
 
 	/**
 	 * Load persistent module settings {@code byte} array.
-	 * <p>Variant of {@link #loadSettings(ProtobufDeserializer)}; however, the raw settings value
+	 * <p>Variant of {@link #loadSettings(Function)}; however, the raw settings value
 	 * is returned. If settings are present, a non-{@code null} buffer is returned, containing the
 	 * settings value; otherwise, this returns {@code null}.
 	 *
 	 * @return settings value buffer or {@code null} if settings were not found
 	 * @since 1.2
-	 * @see #loadSettings(ProtobufDeserializer)
+	 * @see #loadSettings(Function)
 	 */
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
 	protected final @Nullable ByteBuffer loadSettings() {
@@ -397,7 +396,7 @@ public class OriginModule {
 				ByteBuffer.wrap(Base64.decode(val, SETTINGS_BASE64_FLAGS)),
 				true
 			);
-		} catch (RuntimeException err) {
+		} catch (Exception err) {
 			Logger.debug(TAG, "failed to load settings for module %s", this.name, err);
 			settings.edit()
 				.remove(this.settingsKey())
@@ -452,14 +451,14 @@ public class OriginModule {
 	 */
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
 	@SuppressWarnings("overloads")
-	protected final <T> @Nullable T loadSettings(ProtobufDeserializer<T> deser) {
+	protected final <T> @Nullable T loadSettings(Function<ProtobufDecoder, T> deser) {
 		ByteBuffer rv = this.loadSettings();
 
 		if (rv == null)
 			return null;
 		try {
-			return deser.ofProtobuf(new ProtobufReader(rv));
-		} catch (RuntimeException cause) {
+			return deser.apply(ProtobufDecoder.ofBuffer(rv));
+		} catch (Exception cause) {
 			Logger.debug(TAG, "failed to load settings for module %s", this.name, cause);
 			return null;
 		}
@@ -474,11 +473,14 @@ public class OriginModule {
 	 *
 	 * @param val settings to store
 	 * @since 1.2
-	 * @see #loadSettings(ProtobufDeserializer)
+	 * @see #loadSettings(Function)
 	 */
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
 	protected final void storeSettings(ProtobufSerializable val) {
-		this.storeSettings(ProtobufWriter.serialize(val));
+		ProtobufEncoder enc = ProtobufEncoder.of();
+
+		val.toProtobuf(enc);
+		this.storeSettings(enc.asBuffer());
 	}
 
 	/**

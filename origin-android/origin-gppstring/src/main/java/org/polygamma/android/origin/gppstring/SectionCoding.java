@@ -10,8 +10,7 @@ import android.util.Base64;
 import android.util.Pair;
 import android.util.SparseArray;
 
-import androidx.core.util.Consumer;
-
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.Preconditions;
 import org.polygamma.android.origin.util.Strings;
 

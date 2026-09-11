@@ -10,7 +10,6 @@ import android.view.Display;
 import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.util.Function;
 
 /**
  * Utility {@linkplain Context context} definitions.

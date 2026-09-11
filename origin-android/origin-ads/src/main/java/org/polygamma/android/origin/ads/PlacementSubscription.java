@@ -5,12 +5,12 @@ package org.polygamma.android.origin.ads;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
-import androidx.core.util.Consumer;
 
 import org.polygamma.android.origin.adcom.placement.AdFormat;
 import org.polygamma.android.origin.adcom.placement.DisplayAdFormat;
 import org.polygamma.android.origin.adcom.placement.Placement;
 import org.polygamma.android.origin.adcom.placement.PlaybackAdFormat;
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.Preconditions;
 
 import java.lang.ref.ReferenceQueue;

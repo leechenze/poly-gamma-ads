@@ -324,15 +324,6 @@ public final class HttpModule extends OriginModule {
 			return this;
 		}
 
-		/**
-		 * Maximum cache size, in bytes.
-		 *
-		 * @return cache size
-		 */
-		@IntRange(from = 1) long maxCacheSizeBytes() {
-			return this.maxCacheSizeBytes;
-		}
-
 		@Override
 		protected HttpModule load(Origin sdk, Context ctxt) {
 			return new HttpModule(sdk, this.maxCacheSizeBytes);

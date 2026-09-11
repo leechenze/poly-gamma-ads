@@ -10,13 +10,10 @@ import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomContext;
 
 import java.util.Arrays;
@@ -27,7 +24,7 @@ import java.util.Arrays;
 @RunWith(AndroidJUnit4.class)
 public class DeviceTest {
 	@Test
-	public void testSerde() throws InvalidProtocolBufferException {
+	public void testSerde() {
 		Device exp = Device.ofBuilder()
 			.type(AdComEnums.DevicePhone)
 			.limitAdTracking(true)
@@ -61,11 +58,12 @@ public class DeviceTest {
 			.nightMode(true)
 			.landscape(true)
 			.build();
-		Device got = Device.ofProtobuf(new ProtobufReader(
-			AdcomContext.Device.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		Device got = TestUtil.encodeAndDecode(
+			exp,
+			Device::toProtobuf,
+			Device::ofProtobuf,
+			AdcomContext.Device::parseFrom
+		);
 
 		assertEquals(AdComEnums.DevicePhone, got.type());
 		assertTrue(got.limitAdTracking());

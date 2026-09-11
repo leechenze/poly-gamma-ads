@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
 
 import android.content.Context;
 import android.util.Pair;
@@ -15,10 +16,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.polygamma.android.origin.protobuf.ProtobufField;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 
 import java.io.File;
 
@@ -71,16 +73,20 @@ public class OriginModuleTest extends TestWithSdk {
 	}
 
 	private static class TestSettings implements ProtobufSerializable {
-		private static final @ProtobufField.Tag int VALUE = ProtobufField.ofString(1);
+		private static final @FieldTag int VALUE = Protobuf.fieldTagOf(1, WIRE_LEN);
 
 		static final TestSettings EMPTY = new TestSettings("");
 
-		static TestSettings ofProtobuf(ProtobufReader reader) {
+		static TestSettings ofProtobuf(ProtobufDecoder dec) {
 			String val = "";
 
-			while (reader.hasRemaining()) {
-				if (reader.readTag() == VALUE)
-					val = reader.readString();
+			while (dec.hasRemaining()) {
+				int tag = dec.decodeFieldTag();
+
+				if (tag == VALUE)
+					val = dec.decodeString();
+				else
+					dec.skipFieldValue(tag);
 			}
 			return new TestSettings(val);
 		}
@@ -92,8 +98,8 @@ public class OriginModuleTest extends TestWithSdk {
 		}
 
 		@Override
-		public void toProtobuf(ProtobufWriter writer) {
-			writer.writeString(VALUE, this.value);
+		public void toProtobuf(ProtobufEncoder enc) {
+			enc.encodeStringField(VALUE, this.value);
 		}
 	}
 

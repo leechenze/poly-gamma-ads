@@ -18,7 +18,6 @@ import android.os.SystemClock;
 import android.os.ext.SdkExtensions;
 
 import androidx.annotation.Nullable;
-import androidx.core.util.Supplier;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 
@@ -27,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.polygamma.android.origin.util.Strings;
+import org.polygamma.android.origin.util.Supplier;
 
 import java.net.URL;
 import java.nio.ByteBuffer;

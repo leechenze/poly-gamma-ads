@@ -2,14 +2,17 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.util.Collection;
@@ -22,25 +25,25 @@ import java.util.Collection;
  */
 public class Ad implements ProtobufSerializable {
 
-	private static final @Tag int ID			= ofString(       1);
-	/*private static final @Tag int ADOMAIN		= ofString(       2);*/
-	/*private static final @Tag int BUNDLE		= ofString(       3);*/
-	/*private static final @Tag int IURL		= ofString(       4);*/
-	/*private static final @Tag int CAT			= ofString(       5);*/
-	/*private static final @Tag int CATTAX		= ofInt32(        6);*/
-	/*private static final @Tag int LANG		= ofString(       7);*/
-	/*private static final @Tag int ATTR		= ofPackedInt32(  8);*/
-	private static final @Tag int SECURE		= ofBool(         9);
-	/*private static final @Tag int MRATING		= ofInt32(       10);*/
-	/*private static final @Tag int INIT		= ofFixed64(     11);*/
-	/*private static final @Tag int LASTMOD		= ofFixed64(     12);*/
-	private static final @Tag int DISPLAY		= ofMessage(     13);
-	private static final @Tag int VIDEO			= ofMessage(     14);
-	private static final @Tag int AUDIO			= ofMessage(     15);
-	/*private static final @Tag int AUDIT		= ofMessage(     16);*/
-	private static final @Tag int SERVEID		= ofString(     500);
-	/*private static final @Tag int SERVERNAME	= ofString(     501);*/
-	/*private static final @Tag int SERVERVER	= ofString(     502);*/
+	private static final @FieldTag int ID			= fieldTagOf(  1, WIRE_LEN);
+	/*private static final @FieldTag int ADOMAIN	= fieldTagOf(  2, WIRE_LEN);*/
+	/*private static final @FieldTag int BUNDLE		= fieldTagOf(  3, WIRE_LEN);*/
+	/*private static final @FieldTag int IURL		= fieldTagOf(  4, WIRE_LEN);*/
+	/*private static final @FieldTag int CAT		= fieldTagOf(  5, WIRE_LEN);*/
+	/*private static final @FieldTag int CATTAX		= fieldTagOf(  6, WIRE_VARINT);*/
+	/*private static final @FieldTag int LANG		= fieldTagOf(  7, WIRE_LEN);*/
+	/*private static final @FieldTag int ATTR		= fieldTagOf(  8, WIRE_LEN);*/
+	private static final @FieldTag int SECURE		= fieldTagOf(  9, WIRE_VARINT);
+	/*private static final @FieldTag int MRATING	= fieldTagOf( 10, WIRE_VARINT);*/
+	/*private static final @FieldTag int INIT		= fieldTagOf( 11, WIRE_FIXED64);*/
+	/*private static final @FieldTag int LASTMOD	= fieldTagOf( 12, WIRE_FIXED64);*/
+	private static final @FieldTag int DISPLAY		= fieldTagOf( 13, WIRE_LEN);
+	private static final @FieldTag int VIDEO		= fieldTagOf( 14, WIRE_LEN);
+	private static final @FieldTag int AUDIO		= fieldTagOf( 15, WIRE_LEN);
+	/*private static final @FieldTag int AUDIT		= fieldTagOf( 16, WIRE_LEN);*/
+	private static final @FieldTag int SERVEID		= fieldTagOf(500, WIRE_LEN);
+	/*private static final @FieldTag int SERVERNAME	= fieldTagOf(501, WIRE_LEN);*/
+	/*private static final @FieldTag int SERVERVER	= fieldTagOf(502, WIRE_LEN);*/
 
 	private static final Ad DEFAULT = new Ad((Void) null);
 
@@ -57,34 +60,34 @@ public class Ad implements ProtobufSerializable {
 	/**
 	 * Deserialize ad from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized ad
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static Ad ofProtobuf(ProtobufReader reader) {
+	public static Ad ofProtobuf(ProtobufDecoder dec) {
 		String id = "";
 		String serveId = "";
 		boolean secure = false;
 		Ad rv = null;
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == ID) {
-				id = reader.readString();
+				id = dec.decodeString();
 			} else if (tag == SERVEID) {
-				serveId = reader.readString();
+				serveId = dec.decodeString();
 			} else if (tag == SECURE) {
-				secure = reader.readBool();
-			} else if (tag == AUDIO || tag == DISPLAY || tag == VIDEO) {
-				int cookie = reader.beginReadLen();
-
-				rv =
-					tag == DISPLAY ? DisplayAd.ofDisplayAdProtobuf(reader) :
-					tag == AUDIO ? PlaybackAd.ofAudioAdProtobuf(reader) :
-					PlaybackAd.ofVideoAdProtobuf(reader);
-				reader.endReadLen(cookie);
+				secure = dec.decodeBool();
+			} else if (tag == AUDIO) {
+				rv = dec.decodeLen(PlaybackAd::ofAudioAdProtobuf);
+			} else if (tag == DISPLAY) {
+				rv = dec.decodeLen(DisplayAd::ofDisplayAdProtobuf);
+			} else if (tag == VIDEO) {
+				rv = dec.decodeLen(PlaybackAd::ofVideoAdProtobuf);
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		if (rv == null)
@@ -232,21 +235,18 @@ public class Ad implements ProtobufSerializable {
 	}
 
 	@Override
-	public final void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(ID, this.id);
-		writer.writeString(SERVEID, this.serveId);
-		writer.writeBool(SECURE, this.secure);
+	public final void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(ID, this.id)
+			.encodeStringField(SERVEID, this.serveId)
+			.encodeBoolField(SECURE, this.secure);
 
 		if (this instanceof DisplayAd) {
-			long cookie = writer.beginWriteLen(DISPLAY);
-
-			((DisplayAd) this).toDisplayAdProtobuf(writer);
-			writer.endWriteLen(cookie);
+			enc.encodeLenField(DISPLAY, (DisplayAd) this, DisplayAd::toDisplayAdProtobuf);
 		} else if (this instanceof PlaybackAd) {
-			long cookie = writer.beginWriteLen(((PlaybackAd) this).isAudioAd() ? AUDIO : VIDEO);
-
-			((PlaybackAd) this).toAudioOrVideoAdProtobuf(writer);
-			writer.endWriteLen(cookie);
+			enc.encodeLenField(
+				((PlaybackAd) this).isAudioAd() ? AUDIO : VIDEO, (PlaybackAd) this,
+				PlaybackAd::toAudioOrVideoAdProtobuf
+			);
 		}
 	}
 }

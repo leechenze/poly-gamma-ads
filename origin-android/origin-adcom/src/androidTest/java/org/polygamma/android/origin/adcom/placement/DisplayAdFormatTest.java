@@ -8,13 +8,10 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomPlacement;
 
 import java.util.Arrays;
@@ -25,7 +22,7 @@ import java.util.Arrays;
 @RunWith(AndroidJUnit4.class)
 public class DisplayAdFormatTest {
 	@Test
-	public void testSerde() throws InvalidProtocolBufferException {
+	public void testSerde() {
 		DisplayAdFormat exp = DisplayAdFormat.ofBuilder()
 			.supportedMimes(Arrays.asList("text/html", "application/javascript", "text/css"))
 			.supportedAdApis(AdComEnums.AdApiMraid30, AdComEnums.AdApiOmid10)
@@ -46,11 +43,12 @@ public class DisplayAdFormatTest {
 			))
 			.interstitial(true)
 			.build();
-		DisplayAdFormat got = DisplayAdFormat.ofProtobuf(new ProtobufReader(
-			AdcomPlacement.DisplayAdFormat.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		DisplayAdFormat got = TestUtil.encodeAndDecode(
+			exp,
+			DisplayAdFormat::toProtobuf,
+			DisplayAdFormat::ofProtobuf,
+			AdcomPlacement.DisplayAdFormat::parseFrom
+		);
 
 		assertEquals(3, exp.supportedMimeCount());
 		assertEquals("text/html", exp.supportedMime(0));

@@ -2,7 +2,9 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.util.ArrayMap;
 import android.util.Pair;
@@ -12,9 +14,10 @@ import androidx.annotation.ReturnThis;
 
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.CompanionRequirementType;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 import org.polygamma.android.origin.util.Preconditions;
 
@@ -30,21 +33,21 @@ import java.util.Map;
  */
 public class PlaybackCreative implements ProtobufSerializable {
 
-	private static final @Tag int ID				= ofString(    1);
-	private static final @Tag int SEQ				= ofInt32(     2);
-	private static final @Tag int LINEAR			= ofMessage(   3);
-	private static final @Tag int OVERLAY			= ofMessage(   4);
-	private static final @Tag int COMPREQ			= ofInt32(     5);
-	private static final @Tag int COMP				= ofMessage(   6);
+	private static final @FieldTag int ID				= fieldTagOf(1, WIRE_LEN);
+	private static final @FieldTag int SEQ				= fieldTagOf(2, WIRE_VARINT);
+	private static final @FieldTag int LINEAR			= fieldTagOf(3, WIRE_LEN);
+	private static final @FieldTag int OVERLAY			= fieldTagOf(4, WIRE_LEN);
+	private static final @FieldTag int COMPREQ			= fieldTagOf(5, WIRE_VARINT);
+	private static final @FieldTag int COMP				= fieldTagOf(6, WIRE_LEN);
 
 	// `LinearCreative`
-	private static final @Tag int LINEAR_LINK		= ofMessage(   1);
-	private static final @Tag int LINEAR_DUR		= ofInt64(     2);
-	private static final @Tag int LINEAR_SKIPOFF	= ofInt64(     3);
-	private static final @Tag int LINEAR_ASSET		= ofMessage(   4);
-	private static final @Tag int LINEAR_ICON		= ofMessage(   5);
-	private static final @Tag int LINEAR_EVENT		= ofMessage(   6);
-	private static final @Tag int LINEAR_UNIVID		= ofStringPair(7);
+	private static final @FieldTag int LINEAR_LINK		= fieldTagOf(1, WIRE_LEN);
+	private static final @FieldTag int LINEAR_DUR		= fieldTagOf(2, WIRE_VARINT);
+	private static final @FieldTag int LINEAR_SKIPOFF	= fieldTagOf(3, WIRE_VARINT);
+	private static final @FieldTag int LINEAR_ASSET		= fieldTagOf(4, WIRE_LEN);
+	private static final @FieldTag int LINEAR_ICON		= fieldTagOf(5, WIRE_LEN);
+	private static final @FieldTag int LINEAR_EVENT		= fieldTagOf(6, WIRE_LEN);
+	private static final @FieldTag int LINEAR_UNIVID	= fieldTagOf(7, WIRE_LEN);
 
 	/**
 	 * Creative media is overlay.
@@ -355,80 +358,38 @@ public class PlaybackCreative implements ProtobufSerializable {
 		return DEFAULT_OVERLAY.toBuilder();
 	}
 
-	private static void
-	deserializeLinearCreativeProtobuf(PlaybackCreative dst, ProtobufReader src) {
-		List<IconAsset> icons = new ArrayList<>(0);
-		List<LinearAsset> assets = new ArrayList<>(0);
-		List<AdEventTracker> trkr = new ArrayList<>(0);
-		ArrayMap<String, String> univIds = new ArrayMap<>(0);
-
-		dst.configureLinear();
-		while (src.hasRemaining()) {
-			int tag = src.readTag();
-
-			if (tag == LINEAR_LINK) {
-				dst.link = src.readLen(LinkAsset::ofProtobuf);
-			} else if (tag == LINEAR_DUR) {
-				dst.linearPlaybackDurationSeconds = src.readInt64();
-			} else if (tag == LINEAR_SKIPOFF) {
-				dst.linearSkipOffsetSeconds = src.readInt64();
-			} else if (tag == LINEAR_ASSET) {
-				assets.add(src.readLen(LinearAsset::ofProtobuf));
-			} else if (tag == LINEAR_ICON) {
-				icons.add(src.readLen(IconAsset::ofProtobuf));
-			} else if (tag == LINEAR_EVENT) {
-				trkr.add(src.readLen(AdEventTracker::ofProtobuf));
-			} else if (tag == LINEAR_UNIVID) {
-				Pair<String, String> univId = src.readStringPair();
-
-				univIds.put(univId.first, univId.second);
-			}
-		}
-		dst.icons = CollectionsCompat.toArrayOrEmpty(icons, DEFAULT_LINEAR.icons);
-		dst.data = CollectionsCompat.toArrayOrEmpty(assets, DEFAULT_LINEAR.linearAssets());
-		dst.eventTrackers = CollectionsCompat.toArrayOrEmpty(trkr, DEFAULT_LINEAR.eventTrackers);
-		dst.universalAdIds = univIds.isEmpty() ? DEFAULT_LINEAR.universalAdIds : univIds;
-	}
-
 	/**
 	 * Deserialize {@linkplain #isLinear() linear} or {@linkplain #isOverlay() overlay} creative
 	 * from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized creative
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static PlaybackCreative ofProtobuf(ProtobufReader reader) {
+	public static PlaybackCreative ofProtobuf(ProtobufDecoder dec) {
 		PlaybackCreative rv = new PlaybackCreative(DEFAULT_LINEAR);
 		List<CompanionAd> comp = new ArrayList<>(0);
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == ID) {
-				rv.id = reader.readString();
+				rv.id = dec.decodeString();
 			} else if (tag == SEQ) {
 				rv.sequenceAndFlags =
 					(rv.sequenceAndFlags & FLAG_OVERLAY) |
-					Math.max(0, reader.readInt32());
+					Math.max(0, dec.decodeUint32());
 			} else if (tag == LINEAR) {
-				int cookie = reader.beginReadLen();
-
-				deserializeLinearCreativeProtobuf(rv, reader);
-				reader.endReadLen(cookie);
+				dec.decodeLen(rv, PlaybackCreative::mergeLinearCreativeProtobuf);
 			} else if (tag == OVERLAY) {
-				int cookie = reader.beginReadLen();
-
-				rv.configureOverlay(DisplayAd.ofDisplayAdProtobuf(reader));
-				reader.endReadLen(cookie);
+				rv.configureOverlay(dec.decodeLen(DisplayAd::ofDisplayAdProtobuf));
 			} else if (tag == COMPREQ) {
-				rv.companionRequirement = reader.readInt32();
+				rv.companionRequirement = dec.decodeUint32();
 			} else if (tag == COMP) {
-				int cookie = reader.beginReadLen();
-
-				comp.add(CompanionAd.ofProtobuf(reader));
-				reader.endReadLen(cookie);
+				comp.add(dec.decodeLen(CompanionAd::ofProtobuf));
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		rv.companions = CollectionsCompat.toArrayOrEmpty(comp, DEFAULT_LINEAR.companions);
@@ -473,11 +434,54 @@ public class PlaybackCreative implements ProtobufSerializable {
 		this.icons = that.icons;
 	}
 
-	/**
-	 * Configure {@code this} as an overlay creative.
-	 *
-	 * @param display underlying display overlay media
-	 */
+	// Configure creative as a linear creative.
+	private void configureLinear() {
+		this.sequenceAndFlags &= ~FLAG_OVERLAY;
+		this.data = DEFAULT_LINEAR.data;
+		this.universalAdIds = DEFAULT_LINEAR.universalAdIds;
+		this.link = DEFAULT_LINEAR.link;
+		this.eventTrackers = DEFAULT_LINEAR.eventTrackers;
+		this.icons = DEFAULT_LINEAR.icons;
+	}
+
+	private PlaybackCreative mergeLinearCreativeProtobuf(ProtobufDecoder src) {
+		List<IconAsset> icons = new ArrayList<>(0);
+		List<LinearAsset> assets = new ArrayList<>(0);
+		List<AdEventTracker> trkr = new ArrayList<>(0);
+		ArrayMap<String, String> univIds = new ArrayMap<>(0);
+
+		this.configureLinear();
+		while (src.hasRemaining()) {
+			int tag = src.decodeFieldTag();
+
+			if (tag == LINEAR_LINK) {
+				this.link = src.decodeLen(LinkAsset::ofProtobuf);
+			} else if (tag == LINEAR_DUR) {
+				this.linearPlaybackDurationSeconds = src.decodeUint64();
+			} else if (tag == LINEAR_SKIPOFF) {
+				this.linearSkipOffsetSeconds = src.decodeUint64();
+			} else if (tag == LINEAR_ASSET) {
+				assets.add(src.decodeLen(LinearAsset::ofProtobuf));
+			} else if (tag == LINEAR_ICON) {
+				icons.add(src.decodeLen(IconAsset::ofProtobuf));
+			} else if (tag == LINEAR_EVENT) {
+				trkr.add(src.decodeLen(AdEventTracker::ofProtobuf));
+			} else if (tag == LINEAR_UNIVID) {
+				Pair<String, String> univId = src.decodeStringPair();
+
+				univIds.put(univId.first, univId.second);
+			} else {
+				src.skipFieldValue(tag);
+			}
+		}
+		this.icons = CollectionsCompat.toArrayOrEmpty(icons, DEFAULT_LINEAR.icons);
+		this.data = CollectionsCompat.toArrayOrEmpty(assets, DEFAULT_LINEAR.linearAssets());
+		this.eventTrackers = CollectionsCompat.toArrayOrEmpty(trkr, DEFAULT_LINEAR.eventTrackers);
+		this.universalAdIds = univIds.isEmpty() ? DEFAULT_LINEAR.universalAdIds : univIds;
+		return this;
+	}
+
+	// Configure {@code this} as an overlay creative.
 	private void configureOverlay(DisplayAd display) {
 		this.sequenceAndFlags |= FLAG_OVERLAY;
 		this.data = display;
@@ -488,18 +492,6 @@ public class PlaybackCreative implements ProtobufSerializable {
 			LinkAsset.of();
 		this.eventTrackers = display.eventTrackers();
 		this.icons = DEFAULT_OVERLAY.icons;
-	}
-
-	/**
-	 * Configure creative as a linear creative.
-	 */
-	private void configureLinear() {
-		this.sequenceAndFlags &= ~FLAG_OVERLAY;
-		this.data = DEFAULT_LINEAR.data;
-		this.universalAdIds = DEFAULT_LINEAR.universalAdIds;
-		this.link = DEFAULT_LINEAR.link;
-		this.eventTrackers = DEFAULT_LINEAR.eventTrackers;
-		this.icons = DEFAULT_LINEAR.icons;
 	}
 
 	/**
@@ -849,30 +841,33 @@ public class PlaybackCreative implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(ID, this.id);
-		writer.writeInt32(SEQ, this.sequence());
-		writer.writeInt32(COMPREQ, this.companionRequirement);
-		writer.writeRepeatLen(COMP, this.companions);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(ID, this.id)
+			.encodeUnsignedIntField(SEQ, this.sequence())
+			.encodeUnsignedIntField(COMPREQ, this.companionRequirement);
 
+		for (CompanionAd comp : this.companions)
+			enc.encodeMessageField(COMP, comp);
 		if (this.isOverlay()) {
-			writer.writeLen(OVERLAY, this.overlayDisplay()::toDisplayAdProtobuf);
+			enc.encodeLenField(OVERLAY, this.overlayDisplay(), DisplayAd::toDisplayAdProtobuf);
 		} else {
-			long cookie = writer.beginWriteLen(LINEAR);
-
-			writer.writeLen(LINEAR_LINK, this.link);
-			writer.writeInt64(LINEAR_DUR, this.linearPlaybackDurationSeconds);
-			writer.writeInt64(LINEAR_SKIPOFF, this.linearSkipOffsetSeconds);
-			writer.writeRepeatLen(LINEAR_ASSET, this.linearAssets());
-			writer.writeRepeatLen(LINEAR_ICON, this.icons);
-			writer.writeRepeatLen(LINEAR_EVENT, this.eventTrackers);
-			for (int i = 0; i < this.universalAdIds.size(); i++) {
-				writer.writeStringPair(LINEAR_UNIVID, new Pair<>(
-					this.universalAdIds.keyAt(i),
-					this.universalAdIds.valueAt(i)
-				));
-			}
-			writer.endWriteLen(cookie);
+			enc.encodeLenField(LINEAR, this, (lin, encLin) -> {
+				encLin.encodeMessageField(LINEAR_LINK, lin.link)
+					.encodeUnsignedLongField(LINEAR_DUR, lin.linearPlaybackDurationSeconds)
+					.encodeUnsignedLongField(LINEAR_SKIPOFF, lin.linearSkipOffsetSeconds);
+				for (LinearAsset asset : lin.linearAssets())
+					encLin.encodeMessageField(LINEAR_ASSET, asset);
+				for (IconAsset asset : lin.icons)
+					encLin.encodeMessageField(LINEAR_ICON, asset);
+				for (AdEventTracker trkr : lin.eventTrackers)
+					encLin.encodeMessageField(LINEAR_EVENT, trkr);
+				for (int i = 0; i < lin.universalAdIds.size(); i++) {
+					encLin.encodeStringPairField(LINEAR_UNIVID, new Pair<>(
+						lin.universalAdIds.keyAt(i),
+						lin.universalAdIds.valueAt(i)
+					));
+				}
+			});
 		}
 	}
 }

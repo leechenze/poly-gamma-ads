@@ -2,15 +2,15 @@
 
 package org.polygamma.android.origin.adcom.context;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.*;
 
 import android.annotation.SuppressLint;
 
 import androidx.annotation.ReturnThis;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 
 import java.util.Arrays;
 
@@ -23,12 +23,12 @@ import java.util.Arrays;
  */
 public final class Regs implements ProtobufSerializable {
 
-	private static final @Tag int COPPA			= ofBool(          1);
-	private static final @Tag int GDPR			= ofBool(          2);
-	private static final @Tag int GPP			= ofString(        3);
-	private static final @Tag int GPPSID		= ofPackedInt32(   4);
-	/*private static final @Tag int USPRIVACY	= ofString(     200);*/
-	private static final @Tag int PIPL			= ofBool(       500);
+	private static final @FieldTag int COPPA		= fieldTagOf(  1, WIRE_VARINT);
+	private static final @FieldTag int GDPR			= fieldTagOf(  2, WIRE_VARINT);
+	private static final @FieldTag int GPP			= fieldTagOf(  3, WIRE_LEN);
+	private static final @FieldTag int GPPSID		= fieldTagOf(  4, WIRE_LEN);
+	/*private static final @FieldTag int USPRIVACY	= fieldTagOf(200, WIRE_LEN);*/
+	private static final @FieldTag int PIPL			= fieldTagOf(500, WIRE_VARINT);
 
 	private static final int FLAG_COPPA		= 0x01;
 	private static final int FLAG_GDPR		= 0x02;
@@ -183,30 +183,30 @@ public final class Regs implements ProtobufSerializable {
 	/**
 	 * Deserialize regulations from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized regulations
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static Regs ofProtobuf(ProtobufReader reader) {
+	public static Regs ofProtobuf(ProtobufDecoder dec) {
 		Regs rv = new Regs(DEFAULT);
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == GPP) {
-				rv.gpp = reader.readString();
+				rv.gpp = dec.decodeString();
 			} else if (tag == GPPSID) {
-				rv.applicableGppSectionIds = reader.readPackedInt32();
+				rv.applicableGppSectionIds =
+					dec.decodePackedUint32Array(rv.applicableGppSectionIds);
 			} else if (tag == COPPA) {
-				if (reader.readBool())
-					rv.flags |= FLAG_COPPA;
+				rv.flags |= dec.decodeBool() ? FLAG_COPPA : 0;
 			} else if (tag == GDPR) {
-				if (reader.readBool())
-					rv.flags |= FLAG_GDPR;
+				rv.flags |= dec.decodeBool() ? FLAG_GDPR : 0;
 			} else if (tag == PIPL) {
-				if (reader.readBool())
-					rv.flags |= FLAG_PIPL;
+				rv.flags |= dec.decodeBool() ? FLAG_PIPL : 0;
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		return rv;
@@ -311,11 +311,11 @@ public final class Regs implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(GPP, this.gpp);
-		writer.writePackedInt32(GPPSID, this.applicableGppSectionIds);
-		writer.writeBool(COPPA, this.coppa());
-		writer.writeBool(GDPR, this.gdpr());
-		writer.writeBool(PIPL, this.pipl());
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(GPP, this.gpp)
+			.encodePackedUint32ArrayField(GPPSID, this.applicableGppSectionIds)
+			.encodeBoolField(COPPA, this.coppa())
+			.encodeBoolField(GDPR, this.gdpr())
+			.encodeBoolField(PIPL, this.pipl());
 	}
 }

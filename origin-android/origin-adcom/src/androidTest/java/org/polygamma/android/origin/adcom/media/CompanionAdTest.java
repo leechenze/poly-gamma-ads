@@ -9,13 +9,10 @@ import android.util.ArrayMap;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 import java.util.Arrays;
@@ -26,7 +23,7 @@ import java.util.Arrays;
 @RunWith(AndroidJUnit4.class)
 public class CompanionAdTest {
 	@Test
-	public void testSerde() throws InvalidProtocolBufferException {
+	public void testSerde() {
 		ArrayMap<String, String> expUnivIds = new ArrayMap<>();
 
 		expUnivIds.put("registry-1.com", "id-1");
@@ -69,11 +66,12 @@ public class CompanionAdTest {
 				.build(),
 			true
 		);
-		CompanionAd got = CompanionAd.ofProtobuf(new ProtobufReader(
-			AdcomMedia.CompanionAd.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		CompanionAd got = TestUtil.encodeAndDecode(
+			exp,
+			CompanionAd::toProtobuf,
+			CompanionAd::ofProtobuf,
+			AdcomMedia.CompanionAd::parseFrom
+		);
 
 		assertEquals("test-placement-id", got.placementId());
 		assertTrue(got.endCard());

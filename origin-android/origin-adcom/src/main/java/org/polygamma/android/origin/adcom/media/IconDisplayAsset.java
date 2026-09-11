@@ -2,13 +2,15 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import androidx.annotation.IntDef;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.Preconditions;
 
 import java.lang.annotation.Documented;
@@ -24,10 +26,10 @@ import java.lang.annotation.Target;
  */
 public final class IconDisplayAsset implements ProtobufSerializable {
 
-	private static final @Tag int MIME				= ofString(1);
-	private static final @Tag int IMGURL			= ofString(2);
-	private static final @Tag int IFRAMEURL			= ofString(3);
-	private static final @Tag int HTML				= ofString(4);
+	private static final @FieldTag int MIME			= fieldTagOf(1, WIRE_LEN);
+	private static final @FieldTag int IMGURL		= fieldTagOf(2, WIRE_LEN);
+	private static final @FieldTag int IFRAMEURL	= fieldTagOf(3, WIRE_LEN);
+	private static final @FieldTag int HTML			= fieldTagOf(4, WIRE_LEN);
 
 	private static final @Type int TYPE_IMAGE_URL	= 1;
 	private static final @Type int TYPE_IFRAME_URL	= 2;
@@ -83,21 +85,21 @@ public final class IconDisplayAsset implements ProtobufSerializable {
 	/**
 	 * Deserialize icon display media asset from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized media asset
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static IconDisplayAsset ofProtobuf(ProtobufReader reader) {
+	public static IconDisplayAsset ofProtobuf(ProtobufDecoder dec) {
 		String mime = "";
 		String data = "";
 		@Type int type = 0;
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == MIME) {
-				mime = reader.readString();
+				mime = dec.decodeString();
 				continue;
 			} else if (tag == IMGURL) {
 				type = TYPE_IMAGE_URL;
@@ -106,9 +108,10 @@ public final class IconDisplayAsset implements ProtobufSerializable {
 			} else if (tag == HTML) {
 				type = TYPE_HTML_MARKUP;
 			} else {
+				dec.skipFieldValue(tag);
 				continue;
 			}
-			data = reader.readString();
+			data = dec.decodeString();
 		}
 		return new IconDisplayAsset(type, mime, data);
 	}
@@ -215,8 +218,8 @@ public final class IconDisplayAsset implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(MIME, this.mime);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(MIME, this.mime);
 
 		int tag;
 
@@ -233,6 +236,6 @@ public final class IconDisplayAsset implements ProtobufSerializable {
 		default:
 			return;
 		}
-		writer.writeString(tag, this.data);
+		enc.encodeStringField(tag, this.data);
 	}
 }

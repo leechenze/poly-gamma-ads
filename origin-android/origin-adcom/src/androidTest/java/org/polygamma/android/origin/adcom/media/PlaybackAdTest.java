@@ -8,13 +8,10 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 import java.util.Arrays;
@@ -130,18 +127,19 @@ public class PlaybackAdTest {
 	}
 
 	@Test
-	public void testSerdeVideoAd() throws InvalidProtocolBufferException {
+	public void testSerdeVideoAd() {
 		PlaybackAd exp = PlaybackAd.ofVideoAdBuilder()
 			.titleText("title")
 			.descriptionText("description")
 			.eventTrackers(EXPECT_EVENT_TRACKERS)
 			.creatives(EXPECT_CREATIVES)
 			.build();
-		PlaybackAd got = PlaybackAd.ofVideoAdProtobuf(new ProtobufReader(
-			AdcomMedia.VideoAd.parseFrom(ProtobufWriter.serialize(exp::toAudioOrVideoAdProtobuf))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		PlaybackAd got = TestUtil.encodeAndDecode(
+			exp,
+			PlaybackAd::toAudioOrVideoAdProtobuf,
+			PlaybackAd::ofVideoAdProtobuf,
+			AdcomMedia.VideoAd::parseFrom
+		);
 
 		assertFalse(got.isAudioAd());
 		assertTrue(got.isVideoAd());
@@ -151,18 +149,19 @@ public class PlaybackAdTest {
 	}
 
 	@Test
-	public void testSerdeAudioAd() throws InvalidProtocolBufferException {
+	public void testSerdeAudioAd() {
 		PlaybackAd exp = PlaybackAd.ofAudioAdBuilder()
 			.titleText("title")
 			.descriptionText("description")
 			.eventTrackers(EXPECT_EVENT_TRACKERS)
 			.creatives(EXPECT_CREATIVES)
 			.build();
-		PlaybackAd got = PlaybackAd.ofAudioAdProtobuf(new ProtobufReader(
-			AdcomMedia.AudioAd.parseFrom(ProtobufWriter.serialize(exp::toAudioOrVideoAdProtobuf))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		PlaybackAd got = TestUtil.encodeAndDecode(
+			exp,
+			PlaybackAd::toAudioOrVideoAdProtobuf,
+			PlaybackAd::ofAudioAdProtobuf,
+			AdcomMedia.AudioAd::parseFrom
+		);
 
 		assertTrue(got.isAudioAd());
 		assertFalse(got.isVideoAd());

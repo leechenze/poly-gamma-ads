@@ -11,13 +11,10 @@ import android.util.ArrayMap;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 import java.util.Arrays;
@@ -108,8 +105,6 @@ public class DisplayAdTest {
 		got = DisplayAd.ofDisplayAd();
 		assertEquals("", got.id());
 		assertEquals("", got.serveId());
-		assertEquals(0, got.advertiserDomainCount());
-		assertEquals(0, got.advertiserAppBundleCount());
 		assertEquals(0, got.eventTrackerCount());
 		assertFalse(got.secure());
 		assertFalse(got.isAdApiRequired(AdComEnums.AdApiMraid10));
@@ -134,7 +129,7 @@ public class DisplayAdTest {
 	}
 
 	@Test
-	public void testSerdeBannerImage() throws InvalidProtocolBufferException {
+	public void testSerdeBannerImage() {
 		DisplayAd exp = DisplayAd.ofDisplayAdBuilder()
 			.requiredAdApis(AdComEnums.AdApiMraid10, AdComEnums.AdApiMraid30)
 			.widthDp(123)
@@ -146,12 +141,14 @@ public class DisplayAdTest {
 			.eventTrackers(EXPECT_EVENT_TRACKERS)
 			.minShowDurationSeconds(789)
 			.universalAdIds(EXPECT_UNIVERSAL_AD_IDS)
+			.icons(EXPECT_ICON_ASSETS)
 			.build();
-		DisplayAd got = DisplayAd.ofDisplayAdProtobuf(new ProtobufReader(
-			AdcomMedia.DisplayAd.parseFrom(ProtobufWriter.serialize(exp::toDisplayAdProtobuf))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		DisplayAd got = TestUtil.encodeAndDecode(
+			exp,
+			DisplayAd::toDisplayAdProtobuf,
+			DisplayAd::ofDisplayAdProtobuf,
+			AdcomMedia.DisplayAd::parseFrom
+		);
 
 		assertTrue(got.isAdApiRequired(AdComEnums.AdApiMraid10));
 		assertFalse(got.isAdApiRequired(AdComEnums.AdApiMraid20));
@@ -175,7 +172,7 @@ public class DisplayAdTest {
 	}
 
 	@Test
-	public void testSerdeHtmlMarkup() throws InvalidProtocolBufferException {
+	public void testSerdeHtmlMarkup() {
 		DisplayAd exp = DisplayAd.ofDisplayAdBuilder()
 			.requiredAdApis(AdComEnums.AdApiMraid10, AdComEnums.AdApiMraid30)
 			.widthDp(123)
@@ -187,12 +184,14 @@ public class DisplayAdTest {
 			.eventTrackers(EXPECT_EVENT_TRACKERS)
 			.minShowDurationSeconds(789)
 			.universalAdIds(EXPECT_UNIVERSAL_AD_IDS)
+			.icons(EXPECT_ICON_ASSETS)
 			.build();
-		DisplayAd got = DisplayAd.ofDisplayAdProtobuf(new ProtobufReader(
-			AdcomMedia.DisplayAd.parseFrom(ProtobufWriter.serialize(exp::toDisplayAdProtobuf))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		DisplayAd got = TestUtil.encodeAndDecode(
+			exp,
+			DisplayAd::toDisplayAdProtobuf,
+			DisplayAd::ofDisplayAdProtobuf,
+			AdcomMedia.DisplayAd::parseFrom
+		);
 
 		assertTrue(got.isAdApiRequired(AdComEnums.AdApiMraid10));
 		assertFalse(got.isAdApiRequired(AdComEnums.AdApiMraid20));
@@ -216,7 +215,7 @@ public class DisplayAdTest {
 	}
 
 	@Test
-	public void testSerdeHtmlUrl() throws InvalidProtocolBufferException {
+	public void testSerdeHtmlUrl() {
 		DisplayAd exp = DisplayAd.ofDisplayAdBuilder()
 			.requiredAdApis(AdComEnums.AdApiMraid10, AdComEnums.AdApiMraid30)
 			.widthDp(123)
@@ -228,12 +227,14 @@ public class DisplayAdTest {
 			.eventTrackers(EXPECT_EVENT_TRACKERS)
 			.minShowDurationSeconds(789)
 			.universalAdIds(EXPECT_UNIVERSAL_AD_IDS)
+			.icons(EXPECT_ICON_ASSETS)
 			.build();
-		DisplayAd got = DisplayAd.ofDisplayAdProtobuf(new ProtobufReader(
-			AdcomMedia.DisplayAd.parseFrom(ProtobufWriter.serialize(exp::toDisplayAdProtobuf))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		DisplayAd got = TestUtil.encodeAndDecode(
+			exp,
+			DisplayAd::toDisplayAdProtobuf,
+			DisplayAd::ofDisplayAdProtobuf,
+			AdcomMedia.DisplayAd::parseFrom
+		);
 
 		assertTrue(got.isAdApiRequired(AdComEnums.AdApiMraid10));
 		assertFalse(got.isAdApiRequired(AdComEnums.AdApiMraid20));
@@ -257,7 +258,7 @@ public class DisplayAdTest {
 	}
 
 	@Test
-	public void testSerdeNative() throws InvalidProtocolBufferException {
+	public void testSerdeNative() {
 		DisplayAd exp = DisplayAd.ofDisplayAdBuilder()
 			.requiredAdApis(AdComEnums.AdApiMraid10, AdComEnums.AdApiMraid30)
 			.widthDp(123)
@@ -282,12 +283,14 @@ public class DisplayAdTest {
 			.eventTrackers(EXPECT_EVENT_TRACKERS)
 			.minShowDurationSeconds(789)
 			.universalAdIds(EXPECT_UNIVERSAL_AD_IDS)
+			.icons(EXPECT_ICON_ASSETS)
 			.build();
-		DisplayAd got = DisplayAd.ofDisplayAdProtobuf(new ProtobufReader(
-			AdcomMedia.DisplayAd.parseFrom(ProtobufWriter.serialize(exp::toDisplayAdProtobuf))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		DisplayAd got = TestUtil.encodeAndDecode(
+			exp,
+			DisplayAd::toDisplayAdProtobuf,
+			DisplayAd::ofDisplayAdProtobuf,
+			AdcomMedia.DisplayAd::parseFrom
+		);
 
 		assertTrue(got.isAdApiRequired(AdComEnums.AdApiMraid10));
 		assertFalse(got.isAdApiRequired(AdComEnums.AdApiMraid20));

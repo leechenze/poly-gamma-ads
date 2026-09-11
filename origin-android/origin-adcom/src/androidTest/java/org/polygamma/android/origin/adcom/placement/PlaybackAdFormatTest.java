@@ -8,13 +8,10 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomPlacement;
 
 import java.util.Arrays;
@@ -25,7 +22,7 @@ import java.util.Arrays;
 @RunWith(AndroidJUnit4.class)
 public class PlaybackAdFormatTest {
 	@Test
-	public void testSerdeAudioAd() throws InvalidProtocolBufferException {
+	public void testSerdeAudioAd() {
 		PlaybackAdFormat exp = PlaybackAdFormat.ofAudioAdBuilder()
 			.supportedMimes(Arrays.asList("text/html", "video/mp4", "video/ogg"))
 			.supportedAdApis(AdComEnums.AdApiMraid30, AdComEnums.AdApiSimid11)
@@ -33,11 +30,12 @@ public class PlaybackAdFormatTest {
 			.maxBitRateKbps(456)
 			.skippable(true)
 			.build();
-		PlaybackAdFormat got = PlaybackAdFormat.ofAudioAdProtobuf(new ProtobufReader(
-			AdcomPlacement.AudioAdFormat.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		PlaybackAdFormat got = TestUtil.encodeAndDecode(
+			exp,
+			PlaybackAdFormat::toProtobuf,
+			PlaybackAdFormat::ofAudioAdProtobuf,
+			AdcomPlacement.AudioAdFormat::parseFrom
+		);
 
 		assertTrue(got.isAudioAd());
 		assertFalse(got.isVideoAd());
@@ -79,7 +77,7 @@ public class PlaybackAdFormatTest {
 	}
 
 	@Test
-	public void testSerdeVideoAd() throws InvalidProtocolBufferException {
+	public void testSerdeVideoAd() {
 		PlaybackAdFormat exp = PlaybackAdFormat.ofVideoAdBuilder()
 			.supportedMimes(Arrays.asList("text/html", "video/mp4", "video/ogg"))
 			.supportedAdApis(AdComEnums.AdApiMraid30, AdComEnums.AdApiSimid11)
@@ -90,11 +88,12 @@ public class PlaybackAdFormatTest {
 			.videoActivationBehavior(AdComEnums.ActivationEmbeddedBrowser)
 			.skippable(true)
 			.build();
-		PlaybackAdFormat got = PlaybackAdFormat.ofVideoAdProtobuf(new ProtobufReader(
-			AdcomPlacement.VideoAdFormat.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		PlaybackAdFormat got = TestUtil.encodeAndDecode(
+			exp,
+			PlaybackAdFormat::toProtobuf,
+			PlaybackAdFormat::ofVideoAdProtobuf,
+			AdcomPlacement.VideoAdFormat::parseFrom
+		);
 
 		assertFalse(got.isAudioAd());
 		assertTrue(got.isVideoAd());

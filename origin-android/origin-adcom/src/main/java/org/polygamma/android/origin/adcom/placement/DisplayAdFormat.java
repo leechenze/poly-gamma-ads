@@ -2,7 +2,9 @@
 
 package org.polygamma.android.origin.adcom.placement;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
 
@@ -12,8 +14,9 @@ import androidx.annotation.ReturnThis;
 import org.polygamma.android.origin.adcom.enums.ActivationBehavior;
 import org.polygamma.android.origin.adcom.enums.AdApiCode;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.util.ArrayList;
@@ -28,26 +31,26 @@ import java.util.List;
  */
 public final class DisplayAdFormat extends AdFormat {
 
-	/*private static final @Tag int POS			= ofInt32(       1);*/
-	private static final @Tag int INSTL			= ofBool(        2);
-	/*private static final @Tag int TOPFRAME	= ofBool(        3);*/
-	/*private static final @Tag int IFRBUST		= ofString(      4);*/
-	private static final @Tag int CLKTYPE		= ofInt32(       5);
-	/*private static final @Tag int AMPREN		= ofInt32(       6);*/
-	/*private static final @Tag int PTYPE		= ofInt32(       7);*/
-	/*private static final @Tag int CONTEXT		= ofInt32(       8);*/
-	private static final @Tag int MIME			= ofString(      9);
-	private static final @Tag int API			= ofPackedInt32(10);
-	private static final @Tag int CTYPE			= ofPackedInt32(11);
-	private static final @Tag int W				= ofInt32(      12);
-	private static final @Tag int H				= ofInt32(      13);
-	private static final @Tag int UNIT			= ofInt32(      14);
-	/*private static final @Tag int PRIV		= ofBool(       15);*/
-	/*private static final @Tag int DISPLAYFMT	= ofMessage(    16);*/
-	private static final @Tag int NATIVEFMT		= ofMessage(    17);
-	/*private static final @Tag int EVENT		= ofMessage(    18);*/
+	/*private static final @FieldTag int POS		= fieldTagOf( 1, WIRE_VARINT);*/
+	private static final @FieldTag int INSTL		= fieldTagOf( 2, WIRE_VARINT);
+	/*private static final @FieldTag int TOPFRAME	= fieldTagOf( 3, WIRE_VARINT);*/
+	/*private static final @FieldTag int IFRBUST	= fieldTagOf( 4, WIRE_LEN);*/
+	private static final @FieldTag int CLKTYPE		= fieldTagOf( 5, WIRE_VARINT);
+	/*private static final @FieldTag int AMPREN		= fieldTagOf( 6, WIRE_VARINT);*/
+	/*private static final @FieldTag int PTYPE		= fieldTagOf( 7, WIRE_VARINT);*/
+	/*private static final @FieldTag int CONTEXT	= fieldTagOf( 8, WIRE_VARINT);*/
+	private static final @FieldTag int MIME			= fieldTagOf( 9, WIRE_LEN);
+	private static final @FieldTag int API			= fieldTagOf(10, WIRE_LEN);
+	private static final @FieldTag int CTYPE		= fieldTagOf(11, WIRE_LEN);
+	private static final @FieldTag int W			= fieldTagOf(12, WIRE_VARINT);
+	private static final @FieldTag int H			= fieldTagOf(13, WIRE_VARINT);
+	private static final @FieldTag int UNIT			= fieldTagOf(14, WIRE_VARINT);
+	/*private static final @FieldTag int PRIV		= fieldTagOf(15, WIRE_VARINT);*/
+	/*private static final @FieldTag int DISPLAYFMT	= fieldTagOf(16, WIRE_LEN);*/
+	private static final @FieldTag int NATIVEFMT	= fieldTagOf(17, WIRE_LEN);
+	/*private static final @FieldTag int EVENT		= fieldTagOf(18, WIRE_LEN);*/
 
-	private static final @Tag int NATIVE_FORMAT_ASSET = ofMessage(1);
+	private static final @FieldTag int NATIVE_FORMAT_ASSET = fieldTagOf(1, WIRE_LEN);
 
 	/**
 	 * Empty display ad media format.
@@ -215,45 +218,53 @@ public final class DisplayAdFormat extends AdFormat {
 		return DEFAULT.toBuilder();
 	}
 
+	private static NativeAssetFormat[] decodeNativeFormat(ProtobufDecoder dec) {
+		List<NativeAssetFormat> assets = new ArrayList<>();
+
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
+
+			if (tag == NATIVE_FORMAT_ASSET)
+				assets.add(dec.decodeLen(NativeAssetFormat::ofProtobuf));
+			else
+				dec.skipFieldValue(tag);
+		}
+		return CollectionsCompat.toArrayOrEmpty(assets, DEFAULT.nativeAssets);
+	}
+
 	/**
 	 * Deserialize display ad media format from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized format
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static DisplayAdFormat ofProtobuf(ProtobufReader reader) {
+	public static DisplayAdFormat ofProtobuf(ProtobufDecoder dec) {
 		DisplayAdFormat rv = new DisplayAdFormat(DEFAULT);
 		List<String> mime = new ArrayList<>();
-		List<NativeAssetFormat> assets = new ArrayList<>();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == MIME) {
-				mime.add(reader.readString());
+				mime.add(dec.decodeString());
 			} else if (tag == API) {
-				rv.setSupportedAdApiMask(reader.readWordBitmap(0));
+				rv.setSupportedAdApiMask(dec.decodePackedUint32Bitmap64());
 			} else if (tag == CLKTYPE) {
-				rv.activationBehavior = reader.readInt32();
+				rv.activationBehavior = dec.decodeUint32();
 			} else if (tag == W) {
-				rv.widthDp = reader.readInt32();
+				rv.widthDp = dec.decodeUint32();
 			} else if (tag == H) {
-				rv.heightDp = reader.readInt32();
+				rv.heightDp = dec.decodeUint32();
 			} else if (tag == NATIVEFMT) {
-				int cookie = reader.beginReadLen();
-
-				while (reader.hasRemaining()) {
-					if (reader.readTag() == NATIVE_FORMAT_ASSET)
-						assets.add(reader.readLen(NativeAssetFormat::ofProtobuf));
-				}
-				reader.endReadLen(cookie);
+				rv.nativeAssets = dec.decodeLen(DisplayAdFormat::decodeNativeFormat);
 			} else if (tag == INSTL) {
-				rv.interstitial = reader.readBool();
+				rv.interstitial = dec.decodeBool();
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
-		rv.nativeAssets = CollectionsCompat.toArrayOrEmpty(assets, rv.nativeAssets);
 		rv.setSupportedMimes(mime);
 		return rv;
 	}
@@ -363,30 +374,31 @@ public final class DisplayAdFormat extends AdFormat {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		super.writeCommonProtobufFields(writer, MIME, API);
-		writer.writeInt32(CLKTYPE, this.activationBehavior);
-		writer.writePackedInt32(
-			CTYPE,
-			this.nativeAssets.length == 0 ? new int[] {
-				AdComEnums.DisplayCreativeHtml,
-				AdComEnums.DisplayCreativeImage
-			} : new int[] {
-				AdComEnums.DisplayCreativeHtml,
-				AdComEnums.DisplayCreativeImage,
-				AdComEnums.DisplayCreativeNative
-			}
-		);
-		writer.writeInt32(W, this.widthDp);
-		writer.writeInt32(H, this.heightDp);
-		writer.writeInt32(UNIT, AdComEnums.DimensionDp);
+	public void toProtobuf(ProtobufEncoder enc) {
+		super.encodeCommonProtobufFields(enc, MIME, API);
+
+		enc.encodeUnsignedIntField(CLKTYPE, this.activationBehavior)
+			.encodePackedUint32ArrayField(
+				CTYPE,
+				this.nativeAssets.length == 0 ? new int[] {
+					AdComEnums.DisplayCreativeHtml,
+					AdComEnums.DisplayCreativeImage
+				} : new int[] {
+					AdComEnums.DisplayCreativeHtml,
+					AdComEnums.DisplayCreativeImage,
+					AdComEnums.DisplayCreativeNative
+				}
+			)
+			.encodeUnsignedIntField(W, this.widthDp)
+			.encodeUnsignedIntField(H, this.heightDp)
+			.encodeUnsignedIntField(UNIT, AdComEnums.DimensionDp)
+			.encodeBoolField(INSTL, this.interstitial);
 
 		if (this.nativeAssets.length != 0) {
-			long cookie = writer.beginWriteLen(NATIVEFMT);
-
-			writer.writeRepeatLen(NATIVE_FORMAT_ASSET, this.nativeAssets);
-			writer.endWriteLen(cookie);
+			enc.encodeLenField(NATIVEFMT, this.nativeAssets, (nat, natEnc) -> {
+				for (NativeAssetFormat fmt : nat)
+					natEnc.encodeMessageField(NATIVE_FORMAT_ASSET, fmt);
+			});
 		}
-		writer.writeBool(INSTL, this.interstitial);
 	}
 }

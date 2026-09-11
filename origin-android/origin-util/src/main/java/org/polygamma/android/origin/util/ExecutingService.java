@@ -244,7 +244,7 @@ public abstract class ExecutingService {
 			return delay instanceof Long ? (long) delay : -1L;
 		}
 		if (state instanceof ScheduledFuture<?>)
-			return ((ScheduledFuture<?>) state).getDelay(TimeUnit.MILLISECONDS);
+			return Math.max(((ScheduledFuture<?>) state).getDelay(TimeUnit.MILLISECONDS), 0L);
 		if (state instanceof Future<?> || state instanceof Thread)
 			return 0L;
 		return -1L;
@@ -489,7 +489,7 @@ public abstract class ExecutingService {
 	 * @see #awaitShutdown(long, TimeUnit)
 	 */
 	@CallSuper
-	@SuppressWarnings({ "fallthrough", "unchecked" })
+	@SuppressWarnings("fallthrough")
 	public void shutdown() {
 		this.stateLock.lock();
 		try {

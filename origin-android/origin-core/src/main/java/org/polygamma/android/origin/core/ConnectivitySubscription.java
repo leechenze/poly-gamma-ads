@@ -2,16 +2,20 @@
 
 package org.polygamma.android.origin.core;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_FIXED64;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.ReturnThis;
 
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.ConnectionType;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 
 import java.util.Locale;
 
@@ -23,18 +27,18 @@ import java.util.Locale;
  */
 public final class ConnectivitySubscription implements ProtobufSerializable {
 
-	private static final @Tag int ID				= ofFixed64(  1);
-	private static final @Tag int CONNTYPE			= ofInt32(    2);
-	private static final @Tag int CARRNAME			= ofString(   4);
-	private static final @Tag int OPERNAME			= ofString(   5);
-	private static final @Tag int OPERMCC			= ofInt32(    6);
-	private static final @Tag int OPERMNC			= ofInt32(    7);
-	private static final @Tag int OPERCOUNTRY		= ofString(   8);
-	private static final @Tag int NETOPERNAME		= ofString(   9);
-	private static final @Tag int NETOPERMCC		= ofInt32(   10);
-	private static final @Tag int NETOPERMNC		= ofInt32(   11);
-	private static final @Tag int NETOPERCOUNTRY	= ofString(  12);
-	private static final @Tag int AOSPCARRID		= ofSint32( 500);
+	private static final @FieldTag int ID				= fieldTagOf(  1, WIRE_FIXED64);
+	private static final @FieldTag int CONNTYPE			= fieldTagOf(  2, WIRE_VARINT);
+	private static final @FieldTag int CARRNAME			= fieldTagOf(  4, WIRE_LEN);
+	private static final @FieldTag int OPERNAME			= fieldTagOf(  5, WIRE_LEN);
+	private static final @FieldTag int OPERMCC			= fieldTagOf(  6, WIRE_VARINT);
+	private static final @FieldTag int OPERMNC			= fieldTagOf(  7, WIRE_VARINT);
+	private static final @FieldTag int OPERCOUNTRY		= fieldTagOf(  8, WIRE_LEN);
+	private static final @FieldTag int NETOPERNAME		= fieldTagOf(  9, WIRE_LEN);
+	private static final @FieldTag int NETOPERMCC		= fieldTagOf( 10, WIRE_VARINT);
+	private static final @FieldTag int NETOPERMNC		= fieldTagOf( 11, WIRE_VARINT);
+	private static final @FieldTag int NETOPERCOUNTRY	= fieldTagOf( 12, WIRE_LEN);
+	private static final @FieldTag int AOSPCARRID		= fieldTagOf(500, WIRE_VARINT);
 
 	/**
 	 * Default descriptor.
@@ -215,6 +219,7 @@ public final class ConnectivitySubscription implements ProtobufSerializable {
 		 * @return {@code this}
 		 * @see ConnectivitySubscription#networkOperatorMcc()
 		 */
+		@SuppressWarnings("unused")
 		@ReturnThis
 		Builder networkOperatorMcc(int mcc) {
 			this.target().networkOperatorMcc = mcc;
@@ -229,6 +234,7 @@ public final class ConnectivitySubscription implements ProtobufSerializable {
 		 * @return {@code this}
 		 * @see ConnectivitySubscription#networkOperatorMnc()
 		 */
+		@SuppressWarnings("unused")
 		@ReturnThis
 		Builder networkOperatorMnc(int mnc) {
 			this.target().networkOperatorMnc = mnc;
@@ -298,41 +304,43 @@ public final class ConnectivitySubscription implements ProtobufSerializable {
 	/**
 	 * Deserialize subscription description from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized subscription description
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static ConnectivitySubscription ofProtobuf(ProtobufReader reader) {
+	public static ConnectivitySubscription ofProtobuf(ProtobufDecoder dec) {
 		ConnectivitySubscription rv = new ConnectivitySubscription(DEFAULT);
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == ID)
-				rv.id = (int) reader.readFixed64();
+				rv.id = (int) dec.decodeFixed64();
 			else if (tag == CONNTYPE)
-				rv.connectionType = reader.readInt32();
+				rv.connectionType = dec.decodeUint32();
 			else if (tag == CARRNAME)
-				rv.carrierName = reader.readString();
+				rv.carrierName = dec.decodeString();
 			else if (tag == OPERNAME)
-				rv.operatorName = reader.readString();
+				rv.operatorName = dec.decodeString();
 			else if (tag == OPERMCC)
-				rv.operatorMcc = reader.readInt32();
+				rv.operatorMcc = dec.decodeUint32();
 			else if (tag == OPERMNC)
-				rv.operatorMnc = reader.readInt32();
+				rv.operatorMnc = dec.decodeUint32();
 			else if (tag == OPERCOUNTRY)
-				rv.operatorCountryCode = reader.readString();
+				rv.operatorCountryCode = dec.decodeString();
 			else if (tag == NETOPERNAME)
-				rv.networkOperatorName = reader.readString();
+				rv.networkOperatorName = dec.decodeString();
 			else if (tag == NETOPERMCC)
-				rv.networkOperatorMcc = reader.readInt32();
+				rv.networkOperatorMcc = dec.decodeUint32();
 			else if (tag == NETOPERMNC)
-				rv.networkOperatorMnc = reader.readInt32();
+				rv.networkOperatorMnc = dec.decodeUint32();
 			else if (tag == NETOPERCOUNTRY)
-				rv.networkOperatorCountryCode = reader.readString();
+				rv.networkOperatorCountryCode = dec.decodeString();
 			else if (tag == AOSPCARRID)
-				rv.carrierId = reader.readSint32();
+				rv.carrierId = dec.decodeSint32();
+			else
+				dec.skipFieldValue(tag);
 		}
 		return rv;
 	}
@@ -572,21 +580,21 @@ public final class ConnectivitySubscription implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
+	public void toProtobuf(ProtobufEncoder enc) {
 		if (this.id != -1)
-			writer.writeFixed64(ID, this.id);
-		writer.writeInt32(CONNTYPE, this.connectionType);
-		writer.writeString(CARRNAME, this.carrierName);
-		writer.writeString(OPERNAME, this.operatorName);
-		writer.writeInt32(OPERMCC, this.operatorMcc);
-		writer.writeInt32(OPERMNC, this.operatorMnc);
-		writer.writeString(OPERCOUNTRY, this.operatorCountryCode);
-		writer.writeString(NETOPERNAME, this.networkOperatorName);
-		writer.writeInt32(NETOPERMCC, this.networkOperatorMcc);
-		writer.writeInt32(NETOPERMNC, this.networkOperatorMnc);
-		writer.writeString(NETOPERCOUNTRY, this.networkOperatorCountryCode);
+			enc.encodeUnsignedLongField(ID, this.id);
+		enc.encodeUnsignedIntField(CONNTYPE, this.connectionType)
+			.encodeStringField(CARRNAME, this.carrierName)
+			.encodeStringField(OPERNAME, this.operatorName)
+			.encodeUnsignedIntField(OPERMCC, this.operatorMcc)
+			.encodeUnsignedIntField(OPERMNC, this.operatorMnc)
+			.encodeStringField(OPERCOUNTRY, this.operatorCountryCode)
+			.encodeStringField(NETOPERNAME, this.networkOperatorName)
+			.encodeUnsignedIntField(NETOPERMCC, this.networkOperatorMcc)
+			.encodeUnsignedIntField(NETOPERMNC, this.networkOperatorMnc)
+			.encodeStringField(NETOPERCOUNTRY, this.networkOperatorCountryCode);
 		if (this.carrierId != -1)
-			writer.writeSint32(AOSPCARRID, this.carrierId);
+			enc.encodeSignedIntField(AOSPCARRID, this.carrierId);
 	}
 
 	@Override

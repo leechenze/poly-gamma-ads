@@ -1,8 +1,12 @@
 package org.polygamma.android.origin.core;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_FIXED64;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.net.DnsResolver;
 import android.os.Build;
 import android.os.CancellationSignal;
@@ -16,8 +20,9 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.util.Logger;
 import org.polygamma.android.origin.util.Preconditions;
 import org.polygamma.android.origin.util.Strings;
@@ -54,13 +59,13 @@ final class RpcHostRecord {
 		Math.toIntExact(TimeUnit.MINUTES.toSeconds(30));
 
 	@VisibleForTesting
-	static final @Tag int EXPTS		= ofFixed64(1);
+	static final @FieldTag int EXPTS	= fieldTagOf(1, WIRE_FIXED64);
 	@VisibleForTesting
-	static final @Tag int PRIO		= ofInt32(  2);
+	static final @FieldTag int PRIO		= fieldTagOf(2, WIRE_VARINT);
 	@VisibleForTesting
-	static final @Tag int HOST		= ofString( 3);
+	static final @FieldTag int HOST		= fieldTagOf(3, WIRE_LEN);
 	@VisibleForTesting
-	static final @Tag int PORT		= ofInt32(  4);
+	static final @FieldTag int PORT		= fieldTagOf(4, WIRE_VARINT);
 
 	/**
 	 * Construct host record with default {@linkplain #expiryTimestampSeconds expiry} and
@@ -83,37 +88,34 @@ final class RpcHostRecord {
 	/**
 	 * Deserialize record from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized record
 	 * @throws RuntimeException {@code buff} is malformed
 	 */
-	static RpcHostRecord ofProtobuf(ProtobufReader reader) {
+	static RpcHostRecord ofProtobuf(ProtobufDecoder dec) {
 		long exp = Time.nowUtcSeconds() + MAX_EXPIRY_SECONDS;
 		int prio = 0;
 		String host = null;
 		int port = 0;
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == EXPTS)
-				exp = reader.readFixed64();
+				exp = dec.decodeFixed64();
 			else if (tag == PRIO)
-				prio = reader.readInt32();
+				prio = dec.decodeUint32();
 			else if (tag == HOST)
-				host = reader.readString();
+				host = dec.decodeString();
 			else if (tag == PORT)
-				port = reader.readInt32();
+				port = dec.decodeUint32();
+			else
+				dec.skipFieldValue(tag);
 		}
 		return new RpcHostRecord(exp, prio, host, port);
 	}
 
-	/**
-	 * Retrieve root host of a hostname.
-	 *
-	 * @param host hostname to retrieve root host of
-	 * @return root host
-	 */
+	// Retrieve root host of a hostname.
 	private static String rootHostOf(String host) {
 		// XXX: This is really basic, we assume the root host is 2 part `<name>.<tld>`.
 		Iterator<String> parts = Strings.split(host, '.');
@@ -127,13 +129,7 @@ final class RpcHostRecord {
 		);
 	}
 
-	/**
-	 * Construct host records from {@code HTTPS} DNS records.
-	 *
-	 * @param host queried hostname
-	 * @param src DNS query answer
-	 * @return resulting records
-	 */
+	// Construct host records from `HTTPS` DNS records queried for host `host`.
 	private static ArrayList<RpcHostRecord> ofHttpsAnswers(String host, Dns.Message src) {
 		ArrayList<RpcHostRecord> recs = new ArrayList<>(src.answers.length);
 
@@ -176,48 +172,44 @@ final class RpcHostRecord {
 		return recs;
 	}
 
-	/**
-	 * Post query of {@code HTTPS} DNS records.
-	 *
-	 * @param host host to post query for
-	 * @param exec executor to use for executing background tasks
-	 * @param timeoutMs maximum time, in milliseconds, to wait for DNS response
-	 * @return query result
-	 * @throws Exception error was encountered
+	/*
+	 * Post query of `HTTPS` DNS records for host `host` on background executor `exec`, waiting
+	 * at most `timeoutMs` milliseconds for DNS response.
 	 */
 	@SuppressLint("WrongConstant")
+	@SuppressWarnings("deprecation")
 	@RequiresApi(api = Build.VERSION_CODES.Q)
-	private static Dns.Message postHttpsQuery(String host, Executor exec, long timeoutMs)
+	private static Dns.Message
+	postHttpsQuery(Context ctxt, Executor exec, String host, long timeoutMs)
 	throws Exception {
 		LinkedTransferQueue<Object> res = new LinkedTransferQueue<>();
 		CancellationSignal cancel = new CancellationSignal();
 		Object val = null;
+		DnsResolver dns =
+			Build.VERSION.SDK_INT > Build.VERSION_CODES.BAKLAVA ? new DnsResolver(ctxt, null) :
+			DnsResolver.getInstance();
 
-		DnsResolver.getInstance()
-			.rawQuery(
-				null,
-				host,
-				DnsResolver.CLASS_IN,
-				Dns.HttpsRecordType,
-				DnsResolver.FLAG_NO_CACHE_STORE | DnsResolver.FLAG_NO_CACHE_LOOKUP,
-				exec,
-				cancel,
-				new DnsResolver.Callback<byte[]>() {
-					@Override
-					public void onAnswer(@NonNull byte[] answer, int rcode) {
-						res.add(rcode == 0 ? answer : new IllegalStateException(String.format(
-							Locale.ROOT,
-							"query failed: %s",
-							rcode
-						)));
-					}
-
-					@Override
-					public void onError(@NonNull DnsResolver.DnsException err) {
-						res.add(err);
-					}
+		dns.rawQuery(
+			null,
+			host, DnsResolver.CLASS_IN, Dns.HttpsRecordType,
+			DnsResolver.FLAG_NO_CACHE_STORE | DnsResolver.FLAG_NO_CACHE_LOOKUP,
+			exec, cancel,
+			new DnsResolver.Callback<byte[]>() {
+				@Override
+				public void onAnswer(@NonNull byte[] answer, int rcode) {
+					res.add(rcode == 0 ? answer : new IllegalStateException(String.format(
+						Locale.ROOT,
+						"query failed: %s",
+						rcode
+					)));
 				}
-			);
+
+				@Override
+				public void onError(@NonNull DnsResolver.DnsException err) {
+					res.add(err);
+				}
+			}
+		);
 
 		while (true) {
 			long start = SystemClock.uptimeMillis();
@@ -245,17 +237,14 @@ final class RpcHostRecord {
 		throw new TimeoutException("query timed out");
 	}
 
-	/**
-	 * Query {@code HTTPS} records of a host.
-	 *
-	 * @param host host to query records of
-	 * @param exec executor to use for executing background tasks
-	 * @param timeoutMs maximum time, in milliseconds, to wait for DNS response
-	 * @return queried records or {@linkplain Collection#isEmpty() empty}
+	/*
+	 * Query `HTTPS` records of a host `host` on a background executor `exec`, waiting at most
+	 * `timeoutMs` milliseconds for DNS response. If DNS query failed or returned no results,
+	 * this returns an empty collection.
 	 */
 	@RequiresApi(api = Build.VERSION_CODES.Q)
 	private static Collection<RpcHostRecord>
-	ofQueryHttps(String host, Executor exec, long timeoutMs) {
+	ofQueryHttps(Context ctxt, Executor exec, String host, long timeoutMs) {
 		HashSet<RpcHostRecord> recs = new HashSet<>();
 		HashSet<String> queried = new HashSet<>();
 		ArrayList<String> worklist = new ArrayList<>(1);
@@ -270,7 +259,8 @@ final class RpcHostRecord {
 			List<RpcHostRecord> answers;
 
 			try {
-				answers = ofHttpsAnswers(queryHost, postHttpsQuery(queryHost, exec, timeoutMs));
+				answers =
+					ofHttpsAnswers(queryHost, postHttpsQuery(ctxt, exec, queryHost, timeoutMs));
 			} catch (Throwable err) {
 				Logger.warn(TAG, "query failed", err);
 				continue;
@@ -290,16 +280,18 @@ final class RpcHostRecord {
 	/**
 	 * Query host records from DNS.
 	 *
-	 * @param host host to query records of
+	 * @param ctxt owning application context to resolve system services from
 	 * @param exec executor to use for executing background tasks
+	 * @param host host to query records of
 	 * @param timeoutMs maximum time, in milliseconds, to wait for DNS response
 	 * @return possibly {@linkplain Collection#isEmpty() empty} collection of queried records
 	 */
 	@WorkerThread
-	static Collection<RpcHostRecord> ofQuery(String host, Executor exec, long timeoutMs) {
+	static Collection<RpcHostRecord>
+	ofQuery(Context ctxt, Executor exec, String host, long timeoutMs) {
 		return (
 			Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ?
-			ofQueryHttps(host, exec, timeoutMs) :
+			ofQueryHttps(ctxt, exec, host, timeoutMs) :
 			Collections.emptyList()
 		);
 	}
@@ -348,13 +340,13 @@ final class RpcHostRecord {
 	/**
 	 * Serialize record to Protobuf message.
 	 *
-	 * @param writer writer to serialize record to
+	 * @param enc encoder to serialize record to
 	 */
-	void toProtobuf(ProtobufWriter writer) {
-		writer.writeFixed64(EXPTS, this.expiryTimestampSeconds);
-		writer.writeInt32(PRIO, this.priority);
-		writer.writeString(HOST, this.host);
-		writer.writeInt32(PORT, this.port);
+	void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeUnsignedLongField(EXPTS, this.expiryTimestampSeconds)
+			.encodeUnsignedIntField(PRIO, this.priority)
+			.encodeStringField(HOST, this.host)
+			.encodeUnsignedIntField(PORT, this.port);
 	}
 
 	/**

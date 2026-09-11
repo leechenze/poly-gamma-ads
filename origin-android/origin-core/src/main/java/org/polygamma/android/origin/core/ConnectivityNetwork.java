@@ -2,7 +2,10 @@
 
 package org.polygamma.android.origin.core;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_FIXED64;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
 import android.net.LinkAddress;
@@ -14,9 +17,10 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.ReturnThis;
 
 import org.polygamma.android.origin.adcom.enums.ConnectionType;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 import org.polygamma.android.origin.util.Preconditions;
 import org.polygamma.android.origin.util.Strings;
@@ -38,17 +42,17 @@ import java.util.Locale;
  */
 public final class ConnectivityNetwork implements ProtobufSerializable {
 
-	private static final @Tag int ID					= ofFixed64(     1);
-	private static final @Tag int CONNTYPE				= ofPackedInt32( 2);
-	private static final @Tag int CAPABILITY			= ofPackedInt32( 3);
-	private static final @Tag int DOWNKBPS				= ofInt32(       4);
-	private static final @Tag int UPKBPS				= ofInt32(       5);
-	private static final @Tag int LINKNAME				= ofBytes(       6);
-	private static final @Tag int PROXYHOST				= ofString(      7);
-	private static final @Tag int WIFIADDR				= ofFixed64(     8);
-	private static final @Tag int IFNAME				= ofString(      9);
-	private static final @Tag int IFADDR				= ofFixed64(    10);
-	private static final @Tag int SUBID					= ofFixed64(    11);
+	private static final @FieldTag int ID				= fieldTagOf( 1, WIRE_FIXED64);
+	private static final @FieldTag int CONNTYPE			= fieldTagOf( 2, WIRE_LEN);
+	private static final @FieldTag int CAPABILITY		= fieldTagOf( 3, WIRE_LEN);
+	private static final @FieldTag int DOWNKBPS			= fieldTagOf( 4, WIRE_VARINT);
+	private static final @FieldTag int UPKBPS			= fieldTagOf( 5, WIRE_VARINT);
+	private static final @FieldTag int LINKNAME			= fieldTagOf( 6, WIRE_LEN);
+	private static final @FieldTag int PROXYHOST		= fieldTagOf( 7, WIRE_LEN);
+	private static final @FieldTag int WIFIADDR			= fieldTagOf( 8, WIRE_FIXED64);
+	private static final @FieldTag int IFNAME			= fieldTagOf( 9, WIRE_LEN);
+	private static final @FieldTag int IFADDR			= fieldTagOf(10, WIRE_FIXED64);
+	private static final @FieldTag int SUBID			= fieldTagOf(11, WIRE_FIXED64);
 
 	/**
 	 * Network connectivity has been validated.
@@ -227,6 +231,7 @@ public final class ConnectivityNetwork implements ProtobufSerializable {
 		 * @return {@code this}
 		 * @see ConnectivityNetwork#hasCapability(int)
 		 */
+		@SuppressWarnings("unused")
 		@ReturnThis
 		Builder capabilities(@ConnectivityNetworkCapability int... caps) {
 			int mask = 0;
@@ -406,44 +411,46 @@ public final class ConnectivityNetwork implements ProtobufSerializable {
 	/**
 	 * Deserialize network description from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized description
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static ConnectivityNetwork ofProtobuf(ProtobufReader reader) {
+	public static ConnectivityNetwork ofProtobuf(ProtobufDecoder dec) {
 		ConnectivityNetwork rv = new ConnectivityNetwork(DEFAULT);
 		List<InetAddress> linkNames = new ArrayList<>(0);
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == ID) {
-				rv.id = reader.readFixed64();
+				rv.id = dec.decodeFixed64();
 			} else if (tag == CONNTYPE) {
-				rv.connectionTypes = reader.readPackedInt32();
+				rv.connectionTypes = dec.decodePackedUint32Array(rv.connectionTypes);
 			} else if (tag == CAPABILITY) {
-				rv.capabilitiesMask = (int) (reader.readWordBitmap(0) & 0xffffffffL);
+				rv.capabilitiesMask = dec.decodePackedUint32Bitmap32();
 			} else if (tag == DOWNKBPS) {
-				rv.downstreamKbps = reader.readInt32();
+				rv.downstreamKbps = dec.decodeUint32();
 			} else if (tag == UPKBPS) {
-				rv.upstreamKbps = reader.readInt32();
+				rv.upstreamKbps = dec.decodeUint32();
 			} else if (tag == LINKNAME) {
 				try {
-					linkNames.add(InetAddress.getByAddress(reader.readBytes()));
+					linkNames.add(InetAddress.getByAddress(dec.decodeByteArray()));
 				} catch (UnknownHostException cause) {
 					throw new RuntimeException("failed to deserialize link name", cause);
 				}
 			} else if (tag == PROXYHOST) {
-				rv.proxyHost = reader.readString();
+				rv.proxyHost = dec.decodeString();
 			} else if (tag == WIFIADDR) {
-				rv.wifiAddress = reader.readFixed64();
+				rv.wifiAddress = dec.decodeFixed64();
 			} else if (tag == IFNAME) {
-				rv.interfaceName = reader.readString();
+				rv.interfaceName = dec.decodeString();
 			} else if (tag == IFADDR) {
-				rv.interfaceAddress = reader.readFixed64();
+				rv.interfaceAddress = dec.decodeFixed64();
 			} else if (tag == SUBID) {
-				rv.subscriptionId = reader.readFixed64();
+				rv.subscriptionId = dec.decodeFixed64();
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		rv.linkNames = CollectionsCompat.toArrayOrEmpty(linkNames, DEFAULT.linkNames);
@@ -623,22 +630,22 @@ public final class ConnectivityNetwork implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
+	public void toProtobuf(ProtobufEncoder enc) {
 		if (this.id != -1)
-			writer.writeFixed64(ID, this.id);
-		writer.writePackedInt32(CONNTYPE, this.connectionTypes);
-		writer.writeWordBitmap(CAPABILITY, Integer.toUnsignedLong(this.capabilitiesMask), 0);
-		writer.writeInt32(DOWNKBPS, this.downstreamKbps);
-		writer.writeInt32(UPKBPS, this.upstreamKbps);
-		writer.writeString(PROXYHOST, this.proxyHost);
-		writer.writeFixed64(WIFIADDR, this.wifiAddress);
-		writer.writeString(IFNAME, this.interfaceName);
-		writer.writeFixed64(IFADDR, this.interfaceAddress);
+			enc.encodeUnsignedLongField(ID, this.id);
+		enc.encodePackedUint32ArrayField(CONNTYPE, this.connectionTypes)
+			.encodePackedUint32Bitmap32Field(CAPABILITY, this.capabilitiesMask)
+			.encodeUnsignedIntField(DOWNKBPS, this.downstreamKbps)
+			.encodeUnsignedIntField(UPKBPS, this.upstreamKbps)
+			.encodeStringField(PROXYHOST, this.proxyHost)
+			.encodeUnsignedLongField(WIFIADDR, this.wifiAddress)
+			.encodeStringField(IFNAME, this.interfaceName)
+			.encodeUnsignedLongField(IFADDR, this.interfaceAddress);
 		if (this.subscriptionId != -1)
-			writer.writeFixed64(SUBID, this.subscriptionId);
+			enc.encodeUnsignedLongField(SUBID, this.subscriptionId);
 
 		for (InetAddress name : this.linkNames)
-			writer.writeBytes(LINKNAME, name.getAddress());
+			enc.encodeByteArrayField(LINKNAME, name.getAddress());
 	}
 
 	@Override

@@ -8,12 +8,9 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 /**
@@ -22,13 +19,14 @@ import org.polygamma.origin.adcom.AdcomMedia;
 @RunWith(AndroidJUnit4.class)
 public class IconDisplayAssetTest {
 	@Test
-	public void testSerdeHtmlMakrup() throws InvalidProtocolBufferException {
+	public void testSerdeHtmlMakrup() {
 		IconDisplayAsset exp = IconDisplayAsset.ofHtmlMarkupAsset("<html></html>");
-		IconDisplayAsset got = IconDisplayAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.IconDisplayAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		IconDisplayAsset got = TestUtil.encodeAndDecode(
+			exp,
+			IconDisplayAsset::toProtobuf,
+			IconDisplayAsset::ofProtobuf,
+			AdcomMedia.IconDisplayAsset::parseFrom
+		);
 
 		assertTrue(got.isHtmlMarkupAsset());
 		assertFalse(got.isIframeUrlAsset());
@@ -38,13 +36,14 @@ public class IconDisplayAssetTest {
 	}
 
 	@Test
-	public void testSerdeIframeUrl() throws InvalidProtocolBufferException {
+	public void testSerdeIframeUrl() {
 		IconDisplayAsset exp = IconDisplayAsset.ofIframeUrlAsset("https://foo.com");
-		IconDisplayAsset got = IconDisplayAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.IconDisplayAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		IconDisplayAsset got = TestUtil.encodeAndDecode(
+			exp,
+			IconDisplayAsset::toProtobuf,
+			IconDisplayAsset::ofProtobuf,
+			AdcomMedia.IconDisplayAsset::parseFrom
+		);
 
 		assertFalse(got.isHtmlMarkupAsset());
 		assertTrue(got.isIframeUrlAsset());
@@ -54,13 +53,14 @@ public class IconDisplayAssetTest {
 	}
 
 	@Test
-	public void testSerdeImageUrl() throws InvalidProtocolBufferException {
+	public void testSerdeImageUrl() {
 		IconDisplayAsset exp = IconDisplayAsset.ofImageUrlAsset("image/jpeg", "https://foo.com");
-		IconDisplayAsset got = IconDisplayAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.IconDisplayAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		IconDisplayAsset got = TestUtil.encodeAndDecode(
+			exp,
+			IconDisplayAsset::toProtobuf,
+			IconDisplayAsset::ofProtobuf,
+			AdcomMedia.IconDisplayAsset::parseFrom
+		);
 
 		assertFalse(got.isHtmlMarkupAsset());
 		assertFalse(got.isIframeUrlAsset());

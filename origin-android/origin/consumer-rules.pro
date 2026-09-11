@@ -7,7 +7,7 @@
 -dontwarn com.huawei.hms.**
 
 # See `../origin-antifraud/consumer-rules.pro`
--keepclassmembers class org.polygamma.android.origin.antifraud.EntropyMachine {
+-keepclassmembers class org.polygamma.android.origin.antifraud.TamperMachine {
 	*** Z;
 	*** ZI(...);
 	*** I;

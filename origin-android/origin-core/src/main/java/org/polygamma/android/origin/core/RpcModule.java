@@ -2,12 +2,14 @@
 
 package org.polygamma.android.origin.core;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.content.Context;
 import android.net.http.HttpEngine;
 import android.os.Build;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Base64;
 import android.util.Pair;
@@ -17,21 +19,22 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
-import androidx.core.util.Supplier;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.polygamma.android.origin.protobuf.ProtobufDeserializer;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 import org.polygamma.android.origin.util.ExecutingService;
 import org.polygamma.android.origin.util.Flate;
+import org.polygamma.android.origin.util.Function;
 import org.polygamma.android.origin.util.ListenableFutureTask;
 import org.polygamma.android.origin.util.Logger;
 import org.polygamma.android.origin.util.Preconditions;
 import org.polygamma.android.origin.util.Strings;
+import org.polygamma.android.origin.util.Supplier;
 import org.polygamma.android.origin.util.Time;
 
 import java.io.IOException;
@@ -68,7 +71,7 @@ import java.util.zip.Deflater;
  * used whenever available, using the {@linkplain HttpEngine Cronet} HTTP engine; otherwise, HTTP/1
  * or HTTP/2 is used based on platform and available features.
  * <p>Remote procedures can be invoked using the {@link
- * #call(String, String, ProtobufSerializable, ProtobufDeserializer, long, TimeUnit)} family of
+ * #call(String, ProtobufSerializable, Function, long, TimeUnit)} family of
  * methods.
  *
  * @since 1.0
@@ -84,68 +87,58 @@ public class RpcModule extends OriginModule {
 	 */
 	public static final String NAME = "origin.rpc";
 
-	/**
-	 * Service {@linkplain #SETTINGS_RECORD records} were resolved for.
-	 */
-	private static final @Tag int SETTINGS_SERVICE	= ofString( 1);
+	// Service {@linkplain #SETTINGS_RECORD records} were resolved for.
+	private static final @FieldTag int SETTINGS_SERVICE	= fieldTagOf(1, WIRE_LEN);
 
-	/**
-	 * Hostname {@linkplain #SETTINGS_RECORD records} were resolved for.
-	 */
-	private static final @Tag int SETTINGS_HOST		= ofString( 2);
+	// Hostname {@linkplain #SETTINGS_RECORD records} were resolved for.
+	private static final @FieldTag int SETTINGS_HOST	= fieldTagOf(2, WIRE_LEN);
 
-	/**
-	 * {@linkplain RpcHostRecord Host record}.
-	 */
-	private static final @Tag int SETTINGS_RECORD	= ofMessage(3);
+	// {@linkplain RpcHostRecord Host record}.
+	private static final @FieldTag int SETTINGS_RECORD	= fieldTagOf(3, WIRE_LEN);
 
-	/**
-	 * Service and procedure name pattern.
-	 */
+	// Service and procedure name pattern.
 	private static final Pattern SERVICE_AND_PROCEDURE_NAME_PATTERN =
 		Pattern.compile("^[_A-Za-z][_A-Za-z0-9]*$");
 
-	/**
-	 * Default RPC request timeout, in milliseconds.
+	// Service version pattern.
+	private static final Pattern SERVICE_VERSION_PATTERN =
+		Pattern.compile("^[1-9][0-9]*\\.[0-9]+$");
+
+	/*
+	 * Procedure ids are composed of a service name, optional service version, and procedure name,
+	 * delimited by forward slash `/`.
 	 */
+	private static final Pattern PROCEDURE_ID_PATTERN =
+		Pattern.compile("^/([_A-Za-z][_A-Za-z0-9]*)(/[1-9][0-9]*\\.[0-9]+)?/([_A-Za-z][_A-Za-z0-9]*)$");
+
+	// Default RPC request timeout, in milliseconds.
 	private static final long DEFAULT_CALL_REQUEST_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
 
-	/**
-	 * Timeout, in milliseconds, of DNS queries.
-	 */
+	// Timeout, in milliseconds, of DNS queries.
 	private static final long DNS_QUERY_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(15);
 
-	/**
-	 * Maximum length of RPC call URL path, in bytes, which may be invoked using a {@code GET}.
-	 */
+	// Maximum length of RPC call URL path, in bytes, which may be invoked using a {@code GET}.
 	@VisibleForTesting
 	static final int HTTP_GET_CALL_PATH_THRESHOLD = 2048;
 
-	/**
-	 * Maximum number of HTTP redirects that may be followed before an RPC call is aborted.
-	 */
+	// Maximum number of HTTP redirects that may be followed before an RPC call is aborted.
 	private static final int MAX_CALL_HTTP_REDIRECT_COUNT = 5;
 
-	/**
-	 * Maximum number of times an RPC call can be retried.
-	 */
+	// Maximum number of times an RPC call can be retried.
 	@VisibleForTesting
 	static final int MAX_CALL_RETRY_COUNT = 3;
 
-	/**
-	 * Remote procedure call request.
-	 */
+	// Remote procedure call request.
 	@VisibleForTesting
 	final class CallRequest extends ListenableFutureTask<Object> {
 
 		final long id;
 		final long expireTimestampMillis;
-		final String service;
-		final String procedure;
+		final String procedureId;
 		final @Nullable ByteBuffer arguments;
 		final boolean argumentsDeflated;
 		final boolean useHttpGet;
-		final @Nullable ProtobufDeserializer<?> resultDeserializer;
+		final @Nullable Function<ProtobufDecoder, ?> resultDeserializer;
 
 		/*
 		 * Either `null`, `HttpRequest`, `ListenableFuture<?>` or `this` if request has not yet
@@ -169,28 +162,17 @@ public class RpcModule extends OriginModule {
 		// number of times HTTP request has been retried
 		int httpRetryCount;
 
-		/**
-		 * Construct a new call request.
-		 *
-		 * @param id unique request id
-		 * @param timeoutMillis maximum time, in milliseconds, to wait for request to complete
-		 * @param svc service to invoke procedure in
-		 * @param proc procedure to invoke
-		 * @param args arguments to invoke procedure with, if any
-		 * @param resDeser result message deserializer, if any
-		 */
+		// Construct a new call request.
 		CallRequest(
 			long id,
 			long timeoutMillis,
-			String svc,
-			String proc,
-			@Nullable ProtobufSerializable args,
-			@Nullable ProtobufDeserializer<?> resDeser
+			String procId,
+			@Nullable ByteBuffer args,
+			@Nullable Function<ProtobufDecoder, ?> resDeser
 		) {
 			this.id = id;
 			this.expireTimestampMillis = SystemClock.uptimeMillis() + timeoutMillis;
-			this.service = svc;
-			this.procedure = proc;
+			this.procedureId = procId;
 			this.resultDeserializer = resDeser;
 
 			if (args == null) {
@@ -198,37 +180,37 @@ public class RpcModule extends OriginModule {
 				this.argumentsDeflated = false;
 				this.useHttpGet = true;
 			} else {
-				ByteBuffer ser = ProtobufWriter.serialize(args);
-				long basePathLen = svc.length() + proc.length() + 3; // /<svc>/<proc>/
+				long basePathLen = procId.length() + 1;
 				boolean get =
-					(basePathLen + estimateBase64CodingOf(ser.remaining())) <=
+					(basePathLen + estimateBase64CodingOf(args.remaining())) <=
 					HTTP_GET_CALL_PATH_THRESHOLD;
 				boolean deflate = false;
 
 				if (!get) {
 					ByteBuffer comp =
-						Flate.compressZlib(ser.duplicate(), Deflater.BEST_COMPRESSION, false);
+						Flate.compressZlib(args.duplicate(), Deflater.BEST_COMPRESSION, false);
 
-					deflate = comp.remaining() < ser.remaining();
+					deflate = comp.remaining() < args.remaining();
 					if (deflate) {
-						ser = comp;
+						args = comp;
 						get =
-							(basePathLen + estimateBase64CodingOf(ser.remaining())) <=
+							(basePathLen + estimateBase64CodingOf(args.remaining())) <=
 							HTTP_GET_CALL_PATH_THRESHOLD;
 					}
 				}
 
 				this.argumentsDeflated = deflate;
 				this.useHttpGet = get;
-				this.arguments = ser;
+				this.arguments = args;
 			}
 		}
 
-		/**
-		 * Owning module.
-		 *
-		 * @return module
-		 */
+		// Service name.
+		String serviceName() {
+			return this.procedureId.substring(1, this.procedureId.indexOf('/', 1));
+		}
+
+		// Owning module.
 		RpcModule module() {
 			return RpcModule.this;
 		}
@@ -240,14 +222,9 @@ public class RpcModule extends OriginModule {
 				((ListenableFuture<?>) state).cancel(false);
 		}
 
-		/**
-		 * Try and update request state to starting.
-		 * <p>If this returns {@code true}, then its guaranteed that {@code http} has been
-		 * {@linkplain HttpRequest.Builder#send() sent}.
-		 *
-		 * @param http builder of HTTP request underlying call
-		 * @return {@code true} if, and only if, start state was entered successfully; otherwise,
-		 * {@code false} if request is already {@linkplain #isDone() done}
+		/*
+		 * Try and update request state to starting. If this returns `true`, then it's guaranteed
+		 * that `http` has been sent; otherwise, `false` if request is already done.
 		 */
 		boolean tryStart(HttpRequest.Builder http) {
 			Object state;
@@ -263,11 +240,9 @@ public class RpcModule extends OriginModule {
 			return true;
 		}
 
-		/**
-		 * Try and clear request state.
-		 *
-		 * @return {@code true} if, and only if, state was cleared; otherwise, {@code false} if
-		 * request is already {@linkplain #isDone() done}
+		/*
+		 * Try and clear request state. Returns `true` if state was cleared; otherwise, `false` if
+		 * request is already done.
 		 */
 		boolean tryClear() {
 			synchronized (this) {
@@ -278,12 +253,10 @@ public class RpcModule extends OriginModule {
 			return true;
 		}
 
-		/**
-		 * Complete request.
-		 *
-		 * @param res {@code null}, result value, or error {@linkplain Throwable cause} if request
-		 * completed successfully without a result, completed successfully with a result, or
-		 * failed, respectively
+		/*
+		 * Complete request with `res`, where `res` is `null`, result value, or a `Throwable` if
+		 * request completed successfully without a result, completed successfully with a result,
+		 * or failed, respectively.
 		 */
 		void complete(@Nullable Object res) {
 			RpcHostRecord rec = this.hostRecord;
@@ -298,9 +271,7 @@ public class RpcModule extends OriginModule {
 			}
 		}
 
-		/**
-		 * Complete request with timeout.
-		 */
+		// Complete request with timeout.
 		void timeout() {
 			this.complete(new TimeoutException());
 		}
@@ -344,7 +315,7 @@ public class RpcModule extends OriginModule {
 
 		@Override
 		public String toString() {
-			return String.format(Locale.ROOT, "%s/%s@%s", this.service, this.procedure, this.id);
+			return String.format(Locale.ROOT, "%s@%d", this.procedureId, this.id);
 		}
 	}
 
@@ -427,23 +398,15 @@ public class RpcModule extends OriginModule {
 		}
 	}
 
-	/**
-	 * Calculate number of bytes that would be used to encode a byte sequence.
-	 *
-	 * @param size length of byte sequence to be encoded
-	 * @return encoded length, in bytes, of sequence
-	 */
+	// Calculate number of bytes that would be used to base64 encode a byte sequence `size`.
 	@VisibleForTesting
 	static long estimateBase64CodingOf(int size) {
 		return ((size * 8L) + 6 - 1) / 6;
 	}
 
-	/**
-	 * Retrieve RPC request for an HTTP request.
-	 *
-	 * @param http HTTP request
-	 * @return corresponding RPC request
-	 * @throws IllegalArgumentException {@code http} is not associated with an RPC request
+	/*
+	 * Retrieve RPC request for an HTTP request `http`. If `http` is not associated with an RPC
+	 * request, this fails with `IllegalArgumentException`.
 	 */
 	private static CallRequest callRequestOf(HttpRequest http) {
 		CallRequest call = (CallRequest) http.attachment();
@@ -455,9 +418,7 @@ public class RpcModule extends OriginModule {
 		return call;
 	}
 
-	/**
-	 * Remote procedure call {@linkplain CallRequest request} HTTP lifecycle listener.
-	 */
+	// Remote procedure call request HTTP lifecycle listener.
 	private static final HttpRequest.Listener
 	CALL_HTTP_REQUEST_LISTENER = new HttpRequest.Listener() {
 		@Override
@@ -565,7 +526,7 @@ public class RpcModule extends OriginModule {
 					return;
 				body.flip();
 			}
-			call.result = call.resultDeserializer.ofProtobuf(new ProtobufReader(body));
+			call.result = call.resultDeserializer.apply(ProtobufDecoder.ofBuffer(body));
 		}
 
 		@Override
@@ -584,6 +545,43 @@ public class RpcModule extends OriginModule {
 	 */
 	public static Provider ofProvider() {
 		return new Provider();
+	}
+
+	/**
+	 * Generate id of a remote procedure within a service.
+	 *
+	 * @param svc service in which procedure is defined
+	 * @param name name of procedure
+	 * @param ver version of service procedure is defined in or, {@code null} or {@linkplain
+	 * String#isEmpty() empty} string for version {@code 0}
+	 * @return procedure id
+	 * @throws IllegalArgumentException {@code svc} or {@code name} is malformed, or {@code
+	 * ver} is not {@code null}, not empty, and is malformed
+	 * @since 1.2
+	 */
+	public static @RpcProcedureId String
+	idOfProcedure(String svc, String name, @Nullable String ver) {
+		Preconditions.checkArgument(
+			SERVICE_AND_PROCEDURE_NAME_PATTERN.matcher(svc).matches() &&
+			SERVICE_AND_PROCEDURE_NAME_PATTERN.matcher(name).matches()
+		);
+		if (TextUtils.isEmpty(ver))
+			return String.format("/%s/%s", svc, name);
+		Preconditions.checkArgument(SERVICE_VERSION_PATTERN.matcher(ver).matches());
+		return String.format("/%s/%s/%s", svc, ver, name);
+	}
+
+	/**
+	 * Generate id of a remote procedure within version {@code 0} of a service.
+	 *
+	 * @param svc service in which procedure is defined
+	 * @param name name of procedure
+	 * @return procedure id
+	 * @throws IllegalArgumentException {@code svc} or {@code name} is malformed
+	 * @since 1.2
+	 */
+	public static @RpcProcedureId String idOfProcedure(String svc, String name) {
+		return idOfProcedure(svc, name, null);
 	}
 
 	private final RegulationsModule regulations;
@@ -653,67 +651,57 @@ public class RpcModule extends OriginModule {
 		);
 	}
 
-	/**
-	 * Store services host records into module {@linkplain #storeSettings(ByteBuffer) settings}.
-	 */
+	// Store service host records into module settings.
 	@WorkerThread
 	private void storeServicesHostRecords() {
 		if (this.servicesHostRecords.isEmpty())
 			return;
 
-		ProtobufWriter writer = new ProtobufWriter();
+		ProtobufEncoder enc = ProtobufEncoder.of();
 
 		for (int i = 0; i < this.servicesHostRecords.size(); i++) {
-			RpcServiceHostRecords svcRecs = this.servicesHostRecords.valueAt(i);
-			List<RpcHostRecord> recs = svcRecs.toRecords();
+			enc.encodeLenField(
+				fieldTagOf(1, WIRE_LEN),
+				this.servicesHostRecords.valueAt(i),
+				(svcRecs, svcRecsEnc) -> {
+					List<RpcHostRecord> recs = svcRecs.toRecords();
 
-			if (recs.isEmpty())
-				continue;
-
-			long cookie = writer.beginWriteLen(ofMessage(1));
-
-			writer.writeString(SETTINGS_SERVICE, svcRecs.service());
-			writer.writeString(SETTINGS_HOST, svcRecs.host());
-			for (RpcHostRecord rec : recs) {
-				long recCookie = writer.beginWriteLen(SETTINGS_RECORD);
-
-				rec.toProtobuf(writer);
-				writer.endWriteLen(recCookie);
-			}
-			writer.endWriteLen(cookie);
+					if (recs.isEmpty())
+						return;
+					svcRecsEnc.encodeStringField(SETTINGS_SERVICE, svcRecs.service());
+					svcRecsEnc.encodeStringField(SETTINGS_HOST, svcRecs.host());
+					for (RpcHostRecord rec : recs)
+						svcRecsEnc.encodeLenField(SETTINGS_RECORD, rec, RpcHostRecord::toProtobuf);
+				}
+			);
 		}
 
-		super.storeSettings(writer.finish());
+		super.storeSettings(enc.asBuffer());
 	}
 
-	/**
-	 * Read host {@linkplain RpcServiceHostRecords records} for a service.
-	 *
-	 * @param reader reader to read from
-	 * @return resulting records or {@code null} if no records were read
-	 */
-	private static @Nullable RpcServiceHostRecords readServiceHostRecords(ProtobufReader reader) {
+	// Read `RpcServiceHostRecords` for a service, returns `null` if no records were read.
+	private static @Nullable RpcServiceHostRecords readServiceHostRecords(ProtobufDecoder dec) {
 		String svc = "";
 		String host = "";
 		ArrayList<RpcHostRecord> recs = new ArrayList<>();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == SETTINGS_SERVICE)
-				svc = reader.readString();
+				svc = dec.decodeString();
 			else if (tag == SETTINGS_HOST)
-				host = reader.readString();
+				host = dec.decodeString();
 			else if (tag == SETTINGS_RECORD)
-				recs.add(reader.readLen(RpcHostRecord::ofProtobuf));
+				recs.add(dec.decodeLen(RpcHostRecord::ofProtobuf));
+			else
+				dec.skipFieldValue(tag);
 		}
 		return svc.isEmpty() || host.isEmpty() || recs.isEmpty() ? null :
 			new RpcServiceHostRecords(svc, host, recs);
 	}
 
-	/**
-	 * Load services host records from module {@linkplain #loadSettings() settings}.
-	 */
+	// Load services host records from module {@linkplain #loadSettings() settings}.
 	@WorkerThread
 	private void loadServicesHostRecords() {
 		Lock write = this.lock.writeLock();
@@ -722,16 +710,18 @@ public class RpcModule extends OriginModule {
 		if (buff == null)
 			return;
 		try {
-			ProtobufReader reader = new ProtobufReader(buff);
+			ProtobufDecoder dec = ProtobufDecoder.ofBuffer(buff);
 
-			while (reader.hasRemaining()) {
-				if (reader.readTag() != ofMessage(1))
+			while (dec.hasRemaining()) {
+				int tag = dec.decodeFieldTag();
+
+				if (tag != fieldTagOf(1, WIRE_LEN)) {
+					dec.skipFieldValue(tag);
 					continue;
+				}
 
-				int cookie = reader.beginReadLen();
-				RpcServiceHostRecords recs = readServiceHostRecords(reader);
+				RpcServiceHostRecords recs = dec.decodeLen(RpcModule::readServiceHostRecords);
 
-				reader.endReadLen(cookie);
 				if (recs == null)
 					continue;
 
@@ -753,13 +743,9 @@ public class RpcModule extends OriginModule {
 		}
 	}
 
-	/**
-	 * Query host records for a service.
-	 *
-	 * @param svc service name
-	 * @param host root service host to query records of
-	 * @return resulting records or {@code null} if module has been {@linkplain #destroy()
-	 * destroyed}
+	/*
+	 * Query host records for a service `svc` with root service host `host`. The resulting records
+	 * are returned or `null` if module has been destroyed.
 	 */
 	@WorkerThread
 	private @Nullable RpcServiceHostRecords queryServiceHostRecords(String svc, String host) {
@@ -771,8 +757,9 @@ public class RpcModule extends OriginModule {
 			if (this.activeCalls == null)
 				return null;
 			recs = super.sdk().callIoInBackground(() -> RpcHostRecord.ofQuery(
-				host,
+				super.sdk().context(),
 				super.sdk().backgroundIoExecutor(),
+				host,
 				DNS_QUERY_TIMEOUT_MILLIS
 			)).get();
 		} catch (Throwable cause) {
@@ -791,12 +778,7 @@ public class RpcModule extends OriginModule {
 		return new RpcServiceHostRecords(svc, host, recs);
 	}
 
-	/**
-	 * Determine host for a service.
-	 *
-	 * @param svc service name
-	 * @return host name
-	 */
+	// Determine host for a service `svc`.
 	@VisibleForTesting
 	String hostOfService(String svc) {
 		String host = this.host;
@@ -809,13 +791,10 @@ public class RpcModule extends OriginModule {
 		return host.replace("%s", svc);
 	}
 
-	/**
-	 * Update services host records.
-	 * <p>If services host records have not yet been {@linkplain #loadServicesHostRecords()
-	 * loaded}, they are loaded. If the host configuration has changed, relevant service records
-	 * are updated.
-	 *
-	 * @return set of updated host records
+	/*
+	 * Update services host records. If services host records have not yet been loaded, they are
+	 * loaded. If host configuration has changed, relevant service records are updated. The set of
+	 * updated records is returned.
 	 */
 	private Set<String> updateServicesHostRecords() {
 		boolean loaded = false;
@@ -859,12 +838,10 @@ public class RpcModule extends OriginModule {
 		return updSvcNames;
 	}
 
-	/**
-	 * Process services host records update.
-	 * <p>If services host records have not yet been {@linkplain #loadServicesHostRecords()
-	 * loaded}, they are loaded. Service host records for {@linkplain #callsAwaitingProcess blocked}
-	 * call requests are updated, if required, and the respective requests are {@linkplain
-	 * #sendCall(CallRequest, Throwable) sent}.
+	/*
+	 * Process services host records update. If services host records have not yet been
+	 * loaded, they are loaded. Service host records for `callsAwaitingProcess` call requests are
+	 * updated, if required, and the respective requests are sent.
 	 */
 	@WorkerThread
 	private void processServicesHostRecords() {
@@ -876,13 +853,15 @@ public class RpcModule extends OriginModule {
 
 			if (req == null)
 				break;
+
+			String svc = req.serviceName();
+
 			if (!req.isDone())
 				calls.add(req);
-			if (!updSvcNames.add(req.service))
+			if (!updSvcNames.add(svc))
 				continue;
 
-			RpcServiceHostRecords recs =
-				this.queryServiceHostRecords(req.service, this.hostOfService(req.service));
+			RpcServiceHostRecords recs = this.queryServiceHostRecords(svc, this.hostOfService(svc));
 			Lock write = this.lock.writeLock();
 
 			if (recs == null)
@@ -890,7 +869,7 @@ public class RpcModule extends OriginModule {
 
 			write.lock();
 			try {
-				this.servicesHostRecords.put(req.service, recs);
+				this.servicesHostRecords.put(svc, recs);
 			} finally {
 				write.unlock();
 			}
@@ -908,11 +887,9 @@ public class RpcModule extends OriginModule {
 			this.sendCall(call, null);
 	}
 
-	/**
-	 * Timeout call requests which have {@linkplain CallRequest#expireTimestampMillis expired}.
-	 *
-	 * @return {@code true} if module has been {@linkplain #destroy() destroyed}; otherwise,
-	 * {@code false}
+	/*
+	 * Timeout call requests which have expired according to `CallRequest::expireTimestampMillis`.
+	 * This returns `true` if module has been destroyed.
 	 */
 	private boolean processTimeouts() {
 		long now = SystemClock.uptimeMillis();
@@ -942,9 +919,7 @@ public class RpcModule extends OriginModule {
 		return false;
 	}
 
-	/**
-	 * Process request call timeouts and service host records.
-	 */
+	// Process request call timeouts and service host records.
 	@WorkerThread
 	private void process() {
 		if (this.processTimeouts())
@@ -977,22 +952,12 @@ public class RpcModule extends OriginModule {
 		}
 	}
 
-	/**
-	 * Ensure module has not been {@linkplain #destroy() destroyed}.
-	 *
-	 * @throws IllegalStateException module has been destroyed
-	 */
+	// Fail with `IllegalStateException` if module has been destroyed.
 	private void checkNotDestroyed() {
 		Preconditions.checkState(this.activeCalls != null, "module destroyed");
 	}
 
-	/**
-	 * Resolve method and URL for a call.
-	 *
-	 * @param req call request to resolve URL and method for
-	 * @param rec service host record to resolve URL hostname and port from
-	 * @return tuple of HTTP method and URL
-	 */
+	// Resolve method and URL for a call request `req`. The resulting URL is based on `rec`.
 	private Pair<@HttpMethod String, String>
 	resolveCallUrlAndMethod(CallRequest req, RpcHostRecord rec) {
 		StringBuilder url = new StringBuilder();
@@ -1002,10 +967,7 @@ public class RpcModule extends OriginModule {
 			.append(rec.host);
 		if (rec.port > 0 && rec.port != (this.insecure ? 80 : 443))
 			url.append(':').append(rec.port);
-		url.append('/')
-			.append(req.service)
-			.append('/')
-			.append(req.procedure);
+		url.append(req.procedureId);
 
 		if (req.arguments == null || !req.arguments.hasRemaining())
 			return new Pair<>("GET", url.toString());
@@ -1024,11 +986,7 @@ public class RpcModule extends OriginModule {
 		);
 	}
 
-	/**
-	 * Send call request.
-	 *
-	 * @param req request of call to send
-	 */
+	// Send call request `req`.
 	@GuardedBy("this.lock.readLock()")
 	private void doSendCall(CallRequest req) {
 		if (req.isDone())
@@ -1042,7 +1000,7 @@ public class RpcModule extends OriginModule {
 			return;
 		}
 
-		RpcServiceHostRecords recs = this.servicesHostRecords.get(req.service);
+		RpcServiceHostRecords recs = this.servicesHostRecords.get(req.serviceName());
 		RpcHostRecord rec = recs == null ? null : recs.next();
 
 		if (rec == null) {
@@ -1086,11 +1044,9 @@ public class RpcModule extends OriginModule {
 		}
 	}
 
-	/**
-	 * Send call request, if possible.
-	 *
-	 * @param req request of call to send
-	 * @param retryCause reason call is being resent or {@code null} if initial call
+	/*
+	 * Send call request, if possible. If `retryCause` is null, then call is an initial call;
+	 * otherwise, `retryCause` must be the reason why the call is being resent.
 	 */
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
 	private void sendCall(CallRequest req, @Nullable Throwable retryCause) {
@@ -1125,11 +1081,7 @@ public class RpcModule extends OriginModule {
 		}
 	}
 
-	/**
-	 * Handle call request completion.
-	 *
-	 * @param req call request which completed
-	 */
+	// Handle call request completion for `req`.
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
 	private void onCallDone(CallRequest req) {
 		ConcurrentSkipListSet<CallRequest> calls = this.activeCalls;
@@ -1138,32 +1090,40 @@ public class RpcModule extends OriginModule {
 			Logger.debug(TAG, "call request %s done", req);
 	}
 
-	/**
-	 * Invoke remote procedure asynchronously.
+	private static @Nullable ByteBuffer prepareCallArguments(@Nullable Object args) {
+		if (args instanceof ProtobufSerializable) {
+			ProtobufEncoder enc = ProtobufEncoder.of();
+
+			((ProtobufSerializable) args).toProtobuf(enc);
+			return enc.asBuffer();
+		} else if (args instanceof byte[]) {
+			return ByteBuffer.wrap((byte[]) args);
+		} else if (args instanceof ByteBuffer) {
+			return (ByteBuffer) args;
+		}
+		Preconditions.checkArgument(args == null);
+		return null;
+	}
+
+	/*
+	 * Invoke remote procedure `procId`, asynchronously, with optional arguments `args`. If
+	 * `args` is non-`null`, it must be `ProtobufSerializable`, `byte` array, or `ByteBuffer`.
+	 * When `args` is `ProtobufSerializable`, the arguments for the procedure are serialized from
+	 * it, otherwise, `byte` array and buffer arguments are transmitted as-is. The `resDeser`,
+	 * if non-`null`, is used to deserialize the result from the procedure, if any.
 	 *
-	 * @param <T> result type
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
-	 * @param args arguments to invoke procedure with, if any
-	 * @param resDeser procedure result deserializer, if any
-	 * @param timeout maximum time to wait for remote procedure or {@code 0} for default timeout
-	 * @param unit unit {@code timeout} is measured in
-	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * The call is made with a maximum time `timeout`. When `timeout` is `0`, the request waits for
+	 * the default timeout.
 	 */
 	@SuppressWarnings("unchecked")
 	private <T> ListenableFuture<T> doCall(
-		String svc,
-		String name,
-		@Nullable ProtobufSerializable args,
-		@Nullable ProtobufDeserializer<T> resDeser,
+		@RpcProcedureId String procId,
+		@Nullable Object args,
+		@Nullable Function<ProtobufDecoder, T> resDeser,
 		long timeout,
 		TimeUnit unit
 	) {
-		Preconditions.checkArgument(
-			SERVICE_AND_PROCEDURE_NAME_PATTERN.matcher(svc).matches() &&
-			SERVICE_AND_PROCEDURE_NAME_PATTERN.matcher(name).matches()
-		);
+		Preconditions.checkArgument(PROCEDURE_ID_PATTERN.matcher(procId).matches());
 
 		long expireMs = unit.toMillis(timeout);
 
@@ -1173,9 +1133,8 @@ public class RpcModule extends OriginModule {
 		CallRequest req = new CallRequest(
 			this.nextCallRequestId.getAndIncrement(),
 			expireMs,
-			svc,
-			name,
-			args,
+			procId,
+			prepareCallArguments(args),
 			resDeser
 		);
 		Lock read = this.lock.readLock();
@@ -1198,27 +1157,24 @@ public class RpcModule extends OriginModule {
 	 * Invoke remote procedure asynchronously.
 	 *
 	 * @param <T> procedure result type
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
+	 * @param procId id of procedure to invoke
 	 * @param args arguments to invoke procedure with
 	 * @param resDeser deserializer to deserialize procedure result with
 	 * @param timeout maximum time to wait for remote procedure or {@code 0} for default timeout
 	 * @param unit unit {@code timeout} is measured in
 	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * @throws IllegalArgumentException {@code procId} is invalid
 	 * @since 1.2
 	 */
 	public <T> ListenableFuture<T> call(
-		String svc,
-		String name,
+		@RpcProcedureId String procId,
 		ProtobufSerializable args,
-		ProtobufDeserializer<T> resDeser,
+		Function<ProtobufDecoder, T> resDeser,
 		long timeout,
 		TimeUnit unit
 	) {
 		return this.doCall(
-			svc,
-			name,
+			procId,
 			Preconditions.checkNotNull(args),
 			Preconditions.checkNotNull(resDeser),
 			timeout,
@@ -1230,43 +1186,91 @@ public class RpcModule extends OriginModule {
 	 * Invoke remote procedure asynchronously, with default timeout.
 	 *
 	 * @param <T> procedure result type
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
+	 * @param procId id of procedure to invoke
 	 * @param args arguments to invoke procedure with
 	 * @param resDeser deserializer to deserialize procedure result with
 	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * @throws IllegalArgumentException {@code procId} is invalid
 	 * @since 1.2
-	 * @see #call(String, String, ProtobufSerializable, ProtobufDeserializer, long, TimeUnit)
+	 * @see #call(String, ProtobufSerializable, Function, long, TimeUnit)
 	 */
-	public <T> ListenableFuture<T>
-	call(String svc, String name, ProtobufSerializable args, ProtobufDeserializer<T> resDeser) {
-		return this.call(svc, name, args, resDeser, 0L, TimeUnit.MILLISECONDS);
+	public <T> ListenableFuture<T> call(
+		@RpcProcedureId String procId,
+		ProtobufSerializable args,
+		Function<ProtobufDecoder, T> resDeser
+	) {
+		return this.call(procId, args, resDeser, 0L, TimeUnit.MILLISECONDS);
+	}
+
+	/**
+	 * Invoke remote procedure, with serialized arguments, asynchronously.
+	 *
+	 * @param <T> procedure result type
+	 * @param procId id of procedure to invoke
+	 * @param args serialized arguments to invoke procedure with
+	 * @param resDeser deserializer to deserialize procedure result with
+	 * @param timeout maximum time to wait for remote procedure or {@code 0} for default timeout
+	 * @param unit unit {@code timeout} is measured in
+	 * @return completion future
+	 * @throws IllegalArgumentException {@code procId} is invalid
+	 * @since 1.2
+	 */
+	public <T> ListenableFuture<T> callWithBytes(
+		@RpcProcedureId String procId,
+		ByteBuffer args,
+		Function<ProtobufDecoder, T> resDeser,
+		long timeout,
+		TimeUnit unit
+	) {
+		return this.doCall(
+			procId,
+			Preconditions.checkNotNull(args),
+			Preconditions.checkNotNull(resDeser),
+			timeout,
+			unit
+		);
+	}
+
+	/**
+	 * Invoke remote procedure, with serialized arguments, asynchronously, with default timeout.
+	 *
+	 * @param <T> procedure result type
+	 * @param procId id of procedure to invoke
+	 * @param args serialized arguments to invoke procedure with
+	 * @param resDeser deserializer to deserialize procedure result with
+	 * @return completion future
+	 * @throws IllegalArgumentException {@code procId} is invalid
+	 * @since 1.2
+	 * @see #callWithBytes(String, ByteBuffer, Function, long, TimeUnit)
+	 */
+	public <T> ListenableFuture<T> callWithBytes(
+		@RpcProcedureId String procId,
+		ByteBuffer args,
+		Function<ProtobufDecoder, T> resDeser
+	) {
+		return this.callWithBytes(procId, args, resDeser, 0L, TimeUnit.MILLISECONDS);
 	}
 
 	/**
 	 * Invoke remote procedure, without arguments, asynchronously.
 	 *
 	 * @param <T> procedure result type
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
+	 * @param procId id of procedure to invoke
 	 * @param resDeser deserializer to deserialize procedure result with
 	 * @param timeout maximum time to wait for remote procedure or {@code 0} for default timeout
 	 * @param unit unit {@code timeout} is measured in
 	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * @throws IllegalArgumentException {@code procId} is invalid
 	 * @since 1.2
 	 */
 	public <T> ListenableFuture<T> callWithoutArguments(
-		String svc,
-		String name,
-		ProtobufDeserializer<T> resDeser,
+		@RpcProcedureId String procId,
+		Function<ProtobufDecoder, T> resDeser,
 		long timeout,
 		TimeUnit unit
 	) {
 		return this.doCall(
-			svc,
-			name,
+			procId,
 			null,
 			Preconditions.checkNotNull(resDeser),
 			timeout,
@@ -1278,36 +1282,36 @@ public class RpcModule extends OriginModule {
 	 * Invoke remote procedure, without arguments, asynchronously, with default timeout.
 	 *
 	 * @param <T> procedure result type
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
+	 * @param procId id of procedure to invoke
 	 * @param resDeser deserializer to deserialize procedure result with
 	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * @throws IllegalArgumentException {@code procId} is invalid
 	 * @since 1.2
-	 * @see #callWithoutArguments(String, String, ProtobufDeserializer, long, TimeUnit)
+	 * @see #callWithoutArguments(String, Function, long, TimeUnit)
 	 */
 	public <T> ListenableFuture<T>
-	callWithoutArguments(String svc, String name, ProtobufDeserializer<T> resDeser) {
-		return this.callWithoutArguments(svc, name, resDeser, 0L, TimeUnit.MILLISECONDS);
+	callWithoutArguments(@RpcProcedureId String procId, Function<ProtobufDecoder, T> resDeser) {
+		return this.callWithoutArguments(procId, resDeser, 0L, TimeUnit.MILLISECONDS);
 	}
 
 	/**
 	 * Invoke remote procedure, with {@code void} result, asynchronously.
 	 *
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
+	 * @param procId id of procedure to invoke
 	 * @param args arguments to invoke procedure with
 	 * @param timeout maximum time to wait for remote procedure or {@code 0} for default timeout
 	 * @param unit unit {@code timeout} is measured in
 	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * @throws IllegalArgumentException {@code procId} is invalid
 	 * @since 1.2
 	 */
-	public ListenableFuture<Void>
-	callVoid(String svc, String name, ProtobufSerializable args, long timeout, TimeUnit unit) {
+	public ListenableFuture<Void> callVoid(
+		@RpcProcedureId String procId,
+		ProtobufSerializable args,
+		long timeout, TimeUnit unit
+	) {
 		return this.doCall(
-			svc,
-			name,
+			procId,
 			Preconditions.checkNotNull(args),
 			null,
 			timeout,
@@ -1318,45 +1322,83 @@ public class RpcModule extends OriginModule {
 	/**
 	 * Invoke remote procedure, with {@code void} result, asynchronously, with default timeout.
 	 *
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
+	 * @param procId id of procedure to invoke
 	 * @param args arguments to invoke procedure with
 	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * @throws IllegalArgumentException {@code procId} is invalid
 	 * @since 1.2
 	 */
-	public ListenableFuture<Void> callVoid(String svc, String name, ProtobufSerializable args) {
-		return this.callVoid(svc, name, args, 0L, TimeUnit.MILLISECONDS);
+	public ListenableFuture<Void>
+	callVoid(@RpcProcedureId String procId, ProtobufSerializable args) {
+		return this.callVoid(procId, args, 0L, TimeUnit.MILLISECONDS);
+	}
+
+	/**
+	 * Invoke remote procedure, with {@code void} result and serialized arguments, asynchronously.
+	 *
+	 * @param procId id of procedure to invoke
+	 * @param args serialized arguments to invoke procedure with
+	 * @param timeout maximum time to wait for remote procedure or {@code 0} for default timeout
+	 * @param unit unit {@code timeout} is measured in
+	 * @return completion future
+	 * @throws IllegalArgumentException {@code procId} is invalid
+	 * @since 1.2
+	 */
+	public ListenableFuture<Void> callVoidWithBytes(
+		@RpcProcedureId String procId,
+		ByteBuffer args,
+		long timeout, TimeUnit unit
+	) {
+		return this.doCall(
+			procId,
+			Preconditions.checkNotNull(args),
+			null,
+			timeout,
+			unit
+		);
+	}
+
+	/**
+	 * Invoke remote procedure, with {@code void} result and serialized arguments, asynchronously,
+	 * with default timeout.
+	 *
+	 * @param procId id of procedure to invoke
+	 * @param args arguments to invoke procedure with
+	 * @return completion future
+	 * @throws IllegalArgumentException {@code procId} is invalid
+	 * @since 1.2
+	 */
+	public ListenableFuture<Void>
+	callVoidWithBytes(@RpcProcedureId String procId, ByteBuffer args) {
+		return this.callVoidWithBytes(procId, args, 0L, TimeUnit.MILLISECONDS);
 	}
 
 	/**
 	 * Invoke remote procedure, without arguments and with {@code void} result, asynchronously.
 	 *
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
+	 * @param procId id of procedure to invoke
 	 * @param timeout maximum time to wait for remote procedure or {@code 0} for default timeout
 	 * @param unit unit {@code timeout} is measured in
 	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * @throws IllegalArgumentException {@code procId} is invalid
 	 * @since 1.2
 	 */
 	public ListenableFuture<Void>
-	callVoidWithoutArguments(String svc, String name, long timeout, TimeUnit unit) {
-		return this.doCall(svc, name, null, null, timeout, unit);
+	callVoidWithoutArguments(@RpcProcedureId String procId, long timeout, TimeUnit unit) {
+		return this.doCall(procId, null, null, timeout, unit);
 	}
 
 	/**
 	 * Invoke remote procedure, without arguments and with {@code void} result, asynchronously,
 	 * with default timeout.
 	 *
-	 * @param svc name of service to invoke procedure in
-	 * @param name name of procedure to invoke
+	 * @param procId id of procedure to invoke
 	 * @return completion future
-	 * @throws IllegalArgumentException {@code svc} or {@code name} is invalid
+	 * @throws IllegalArgumentException {@code procId} is invalid
 	 * @since 1.2
 	 */
-	public ListenableFuture<Void> callVoidWithoutArguments(String svc, String name) {
-		return this.callVoidWithoutArguments(svc, name, 0L, TimeUnit.MILLISECONDS);
+	public ListenableFuture<Void> callVoidWithoutArguments(@RpcProcedureId String procId) {
+		return this.callVoidWithoutArguments(procId, 0L, TimeUnit.MILLISECONDS);
 	}
 
 	@Override

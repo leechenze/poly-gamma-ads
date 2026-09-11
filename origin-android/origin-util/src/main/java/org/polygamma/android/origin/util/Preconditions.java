@@ -7,7 +7,6 @@ import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.util.Supplier;
 
 import java.util.Locale;
 import java.util.Objects;

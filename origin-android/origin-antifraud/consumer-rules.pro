@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
 # Keep tamper members in `EntropyMachine`.
--keepclassmembers class org.polygamma.android.origin.antifraud.EntropyMachine {
+-keepclassmembers class org.polygamma.android.origin.antifraud.TamperMachine {
 	*** Z;
 	*** ZI(...);
 	*** I;

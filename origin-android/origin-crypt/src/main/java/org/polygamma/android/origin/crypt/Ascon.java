@@ -47,7 +47,7 @@ public class Ascon {
 	 * @since 1.2
 	 */
 	public static Ascon ofEmpty() {
-		return new Ascon(0, 0, 0, 0, 0);
+		return new Ascon();
 	}
 
 	/**
@@ -91,12 +91,12 @@ public class Ascon {
 	long x4;
 	private long lastPartialBlock;
 
-	private Ascon(long x0, long x1, long x2, long x3, long x4) {
-		this.x0 = x0;
-		this.x1 = x1;
-		this.x2 = x2;
-		this.x3 = x3;
-		this.x4 = x4;
+	private Ascon() {
+		this.x0 = 0;
+		this.x1 = 0;
+		this.x2 = 0;
+		this.x3 = 0;
+		this.x4 = 0;
 	}
 
 	/**
@@ -266,7 +266,7 @@ public class Ascon {
 	}
 
 	/**
-	 * Absorb input for computing hash.
+	 * Absorb subsequence of input for computing hash.
 	 * <p>Upon return, the state is updated with the first {@code N} bytes absorbed from
 	 * {@code src}, starting at position {@code off} (inclusive). The number of bytes absorbed
 	 * {@code N} is guaranteed to be less than or equal to {@code len}. When {@code len} is aligned
@@ -283,6 +283,8 @@ public class Ascon {
 	 * @since 1.2
 	 */
 	public void updateHash(byte[] src, int off, int len) {
+		if (len == 0)
+			return;
 		if (this.lastPartialBlock != 0L) {
 			int n = this.absorbLastPartialHashBlock(src, off, len);
 
@@ -299,6 +301,21 @@ public class Ascon {
 		}
 		if (blen != 0)
 			this.bufferPartialBlock(src, off + (wlen * BLOCK_SIZE), blen);
+	}
+
+	/**
+	 * Absorb input for computing hash.
+	 * <p>Shorthand for:
+	 * {@snippet :
+	 * updateHash(src, 0, src.length); // @link substring="updateHash" target="#updateHash(byte[], int, int)"
+	 * }
+	 *
+	 * @param src buffer to hash contents of
+	 * @since 1.2
+	 */
+	@SuppressWarnings("JavadocDeclaration")
+	public void updateHash(byte[] src) {
+		this.updateHash(src, 0, src.length);
 	}
 
 	/**

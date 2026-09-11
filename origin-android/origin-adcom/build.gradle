@@ -9,7 +9,6 @@ description = "AdCOM definitions specialized for Android."
 
 dependencies {
 	api(project(":origin-protobuf"))
-	api(libs.androidx.core)
 	implementation(project(":origin-util"))
 
 	androidTestImplementation(libs.protobuf.lite)

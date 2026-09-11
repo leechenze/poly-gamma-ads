@@ -218,6 +218,21 @@ public class ChaCha20 {
 	}
 
 	/**
+	 * Set cipher nonce to 32-bit value.
+	 *
+	 * @param nonce 32-bit nonce
+	 * @return {@code this}
+	 * @since 1.2
+	 */
+	public ChaCha20 setNonce(int nonce) {
+		this.nonce0 = nonce;
+		this.nonce32 = 0;
+		this.nonce64 = 0;
+		this.keystreamRemaining = 0;
+		return this;
+	}
+
+	/**
 	 * Set cipher nonce to {@code 0}.
 	 * <p>Efficient equivalent of:
 	 * {@snippet :
@@ -232,6 +247,28 @@ public class ChaCha20 {
 		this.nonce32 = 0;
 		this.nonce64 = 0;
 		this.keystreamRemaining = 0;
+		return this;
+	}
+
+	/**
+	 * Clear key, nonce, and counter.
+	 * <p>Efficient equivalent of:
+	 * {@snippet :
+	 * setCounter(0); // @link substring="setCounter" target="#setCounter(int)"
+	 * setKey(new byte[KEY_SIZE], 0); // @link substring="setKey" target="#setKey(byte[], int)"
+	 * setNonce(new byte[NONCE_SIZE], 0); // @link substring="setNonce" target="#setNonce(byte[], int)"
+	 * }
+	 *
+	 * @return {@code this}
+	 * @since 1.2
+	 */
+	public ChaCha20 clear() {
+		this.key0 = 0;
+		this.key64 = 0;
+		this.key128 = 0;
+		this.key192 = 0;
+		this.counter = 0;
+		this.clearNonce();
 		return this;
 	}
 

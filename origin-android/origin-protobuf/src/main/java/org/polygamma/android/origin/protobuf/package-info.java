@@ -3,14 +3,12 @@
 /**
  * Lightweight Protocol Buffers (Protobuf) implementation classes.
  * <p>Protobuf messages can be serialized and deserialized using {@link
- * org.polygamma.android.origin.protobuf.ProtobufWriter} and {@link
- * org.polygamma.android.origin.protobuf.ProtobufReader}, respectively. Protobuf message field
+ * org.polygamma.android.origin.protobuf.ProtobufEncoder} and {@link
+ * org.polygamma.android.origin.protobuf.ProtobufDecoder}, respectively. Protobuf message field
  * tags can be generated using the definitions in {@link
- * org.polygamma.android.origin.protobuf.ProtobufField}.
+ * org.polygamma.android.origin.protobuf.Protobuf}.
  * <p>Objects which can be serialized into a Protobuf message should implement {@link
- * org.polygamma.android.origin.protobuf.ProtobufSerializable}. The {@link
- * org.polygamma.android.origin.protobuf.ProtobufDeserializer} can be implemented for messages
- * which can be deserialized from a Protobuf message.
+ * org.polygamma.android.origin.protobuf.ProtobufSerializable}.
  *
  * @since 1.2
  */

@@ -8,12 +8,9 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.origin.adcom.AdcomContext;
 
 /**
@@ -22,7 +19,7 @@ import org.polygamma.origin.adcom.AdcomContext;
 @RunWith(AndroidJUnit4.class)
 public class RegsTest {
 	@Test
-	public void testSerde() throws InvalidProtocolBufferException {
+	public void testSerde() {
 		Regs exp = Regs.ofBuilder()
 			.coppa(true)
 			.gdpr(false)
@@ -30,11 +27,12 @@ public class RegsTest {
 			.applicableGppSectionIds(1, 2, 3, 4)
 			.pipl(true)
 			.build();
-		Regs got = Regs.ofProtobuf(new ProtobufReader(
-			AdcomContext.Regs.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		Regs got = TestUtil.encodeAndDecode(
+			exp,
+			Regs::toProtobuf,
+			Regs::ofProtobuf,
+			AdcomContext.Regs::parseFrom
+		);
 
 		assertTrue(got.coppa());
 		assertFalse(got.gdpr());

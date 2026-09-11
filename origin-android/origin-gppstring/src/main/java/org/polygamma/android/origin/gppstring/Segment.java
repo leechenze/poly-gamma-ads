@@ -7,11 +7,11 @@ import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
 
 import androidx.annotation.Nullable;
-import androidx.core.util.Supplier;
 
 import org.polygamma.android.origin.util.Bits;
 import org.polygamma.android.origin.util.Preconditions;
 import org.polygamma.android.origin.util.Strings;
+import org.polygamma.android.origin.util.Supplier;
 
 import java.util.Arrays;
 import java.util.Date;

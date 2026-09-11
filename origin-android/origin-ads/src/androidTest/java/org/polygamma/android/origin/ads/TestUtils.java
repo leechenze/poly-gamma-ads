@@ -5,21 +5,15 @@ package org.polygamma.android.origin.ads;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
-import android.graphics.Insets;
-import android.graphics.Point;
 import android.graphics.Rect;
-import android.os.Build;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.view.WindowInsets;
-import android.view.WindowManager;
-import android.view.WindowMetrics;
 
 import androidx.annotation.WorkerThread;
-import androidx.core.util.Consumer;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
+import org.polygamma.android.origin.util.Consumer;
 
 import java.util.concurrent.CountDownLatch;
 

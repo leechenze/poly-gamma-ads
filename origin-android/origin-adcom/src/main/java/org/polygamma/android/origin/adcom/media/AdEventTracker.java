@@ -2,7 +2,9 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.util.ArrayMap;
 import android.util.Pair;
@@ -15,9 +17,10 @@ import org.polygamma.android.origin.adcom.enums.AdApiCode;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.AdEventTrackerType;
 import org.polygamma.android.origin.adcom.enums.AdEventType;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 import org.polygamma.android.origin.util.Preconditions;
 
@@ -35,14 +38,14 @@ import java.util.Map;
  */
 public final class AdEventTracker implements ProtobufSerializable {
 
-	private static final @Tag int TYPE		= ofInt32(        1);
-	private static final @Tag int METHOD	= ofInt32(        2);
-	private static final @Tag int API		= ofPackedInt32(  3);
-	private static final @Tag int URL		= ofString(       4);
-	private static final @Tag int CDATA		= ofMessage(      5);
-	private static final @Tag int ERRORURL	= ofString(     500);
-	private static final @Tag int OFFSEC	= ofInt64(      501);
-	private static final @Tag int OFFPCT	= ofInt32(      502);
+	private static final @FieldTag int TYPE		= fieldTagOf(  1, WIRE_VARINT);
+	private static final @FieldTag int METHOD	= fieldTagOf(  2, WIRE_VARINT);
+	private static final @FieldTag int API		= fieldTagOf(  3, WIRE_LEN);
+	private static final @FieldTag int URL		= fieldTagOf(  4, WIRE_LEN);
+	private static final @FieldTag int CDATA	= fieldTagOf(  5, WIRE_LEN);
+	private static final @FieldTag int ERRORURL	= fieldTagOf(500, WIRE_LEN);
+	private static final @FieldTag int OFFSEC	= fieldTagOf(501, WIRE_VARINT);
+	private static final @FieldTag int OFFPCT	= fieldTagOf(502, WIRE_VARINT);
 
 	private static final int FLAG_OFFSET_PERCENT	= 0x10000000;
 	private static final int FLAG_OFFSET_EXACT		= 0x20000000;
@@ -272,44 +275,46 @@ public final class AdEventTracker implements ProtobufSerializable {
 	/**
 	 * Deserialize tracker from Protobuf message.
 	 *
-	 * @param reader reader to deserialize tracker from
+	 * @param dec decoder to deserialize tracker from
 	 * @return deserialized tracker
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static AdEventTracker ofProtobuf(ProtobufReader reader) {
+	public static AdEventTracker ofProtobuf(ProtobufDecoder dec) {
 		AdEventTracker rv = new AdEventTracker(DEFAULT);
 		List<String> errUrls = new ArrayList<>();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == TYPE) {
-				rv.event = reader.readInt32();
+				rv.event = dec.decodeUint32();
 			} else if (tag == METHOD) {
-				rv.type = reader.readInt32();
+				rv.type = dec.decodeUint32();
 			} else if (tag == API) {
-				rv.requiredAdApisAndFlags |= (int) (reader.readWordBitmap(0) & 0xffffffffL);
+				rv.requiredAdApisAndFlags |= dec.decodePackedUint32Bitmap32();
 			} else if (tag == URL) {
-				rv.url = reader.readString();
+				rv.url = dec.decodeString();
 			} else if (tag == CDATA) {
-				Pair<String, String> cdata = reader.readStringPair();
+				Pair<String, String> cdata = dec.decodeStringPair();
 
 				if (rv.vendorData == DEFAULT.vendorData)
 					rv.vendorData = new ArrayMap<>(1);
 				rv.vendorData.put(cdata.first, cdata.second);
 			} else if (tag == ERRORURL) {
-				errUrls.add(reader.readString());
+				errUrls.add(dec.decodeString());
 			} else if (tag == OFFSEC) {
 				rv.requiredAdApisAndFlags =
 					(rv.requiredAdApisAndFlags & ~FLAG_OFFSET_PERCENT) |
 					FLAG_OFFSET_EXACT;
-				rv.playbackOffsetSecondsOrPercent = reader.readInt64();
+				rv.playbackOffsetSecondsOrPercent = dec.decodeUint64();
 			} else if (tag == OFFPCT) {
 				rv.requiredAdApisAndFlags =
 					(rv.requiredAdApisAndFlags & ~FLAG_OFFSET_EXACT) |
 					FLAG_OFFSET_PERCENT;
-				rv.playbackOffsetSecondsOrPercent = reader.readInt32();
+				rv.playbackOffsetSecondsOrPercent = dec.decodeUint64();
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		rv.errorUrls = CollectionsCompat.toStringArrayOrEmpty(errUrls);
@@ -549,27 +554,24 @@ public final class AdEventTracker implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeInt32(TYPE, this.event);
-		writer.writeInt32(METHOD, this.type);
-		writer.writeWordBitmap(
-			API,
-			Integer.toUnsignedLong(this.requiredAdApisAndFlags & ~FLAGS_MASK),
-			0
-		);
-		writer.writeString(URL, this.url);
-		writer.writeRepeatString(ERRORURL, this.errorUrls);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeUnsignedIntField(TYPE, this.event)
+			.encodeUnsignedIntField(METHOD, this.type)
+			.encodePackedUint32Bitmap32Field(API, this.requiredAdApisAndFlags & ~FLAGS_MASK)
+			.encodeStringField(URL, this.url);
 
+		for (String url : this.errorUrls)
+			enc.encodeStringField(ERRORURL, url);
 		for (int i = 0; i < this.vendorData.size(); i++) {
-			writer.writeStringPair(
-				CDATA,
-				new Pair<>(this.vendorData.keyAt(i), this.vendorData.valueAt(i))
-			);
+			enc.encodeStringPairField(CDATA, new Pair<>(
+				this.vendorData.keyAt(i),
+				this.vendorData.valueAt(i)
+			));
 		}
 
 		if ((this.requiredAdApisAndFlags & FLAG_OFFSET_EXACT) != 0)
-			writer.writeInt64(OFFSEC, this.playbackOffsetSecondsOrPercent);
+			enc.encodeUnsignedLongField(OFFSEC, this.playbackOffsetSecondsOrPercent);
 		else if ((this.requiredAdApisAndFlags & FLAG_OFFSET_PERCENT) != 0)
-			writer.writeInt32(OFFPCT, (int) this.playbackOffsetSecondsOrPercent);
+			enc.encodeUnsignedIntField(OFFPCT, (int) this.playbackOffsetSecondsOrPercent);
 	}
 }

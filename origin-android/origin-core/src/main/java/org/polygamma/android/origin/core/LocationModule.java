@@ -134,7 +134,7 @@ public class LocationModule extends OriginModule {
 				man.requestLocationUpdates(
 					LocationManager.PASSIVE_PROVIDER,
 					(new LocationRequest.Builder(LocationRequest.PASSIVE_INTERVAL))
-						.setMinUpdateIntervalMillis(TimeUnit.MINUTES.toMillis(1))
+						.setMinUpdateIntervalMillis(TimeUnit.MINUTES.toMillis(2))
 						.build(),
 					super.sdk().backgroundIoExecutor(),
 					this

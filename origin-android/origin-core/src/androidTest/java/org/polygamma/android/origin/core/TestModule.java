@@ -10,9 +10,9 @@ import android.util.Pair;
 
 import androidx.annotation.CallSuper;
 import androidx.annotation.Nullable;
-import androidx.core.util.Consumer;
-import androidx.core.util.Function;
 
+import org.polygamma.android.origin.util.Consumer;
+import org.polygamma.android.origin.util.Function;
 import org.polygamma.android.origin.util.Sync;
 
 import java.io.File;

@@ -12,11 +12,11 @@ import android.util.Pair;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.core.util.Consumer;
 
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.ConnectionType;
 import org.polygamma.android.origin.util.AndroidContexts;
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.ExecutingService;
 import org.polygamma.android.origin.util.Logger;
 import org.polygamma.android.origin.util.Preconditions;

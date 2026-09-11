@@ -10,7 +10,6 @@ import androidx.annotation.RequiresApi;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.polygamma.android.origin.util.Futures;
-import org.polygamma.android.origin.util.ListenableFutureTask;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ForkJoinPool;

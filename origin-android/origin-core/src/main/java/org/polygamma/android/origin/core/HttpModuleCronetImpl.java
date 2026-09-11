@@ -22,11 +22,11 @@ import androidx.annotation.RequiresExtension;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
-import androidx.core.util.Supplier;
 
 import org.polygamma.android.origin.util.AndroidSettings;
 import org.polygamma.android.origin.util.Logger;
 import org.polygamma.android.origin.util.Preconditions;
+import org.polygamma.android.origin.util.Supplier;
 
 import java.io.EOFException;
 import java.io.File;

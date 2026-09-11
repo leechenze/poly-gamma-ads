@@ -10,10 +10,10 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
-import androidx.core.util.Supplier;
 
 import org.polygamma.android.origin.util.Logger;
 import org.polygamma.android.origin.util.Preconditions;
+import org.polygamma.android.origin.util.Supplier;
 
 import java.io.File;
 import java.io.IOException;

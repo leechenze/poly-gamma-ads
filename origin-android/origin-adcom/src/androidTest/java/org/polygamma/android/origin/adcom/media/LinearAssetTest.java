@@ -8,13 +8,10 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 /**
@@ -23,14 +20,15 @@ import org.polygamma.origin.adcom.AdcomMedia;
 @RunWith(AndroidJUnit4.class)
 public class LinearAssetTest {
 	@Test
-	public void testSerdeClosedCaption() throws InvalidProtocolBufferException {
+	public void testSerdeClosedCaption() {
 		LinearAsset exp =
 			LinearAsset.ofClosedCaptionAsset("https://foo.com", "application/xml", "en");
-		LinearAsset got = LinearAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.LinearAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		LinearAsset got = TestUtil.encodeAndDecode(
+			exp,
+			LinearAsset::toProtobuf,
+			LinearAsset::ofProtobuf,
+			AdcomMedia.LinearAsset::parseFrom
+		);
 
 		assertTrue(got.isClosedCaptionAsset());
 		assertFalse(got.isInteractiveAsset());
@@ -42,18 +40,19 @@ public class LinearAssetTest {
 	}
 
 	@Test
-	public void testSerdeInteractiveAsset() throws InvalidProtocolBufferException {
+	public void testSerdeInteractiveAsset() {
 		LinearAsset exp = LinearAsset.ofInteractiveAsset(
 			"https://foo.com",
 			"text/html",
 			AdComEnums.AdApiOmid10,
 			true
 		);
-		LinearAsset got = LinearAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.LinearAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		LinearAsset got = TestUtil.encodeAndDecode(
+			exp,
+			LinearAsset::toProtobuf,
+			LinearAsset::ofProtobuf,
+			AdcomMedia.LinearAsset::parseFrom
+		);
 
 		assertFalse(got.isClosedCaptionAsset());
 		assertTrue(got.isInteractiveAsset());
@@ -66,7 +65,7 @@ public class LinearAssetTest {
 	}
 
 	@Test
-	public void testSerdeMediaAsset() throws InvalidProtocolBufferException {
+	public void testSerdeMediaAsset() {
 		LinearAsset exp = LinearAsset.ofMediaAsset(
 			"https://foo.com",
 			"video/mp4",
@@ -81,11 +80,12 @@ public class LinearAssetTest {
 			true,
 			true
 		);
-		LinearAsset got = LinearAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.LinearAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		LinearAsset got = TestUtil.encodeAndDecode(
+			exp,
+			LinearAsset::toProtobuf,
+			LinearAsset::ofProtobuf,
+			AdcomMedia.LinearAsset::parseFrom
+		);
 
 		assertFalse(got.isClosedCaptionAsset());
 		assertFalse(got.isInteractiveAsset());
@@ -106,7 +106,7 @@ public class LinearAssetTest {
 	}
 
 	@Test
-	public void testSerdeMezzanineAsset() throws InvalidProtocolBufferException {
+	public void testSerdeMezzanineAsset() {
 		LinearAsset exp = LinearAsset.ofMezzanineAsset(
 			"https://foo.com",
 			"video/mp4",
@@ -121,11 +121,12 @@ public class LinearAssetTest {
 			true,
 			true
 		);
-		LinearAsset got = LinearAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.LinearAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		LinearAsset got = TestUtil.encodeAndDecode(
+			exp,
+			LinearAsset::toProtobuf,
+			LinearAsset::ofProtobuf,
+			AdcomMedia.LinearAsset::parseFrom
+		);
 
 		assertFalse(got.isClosedCaptionAsset());
 		assertFalse(got.isInteractiveAsset());

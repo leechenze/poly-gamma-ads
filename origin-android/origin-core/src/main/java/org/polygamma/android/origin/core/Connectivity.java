@@ -2,15 +2,18 @@
 
 package org.polygamma.android.origin.core;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.util.ArrayList;
@@ -30,10 +33,10 @@ import java.util.Locale;
  */
 public final class Connectivity implements ProtobufSerializable {
 
-	private static final @Tag int NET			= ofMessage(1);
-	private static final @Tag int ACTNETIDX		= ofInt32(  2);
-	private static final @Tag int SUB			= ofMessage(3);
-	private static final @Tag int ACTSUBIDX		= ofInt32(  4);
+	private static final @FieldTag int NET			= fieldTagOf(1, WIRE_LEN);
+	private static final @FieldTag int ACTNETIDX	= fieldTagOf(2, WIRE_VARINT);
+	private static final @FieldTag int SUB			= fieldTagOf(3, WIRE_LEN);
+	private static final @FieldTag int ACTSUBIDX	= fieldTagOf(4, WIRE_VARINT);
 
 	private static final Connectivity DEFAULT =
 		new Connectivity(new ConnectivityNetwork[0], 0, new ConnectivitySubscription[0], 0);
@@ -51,34 +54,36 @@ public final class Connectivity implements ProtobufSerializable {
 	/**
 	 * Deserialize description from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized description
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static Connectivity ofProtobuf(ProtobufReader reader) {
+	public static Connectivity ofProtobuf(ProtobufDecoder dec) {
 		List<ConnectivityNetwork> nets = new ArrayList<>(0);
 		List<ConnectivitySubscription> subs = new ArrayList<>(0);
-		int actNetIdx = -1;
-		int actSubIdx = -1;
+		int actNetIdx = 0;
+		int actSubIdx = 0;
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == NET)
-				nets.add(reader.readLen(ConnectivityNetwork::ofProtobuf));
+				nets.add(dec.decodeLen(ConnectivityNetwork::ofProtobuf));
 			else if (tag == ACTNETIDX)
-				actNetIdx = reader.readInt32();
+				actNetIdx = dec.decodeUint32();
 			else if (tag == SUB)
-				subs.add(reader.readLen(ConnectivitySubscription::ofProtobuf));
+				subs.add(dec.decodeLen(ConnectivitySubscription::ofProtobuf));
 			else if (tag == ACTSUBIDX)
-				actSubIdx = reader.readInt32();
+				actSubIdx = dec.decodeUint32();
+			else
+				dec.skipFieldValue(tag);
 		}
 		return nets.isEmpty() && subs.isEmpty() ? DEFAULT : new Connectivity(
 			CollectionsCompat.toArrayOrEmpty(nets, DEFAULT.networks),
-			actNetIdx == -1 ? nets.size() : actNetIdx,
+			actNetIdx,
 			CollectionsCompat.toArrayOrEmpty(subs, DEFAULT.subscriptions),
-			actSubIdx == -1 ? subs.size() : actSubIdx
+			actSubIdx
 		);
 	}
 
@@ -212,11 +217,13 @@ public final class Connectivity implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeRepeatLen(NET, this.networks);
-		writer.writeInt32(ACTNETIDX, this.activeNetworkIndex);
-		writer.writeRepeatLen(SUB, this.subscriptions);
-		writer.writeInt32(ACTSUBIDX, this.activeSubscriptionIndex);
+	public void toProtobuf(ProtobufEncoder enc) {
+		for (ConnectivityNetwork net : this.networks)
+			enc.encodeMessageField(NET, net);
+		for (ConnectivitySubscription sub : this.subscriptions)
+			enc.encodeMessageField(SUB, sub);
+		enc.encodeUnsignedIntField(ACTNETIDX, this.activeNetworkIndex)
+			.encodeUnsignedIntField(ACTSUBIDX, this.activeSubscriptionIndex);
 	}
 
 	@Override

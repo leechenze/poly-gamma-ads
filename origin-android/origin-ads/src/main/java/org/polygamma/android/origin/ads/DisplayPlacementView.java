@@ -13,8 +13,8 @@ import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiContext;
 import androidx.annotation.UiThread;
-import androidx.core.util.Consumer;
 
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.Preconditions;
 
 import java.lang.annotation.Documented;

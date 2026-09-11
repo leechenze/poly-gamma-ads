@@ -11,13 +11,10 @@ import android.util.ArrayMap;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 import java.util.Arrays;
@@ -73,7 +70,7 @@ public class PlaybackCreativeTest {
 	}
 
 	@Test
-	public void testSerdeLinear() throws InvalidProtocolBufferException {
+	public void testSerdeLinear() {
 		ArrayMap<String, String> expUnivIds = new ArrayMap<>();
 
 		expUnivIds.put("id-registry-1.com", "id-1");
@@ -131,11 +128,12 @@ public class PlaybackCreativeTest {
 			))
 			.linearUniversalAdIds(expUnivIds)
 			.build();
-		PlaybackCreative got = PlaybackCreative.ofProtobuf(new ProtobufReader(
-			AdcomMedia.PlaybackCreative.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		PlaybackCreative got = TestUtil.encodeAndDecode(
+			exp,
+			PlaybackCreative::toProtobuf,
+			PlaybackCreative::ofProtobuf,
+			AdcomMedia.PlaybackCreative::parseFrom
+		);
 
 		assertTrue(got.isLinear());
 		assertFalse(got.isOverlay());
@@ -213,7 +211,7 @@ public class PlaybackCreativeTest {
 	}
 
 	@Test
-	public void testSerdeOverlay() throws InvalidProtocolBufferException {
+	public void testSerdeOverlay() {
 		PlaybackCreative exp = PlaybackCreative.ofOverlayBuilder()
 			.id("overlay-id")
 			.sequence(123)
@@ -227,11 +225,12 @@ public class PlaybackCreativeTest {
 					.build()
 			)
 			.build();
-		PlaybackCreative got = PlaybackCreative.ofProtobuf(new ProtobufReader(
-			AdcomMedia.PlaybackCreative.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		PlaybackCreative got = TestUtil.encodeAndDecode(
+			exp,
+			PlaybackCreative::toProtobuf,
+			PlaybackCreative::ofProtobuf,
+			AdcomMedia.PlaybackCreative::parseFrom
+		);
 
 		assertFalse(got.isLinear());
 		assertTrue(got.isOverlay());

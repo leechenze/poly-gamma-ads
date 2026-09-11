@@ -7,11 +7,11 @@ import android.os.SystemClock;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.core.util.Consumer;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.polygamma.android.origin.util.CollectionsCompat;
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.Logger;
 
 import java.util.ArrayList;

@@ -8,13 +8,10 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomPlacement;
 
 import java.util.Arrays;
@@ -25,14 +22,15 @@ import java.util.Arrays;
 @RunWith(AndroidJUnit4.class)
 public class NativeAssetFormatTest {
 	@Test
-	public void testSerdeData() throws InvalidProtocolBufferException {
+	public void testSerdeData() {
 		NativeAssetFormat exp =
 			NativeAssetFormat.ofDataAsset(123, true, AdComEnums.NativeDataAssetAddress, 456);
-		NativeAssetFormat got = NativeAssetFormat.ofProtobuf(new ProtobufReader(
-			AdcomPlacement.NativeAssetFormat.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		NativeAssetFormat got = TestUtil.encodeAndDecode(
+			exp,
+			NativeAssetFormat::toProtobuf,
+			NativeAssetFormat::ofProtobuf,
+			AdcomPlacement.NativeAssetFormat::parseFrom
+		);
 
 		assertTrue(got.isDataAsset());
 		assertFalse(got.isImageAsset());
@@ -46,7 +44,7 @@ public class NativeAssetFormatTest {
 	}
 
 	@Test
-	public void testSerdeImage() throws InvalidProtocolBufferException {
+	public void testSerdeImage() {
 		NativeAssetFormat exp = NativeAssetFormat.ofImageAsset(
 			123,
 			true,
@@ -55,11 +53,12 @@ public class NativeAssetFormatTest {
 			789,
 			Arrays.asList("image/png", "image/jpeg")
 		);
-		NativeAssetFormat got = NativeAssetFormat.ofProtobuf(new ProtobufReader(
-			AdcomPlacement.NativeAssetFormat.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		NativeAssetFormat got = TestUtil.encodeAndDecode(
+			exp,
+			NativeAssetFormat::toProtobuf,
+			NativeAssetFormat::ofProtobuf,
+			AdcomPlacement.NativeAssetFormat::parseFrom
+		);
 
 		assertFalse(got.isDataAsset());
 		assertTrue(got.isImageAsset());
@@ -77,13 +76,14 @@ public class NativeAssetFormatTest {
 	}
 
 	@Test
-	public void testSerdeTitle() throws InvalidProtocolBufferException {
+	public void testSerdeTitle() {
 		NativeAssetFormat exp = NativeAssetFormat.ofTitleAsset(123, true, 456);
-		NativeAssetFormat got = NativeAssetFormat.ofProtobuf(new ProtobufReader(
-			AdcomPlacement.NativeAssetFormat.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		NativeAssetFormat got = TestUtil.encodeAndDecode(
+			exp,
+			NativeAssetFormat::toProtobuf,
+			NativeAssetFormat::ofProtobuf,
+			AdcomPlacement.NativeAssetFormat::parseFrom
+		);
 
 		assertFalse(got.isDataAsset());
 		assertFalse(got.isImageAsset());
@@ -96,7 +96,7 @@ public class NativeAssetFormatTest {
 	}
 
 	@Test
-	public void testSerdeVideo() throws InvalidProtocolBufferException {
+	public void testSerdeVideo() {
 		NativeAssetFormat exp = NativeAssetFormat.ofVideoAsset(
 			123,
 			true,
@@ -111,11 +111,12 @@ public class NativeAssetFormatTest {
 				.skippable(true)
 				.build()
 		);
-		NativeAssetFormat got = NativeAssetFormat.ofProtobuf(new ProtobufReader(
-			AdcomPlacement.NativeAssetFormat.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		NativeAssetFormat got = TestUtil.encodeAndDecode(
+			exp,
+			NativeAssetFormat::toProtobuf,
+			NativeAssetFormat::ofProtobuf,
+			AdcomPlacement.NativeAssetFormat::parseFrom
+		);
 
 		assertFalse(got.isDataAsset());
 		assertFalse(got.isImageAsset());

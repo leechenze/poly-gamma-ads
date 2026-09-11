@@ -2,14 +2,13 @@
 
 package org.polygamma.android.origin.antifraud;
 
-import androidx.annotation.IntDef;
+import android.util.Base64;
+
 import androidx.annotation.Nullable;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.polygamma.android.origin.antifraud.CheckWire.IvtRating;
+
+import java.util.Arrays;
 
 /**
  * Anti-fraud status description of a device.
@@ -20,43 +19,29 @@ import java.lang.annotation.Target;
 public final class AntifraudStatus {
 
 	/**
-	 * Unknown whether device is fraudulent or not.
+	 * Status digest.
 	 */
-	static final @Rating int RatingUnknown		= 0;
+	final @Nullable byte[] digest;
 
 	/**
-	 * Device is controlled by non-human agent.
+	 * Fraudlent rating.
 	 */
-	static final @Rating int RatingNonHuman		= 1;
+	final @IvtRating int rating;
 
 	/**
-	 * Device is controlled by human user.
+	 * Confidence, within range {@code [0; 100]}, of rating.
 	 */
-	static final @Rating int RatingHuman		= 2;
-
-	/**
-	 * Fraudulent rating enumeration discriminant value marker.
-	 */
-	@Documented
-	@Retention(RetentionPolicy.SOURCE)
-	@Target(ElementType.TYPE_USE)
-	@IntDef({ RatingHuman, RatingNonHuman, RatingUnknown })
-	@interface Rating {
-	}
-
-	private final String digest;
-	private final @Rating int rating;
-	private final int confidence;
+	final int confidence;
 
 	/**
 	 * Construct new status.
 	 *
-	 * @param digest status digest
+	 * @param digest status digest or {@code null} if unavailable
 	 * @param rating fraudulent rating
 	 * @param conf confidence, between {@code 0} and {@code 100}, of rating
 	 */
-	AntifraudStatus(String digest, @Rating int rating, int conf) {
-		this.digest = digest;
+	AntifraudStatus(@Nullable byte[] digest, @IvtRating int rating, int conf) {
+		this.digest = digest == null || digest.length == 0 ? null : digest;
 		this.rating = rating;
 		this.confidence = conf;
 	}
@@ -68,16 +53,10 @@ public final class AntifraudStatus {
 	 * @since 1.1
 	 */
 	public String digest() {
-		return this.digest;
-	}
-
-	/**
-	 * Fradulent rating.
-	 *
-	 * @return rating
-	 */
-	@Rating int rating() {
-		return this.rating;
+		return this.digest == null ? "" : Base64.encodeToString(
+			this.digest,
+			Base64.NO_PADDING | Base64.NO_WRAP | Base64.URL_SAFE
+		);
 	}
 
 	/**
@@ -87,7 +66,7 @@ public final class AntifraudStatus {
 	 * @since 1.1
 	 */
 	public boolean isFraudulent() {
-		return this.rating == RatingNonHuman;
+		return this.rating == CheckWire.IvtRatingNonHuman;
 	}
 
 	/**
@@ -97,7 +76,7 @@ public final class AntifraudStatus {
 	 * @since 1.1
 	 */
 	public boolean isLegitimate() {
-		return this.rating == RatingHuman;
+		return this.rating == CheckWire.IvtRatingHuman;
 	}
 
 	/**
@@ -124,7 +103,7 @@ public final class AntifraudStatus {
 		AntifraudStatus that = (AntifraudStatus) other;
 
 		return (
-			this.digest.equals(that.digest) &&
+			Arrays.equals(this.digest, that.digest) &&
 			this.rating == that.rating &&
 			this.confidence == that.confidence
 		);

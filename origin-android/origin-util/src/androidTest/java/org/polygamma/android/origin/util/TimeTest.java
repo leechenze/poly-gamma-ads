@@ -5,7 +5,6 @@ package org.polygamma.android.origin.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import android.os.Build;
 import android.os.SystemClock;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -13,7 +12,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.time.DateTimeException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,20 +22,6 @@ public class TimeTest {
 	@Test
 	public void testNowUtc() {
 		long exp = System.currentTimeMillis();
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-			try {
-				exp = SystemClock.currentGnssTimeClock().millis();
-			} catch (DateTimeException ignored) {
-			}
-		}
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			try {
-				exp = SystemClock.currentNetworkTimeClock().millis();
-			} catch (DateTimeException ignored) {
-			}
-		}
-
 		long got = Time.nowUtcMillis();
 		long delta = Math.abs(got - exp);
 

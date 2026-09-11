@@ -8,13 +8,10 @@ import android.util.SparseArray;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 import java.util.Arrays;
@@ -25,16 +22,17 @@ import java.util.Arrays;
 @RunWith(AndroidJUnit4.class)
 public class LinkAssetTest {
 	@Test
-	public void testSerde() throws InvalidProtocolBufferException {
+	public void testSerde() {
 		LinkAsset exp = LinkAsset.of("https://primary.com", "https://fallback.com", Arrays.asList(
 			"https://click-track-1.com/\00019\0\00010\0foo",
 			"https://click-track-2.com/bar\00040\0"
 		));
-		LinkAsset got = LinkAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.LinkAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		LinkAsset got = TestUtil.encodeAndDecode(
+			exp,
+			LinkAsset::toProtobuf,
+			LinkAsset::ofProtobuf,
+			AdcomMedia.LinkAsset::parseFrom
+		);
 		SparseArray<String> macros = new SparseArray<>();
 
 		macros.put(AdComEnums.AdTrackerUrlMacroTransactionId, "123");

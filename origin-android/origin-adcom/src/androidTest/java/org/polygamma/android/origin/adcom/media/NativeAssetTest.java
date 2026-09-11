@@ -8,17 +8,13 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 /**
  * {@link NativeAsset} tests.
@@ -41,7 +37,7 @@ public class NativeAssetTest {
 	}
 
 	@Test
-	public void testSerdeDataAsset() throws InvalidProtocolBufferException {
+	public void testSerdeDataAsset() {
 		NativeAsset exp = NativeAsset.ofDataAsset(
 			123,
 			true,
@@ -49,11 +45,12 @@ public class NativeAssetTest {
 			AdComEnums.NativeDataAssetCtaText,
 			"cta"
 		);
-		NativeAsset got = NativeAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.NativeAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		NativeAsset got = TestUtil.encodeAndDecode(
+			exp,
+			NativeAsset::toProtobuf,
+			NativeAsset::ofProtobuf,
+			AdcomMedia.NativeAsset::parseFrom
+		);
 
 		assertTrue(got.isDataAsset());
 		assertFalse(got.isTitleAsset());
@@ -67,13 +64,14 @@ public class NativeAssetTest {
 	}
 
 	@Test
-	public void testSerdeTitleAsset() throws InvalidProtocolBufferException {
+	public void testSerdeTitleAsset() {
 		NativeAsset exp = NativeAsset.ofTitleAsset(123, true, EXPECT_LINK, "title");
-		NativeAsset got = NativeAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.NativeAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		NativeAsset got = TestUtil.encodeAndDecode(
+			exp,
+			NativeAsset::toProtobuf,
+			NativeAsset::ofProtobuf,
+			AdcomMedia.NativeAsset::parseFrom
+		);
 
 		assertFalse(got.isDataAsset());
 		assertTrue(got.isTitleAsset());
@@ -86,7 +84,7 @@ public class NativeAssetTest {
 	}
 
 	@Test
-	public void testSerdeImageAsset() throws InvalidProtocolBufferException {
+	public void testSerdeImageAsset() {
 		NativeAsset exp = NativeAsset.ofImageAsset(
 			123,
 			true,
@@ -96,11 +94,12 @@ public class NativeAssetTest {
 			789,
 			"https://image.com"
 		);
-		NativeAsset got = NativeAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.NativeAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		NativeAsset got = TestUtil.encodeAndDecode(
+			exp,
+			NativeAsset::toProtobuf,
+			NativeAsset::ofProtobuf,
+			AdcomMedia.NativeAsset::parseFrom
+		);
 
 		assertFalse(got.isDataAsset());
 		assertFalse(got.isTitleAsset());
@@ -116,7 +115,7 @@ public class NativeAssetTest {
 	}
 
 	@Test
-	public void testSerdeVideoAsset() throws InvalidProtocolBufferException {
+	public void testSerdeVideoAsset() {
 		NativeAsset exp = NativeAsset.ofVideoAsset(
 			123,
 			true,
@@ -179,11 +178,12 @@ public class NativeAssetTest {
 				))
 				.build()
 		);
-		NativeAsset got = NativeAsset.ofProtobuf(new ProtobufReader(
-			AdcomMedia.NativeAsset.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		NativeAsset got = TestUtil.encodeAndDecode(
+			exp,
+			NativeAsset::toProtobuf,
+			NativeAsset::ofProtobuf,
+			AdcomMedia.NativeAsset::parseFrom
+		);
 
 		assertFalse(got.isDataAsset());
 		assertFalse(got.isTitleAsset());

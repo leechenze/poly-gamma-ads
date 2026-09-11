@@ -2,11 +2,14 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 
 /**
  * Playback companion ad media.
@@ -15,9 +18,9 @@ import org.polygamma.android.origin.protobuf.ProtobufWriter;
  */
 public final class CompanionAd implements ProtobufSerializable {
 
-	private static final @Tag int PLCMTID	= ofString( 1);
-	private static final @Tag int DISPLAY	= ofMessage(2);
-	private static final @Tag int VCM		= ofBool(   3);
+	private static final @FieldTag int PLCMTID	= fieldTagOf(1, WIRE_LEN);
+	private static final @FieldTag int DISPLAY	= fieldTagOf(2, WIRE_LEN);
+	private static final @FieldTag int VCM		= fieldTagOf(3, WIRE_VARINT);
 
 	/**
 	 * Construct new companion ad media.
@@ -35,25 +38,27 @@ public final class CompanionAd implements ProtobufSerializable {
 	/**
 	 * Deserialize companion ad media from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized companion media instance
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static CompanionAd ofProtobuf(ProtobufReader reader) {
+	public static CompanionAd ofProtobuf(ProtobufDecoder dec) {
 		String plcmtId = "";
 		DisplayAd display = DisplayAd.ofDisplayAd();
 		boolean vcm = false;
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == PLCMTID)
-				plcmtId = reader.readString();
+				plcmtId = dec.decodeString();
 			else if (tag == DISPLAY)
-				display = reader.readLen(DisplayAd::ofDisplayAdProtobuf);
+				display = dec.decodeLen(DisplayAd::ofDisplayAdProtobuf);
 			else if (tag == VCM)
-				vcm = reader.readBool();
+				vcm = dec.decodeBool();
+			else
+				dec.skipFieldValue(tag);
 		}
 		return of(plcmtId, display, vcm);
 	}
@@ -99,14 +104,9 @@ public final class CompanionAd implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(PLCMTID, this.placementId);
-
-		long cookie = writer.beginWriteLen(DISPLAY);
-
-		this.display.toDisplayAdProtobuf(writer);
-		writer.endWriteLen(cookie);
-
-		writer.writeBool(VCM, this.endCard);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(PLCMTID, this.placementId)
+			.encodeBoolField(VCM, this.endCard)
+			.encodeLenField(DISPLAY, this.display, DisplayAd::toDisplayAdProtobuf);
 	}
 }

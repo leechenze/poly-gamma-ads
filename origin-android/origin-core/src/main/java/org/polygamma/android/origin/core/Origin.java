@@ -16,17 +16,16 @@ import android.util.Pair;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
-import androidx.core.os.ExecutorCompat;
-import androidx.core.util.Consumer;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.polygamma.android.origin.adcom.ContentCategories;
 import org.polygamma.android.origin.adcom.context.App;
-import org.polygamma.android.origin.protobuf.ProtobufDeserializer;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
 import org.polygamma.android.origin.util.CollectionsCompat;
+import org.polygamma.android.origin.util.Consumer;
 import org.polygamma.android.origin.util.Finalizer;
+import org.polygamma.android.origin.util.Function;
 import org.polygamma.android.origin.util.Futures;
 import org.polygamma.android.origin.util.ListeningExecutor;
 import org.polygamma.android.origin.util.Logger;
@@ -464,7 +463,7 @@ public final class Origin {
 	 * Retrieve SDK settings directory.
 	 *
 	 * @return settings directory
-	 * @see OriginModule#loadSettings(ProtobufDeserializer)
+	 * @see OriginModule#loadSettings(Function)
 	 * @see OriginModule#storeSettings(ProtobufSerializable)
 	 */
 	SharedPreferences settings() {

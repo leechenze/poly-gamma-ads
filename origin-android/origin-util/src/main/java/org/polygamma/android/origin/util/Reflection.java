@@ -6,8 +6,6 @@ import android.icu.text.Normalizer2;
 import android.os.Build;
 import android.util.LruCache;
 
-import androidx.core.util.Supplier;
-
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;

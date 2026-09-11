@@ -6,9 +6,9 @@ import androidx.annotation.RestrictTo;
 
 import org.polygamma.android.origin.adcom.enums.AdApiCode;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufField;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.util.Collection;
@@ -131,18 +131,19 @@ public abstract class AdFormat implements ProtobufSerializable {
 	}
 
 	/**
-	 * Write common Protobuf fields.
+	 * Encode common Protobuf fields.
 	 *
-	 * @param writer writer to write fields to
+	 * @param enc encoder to encode fields into
 	 * @param mimeTag MIME field tag
 	 * @param apiTag API field tag
 	 */
-	final void writeCommonProtobufFields(
-		ProtobufWriter writer,
-		@ProtobufField.Tag int mimeTag,
-		@ProtobufField.Tag int apiTag
+	final void encodeCommonProtobufFields(
+		ProtobufEncoder enc,
+		@FieldTag int mimeTag,
+		@FieldTag int apiTag
 	) {
-		writer.writeRepeatString(mimeTag, this.supportedMimes);
-		writer.writeWordBitmap(apiTag, Integer.toUnsignedLong(this.supportedAdApiMask), 0);
+		for (String mime : this.supportedMimes)
+			enc.encodeStringField(mimeTag, mime);
+		enc.encodePackedUint32Bitmap32Field(apiTag, this.supportedAdApiMask);
 	}
 }

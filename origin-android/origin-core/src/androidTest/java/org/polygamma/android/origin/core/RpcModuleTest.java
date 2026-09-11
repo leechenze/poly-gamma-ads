@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
 
 import android.os.SystemClock;
 import android.util.ArrayMap;
@@ -23,10 +24,11 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.polygamma.android.origin.protobuf.ProtobufField;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 import org.polygamma.android.origin.util.ExecutingService;
 import org.polygamma.android.origin.util.Flate;
@@ -57,6 +59,7 @@ import okio.Buffer;
 /**
  * {@link RpcModule} tests.
  */
+@SuppressWarnings({"DataFlowIssue", "resource"})
 @RunWith(AndroidJUnit4.class)
 public class RpcModuleTest extends TestWithSdk {
 
@@ -67,7 +70,7 @@ public class RpcModuleTest extends TestWithSdk {
 	 */
 	private static final class TestMessage implements ProtobufSerializable {
 
-		private static final @ProtobufField.Tag int DATA = ProtobufField.ofBytes(1);
+		private static final @FieldTag int DATA = Protobuf.fieldTagOf(1, WIRE_LEN);
 
 		/**
 		 * Construct new test message with random data of specific length.
@@ -90,12 +93,16 @@ public class RpcModuleTest extends TestWithSdk {
 			return new TestMessage((ByteBuffer) data.flip());
 		}
 
-		static TestMessage ofProtobuf(ProtobufReader reader) {
+		static TestMessage ofProtobuf(ProtobufDecoder dec) {
 			ByteBuffer data = ByteBuffer.allocate(0);
 
-			while (reader.hasRemaining()) {
-				if (reader.readTag() == DATA)
-					data = ByteBuffer.wrap(reader.readBytes());
+			while (dec.hasRemaining()) {
+				int tag = dec.decodeFieldTag();
+
+				if (tag == DATA)
+					data = ByteBuffer.wrap(dec.decodeByteArray());
+				else
+					dec.skipFieldValue(tag);
 			}
 			return new TestMessage(data);
 		}
@@ -107,8 +114,12 @@ public class RpcModuleTest extends TestWithSdk {
 		}
 
 		@Override
-		public void toProtobuf(ProtobufWriter writer) {
-			writer.writeBytes(DATA, this.data.duplicate());
+		public void toProtobuf(ProtobufEncoder enc) {
+			byte[] data = new byte[this.data.remaining()];
+
+			this.data.duplicate()
+				.get(data);
+			enc.encodeByteArrayField(DATA, data);
 		}
 
 		@Override
@@ -122,6 +133,7 @@ public class RpcModuleTest extends TestWithSdk {
 	 */
 	private static final class TestCallCase {
 		final long timeoutMillis;
+		final @Nullable String serviceVersion;
 		final String procedure;
 		final @HttpMethod String method;
 		final @Nullable ByteBuffer arguments;
@@ -129,22 +141,36 @@ public class RpcModuleTest extends TestWithSdk {
 		final boolean dropResponse;
 
 		TestCallCase(
+			@Nullable String svcVer,
 			String proc,
 			int argsSizeBytes,
 			int resSizeBytes,
 			boolean dropResp,
 			long timeoutMillis
 		) {
+			ProtobufEncoder enc = ProtobufEncoder.of();
+
 			this.timeoutMillis = timeoutMillis;
+			this.serviceVersion = svcVer;
 			this.procedure = proc;
-			this.arguments = argsSizeBytes == 0 ? null :
-				ProtobufWriter.serialize(TestMessage.ofRandom(argsSizeBytes));
-			this.response = resSizeBytes == 0 ? null :
-				ProtobufWriter.serialize(TestMessage.ofRandom(resSizeBytes));
+			if (argsSizeBytes == 0) {
+				this.arguments = null;
+			} else {
+				TestMessage.ofRandom(argsSizeBytes)
+					.toProtobuf(enc.reset());
+				this.arguments = ByteBuffer.wrap(enc.intoArray());
+			}
+			if (resSizeBytes == 0) {
+				this.response = null;
+			} else {
+				TestMessage.ofRandom(resSizeBytes)
+					.toProtobuf(enc.reset());
+				this.response = ByteBuffer.wrap(enc.intoArray());
+			}
 
 			// /<svc>/<proc>/<args>
 			long pathLen =
-				SERVICE.length() + proc.length() + 3 +
+				RpcModule.idOfProcedure(SERVICE, proc, svcVer).length() + 1 +
 				RpcModule.estimateBase64CodingOf(argsSizeBytes);
 
 			this.method =
@@ -153,8 +179,11 @@ public class RpcModuleTest extends TestWithSdk {
 			this.dropResponse = dropResp;
 		}
 
-		TestCallCase(String proc, int argsSizeBytes, int resSizeBytes, boolean dropResp) {
-			this(proc, argsSizeBytes, resSizeBytes, dropResp, 0L);
+		TestCallCase(
+			@Nullable String svcVer, String proc,
+			int argsSizeBytes, int resSizeBytes, boolean dropResp
+		) {
+			this(svcVer, proc, argsSizeBytes, resSizeBytes, dropResp, 0L);
 		}
 	}
 
@@ -198,7 +227,8 @@ public class RpcModuleTest extends TestWithSdk {
 		}
 
 		String host = client.hostOfService(SERVICE);
-		Collection<RpcHostRecord> recs = RpcHostRecord.ofQuery(host, Runnable::run, 5000);
+		Collection<RpcHostRecord> recs =
+			RpcHostRecord.ofQuery(TestUtil.context(), Runnable::run, host, 5000);
 
 		if (recs.isEmpty())
 			recs = Collections.singleton(RpcHostRecord.ofHost(host, 8080));
@@ -320,7 +350,14 @@ public class RpcModuleTest extends TestWithSdk {
 		RecordedRequest req = server.takeRequest(5, TimeUnit.SECONDS);
 
 		assertNotNull(req);
-		assertTrue(req.getPath().startsWith(String.format("/%s/%s", SERVICE, test.procedure)));
+		if (test.serviceVersion != null) {
+			assertTrue(req.getPath().startsWith(String.format(
+				"/%s/%s/%s",
+				SERVICE, test.serviceVersion, test.procedure
+			)));
+		} else {
+			assertTrue(req.getPath().startsWith(String.format("/%s/%s", SERVICE, test.procedure)));
+		}
 		assertEquals(test.method, req.getMethod());
 
 		assertNotNull(req.getHeader("Host"));
@@ -332,7 +369,11 @@ public class RpcModuleTest extends TestWithSdk {
 
 		if ("GET".equals(req.getMethod())) {
 			String argsBase64 = req.getPath()
-				.substring(SERVICE.length() + test.procedure.length() + 2);
+				.substring(RpcModule.idOfProcedure(
+					SERVICE,
+					test.procedure,
+					test.serviceVersion
+				).length());
 
 			if (test.arguments == null) {
 				assertEquals("", argsBase64);
@@ -358,15 +399,18 @@ public class RpcModuleTest extends TestWithSdk {
 		}
 	}
 
-	@SuppressWarnings("CastCanBeRemovedNarrowingVariableType")
 	private static void assertCallResponse(RpcModule.CallRequest call, TestCallCase test)
 	throws ExecutionException, InterruptedException {
 		Object res = call.get();
 
-		if (test.response == null || test.dropResponse)
+		if (test.response == null || test.dropResponse) {
 			assertNull(res);
-		else
-			assertEquals(test.response, ProtobufWriter.serialize((TestMessage) res));
+		} else {
+			ProtobufEncoder enc = ProtobufEncoder.of();
+
+			((TestMessage) res).toProtobuf(enc);
+			assertEquals(test.response, enc.asBuffer());
+		}
 	}
 
 	/**
@@ -381,33 +425,29 @@ public class RpcModuleTest extends TestWithSdk {
 		if (test.arguments == null) {
 			fut = test.response == null || test.dropResponse ?
 				client.callVoidWithoutArguments(
-					SERVICE,
-					test.procedure,
+					RpcModule.idOfProcedure(SERVICE, test.procedure, test.serviceVersion),
 					test.timeoutMillis,
 					TimeUnit.MILLISECONDS
 				) :
 				client.callWithoutArguments(
-					SERVICE,
-					test.procedure,
+					RpcModule.idOfProcedure(SERVICE, test.procedure, test.serviceVersion),
 					TestMessage::ofProtobuf,
 					test.timeoutMillis,
 					TimeUnit.MILLISECONDS
 				);
 		} else {
 			TestMessage args =
-				TestMessage.ofProtobuf(new ProtobufReader(test.arguments.duplicate()));
+				TestMessage.ofProtobuf(ProtobufDecoder.ofBuffer(test.arguments.duplicate()));
 
 			fut = test.response == null || test.dropResponse ?
 				client.callVoid(
-					SERVICE,
-					test.procedure,
+					RpcModule.idOfProcedure(SERVICE, test.procedure, test.serviceVersion),
 					args,
 					test.timeoutMillis,
 					TimeUnit.MILLISECONDS
 				) :
 				client.call(
-					SERVICE,
-					test.procedure,
+					RpcModule.idOfProcedure(SERVICE, test.procedure, test.serviceVersion),
 					args,
 					TestMessage::ofProtobuf,
 					test.timeoutMillis,
@@ -432,11 +472,11 @@ public class RpcModuleTest extends TestWithSdk {
 	public void testCallInvalid() {
 		assertThrows(
 			IllegalArgumentException.class,
-			() -> client.callVoidWithoutArguments("invalid/name", "proc")
+			() -> client.callVoidWithoutArguments("invalid/name")
 		);
 		assertThrows(
 			IllegalArgumentException.class,
-			() -> client.callVoid(SERVICE, "invalid/name", TestMessage.ofRandom(8))
+			() -> client.callVoid("invalid/name", TestMessage.ofRandom(8))
 		);
 	}
 
@@ -447,19 +487,38 @@ public class RpcModuleTest extends TestWithSdk {
 		// test normal calls which should succeed just fine
 		for (TestCallCase test : new TestCallCase[] {
 			// void call with no arguments and response: should be a GET
-			new TestCallCase("void_no_args", 0, 0, false),
+			new TestCallCase(null, "void_no_args", 0, 0, false),
+			new TestCallCase("1.0", "void_no_args_ver", 0, 0, false),
 			// void call with small arguments: should be a GET
-			new TestCallCase("void_small_args", 128, 0, false),
+			new TestCallCase(null, "void_small_args", 128, 0, false),
+			new TestCallCase("1.0", "void_small_args_ver", 128, 0, false),
 			// void call with a response should drop response: should be a GET
-			new TestCallCase("void_small_args_drop_body", 128, 128, true),
+			new TestCallCase(null, "void_small_args_drop_body", 128, 128, true),
+			new TestCallCase("1.0", "void_small_args_drop_body_ver", 128, 128, true),
 			// void call with large arguments: should be a POST
-			new TestCallCase("void_large_args", RpcModule.HTTP_GET_CALL_PATH_THRESHOLD, 0, false),
+			new TestCallCase(
+				null, "void_large_args",
+				RpcModule.HTTP_GET_CALL_PATH_THRESHOLD, 0, false
+			),
+			new TestCallCase(
+				"1.0", "void_large_args_ver",
+				RpcModule.HTTP_GET_CALL_PATH_THRESHOLD, 0, false
+			),
 			// non-void calls have a response: should be a GET
-			new TestCallCase("test_no_args", 0, 128, false),
+			new TestCallCase(null, "test_no_args", 0, 128, false),
+			new TestCallCase("1.0", "test_no_args_ver", 0, 128, false),
 			// non-void calls with small arguments have a response: should be a GET
-			new TestCallCase("test_small_args", 128, 128, false),
+			new TestCallCase(null, "test_small_args", 128, 128, false),
+			new TestCallCase("1.0", "test_small_args_ver", 128, 128, false),
 			// non-void calls with large arguments have a response: should be a POST
-			new TestCallCase("test_large_args", RpcModule.HTTP_GET_CALL_PATH_THRESHOLD, 128, true)
+			new TestCallCase(
+				null, "test_large_args",
+				RpcModule.HTTP_GET_CALL_PATH_THRESHOLD, 128, true
+			),
+			new TestCallCase(
+				"1.0", "test_large_args",
+				RpcModule.HTTP_GET_CALL_PATH_THRESHOLD, 128, true
+			)
 		}) {
 			RpcModule.CallRequest call = sendCallRequest(test);
 
@@ -497,7 +556,7 @@ public class RpcModuleTest extends TestWithSdk {
 		// call should fail, 404 isn't recoverable
 		serverOf(rec).enqueue((new MockResponse()).setResponseCode(404));
 
-		test = new TestCallCase("void_error_404", 128, 0, false);
+		test = new TestCallCase(null, "void_error_404", 128, 0, false);
 		call = sendCallRequest(test);
 
 		assertTrue(client.activeCalls.contains(call));
@@ -519,7 +578,7 @@ public class RpcModuleTest extends TestWithSdk {
 		serverOf(rec).enqueue((new MockResponse()).setResponseCode(502));
 
 		now = Time.nowUptimeSeconds();
-		test = new TestCallCase("void_retry_502", 128, 128, false);
+		test = new TestCallCase(null, "void_retry_502", 128, 128, false);
 		call = sendCallRequest(test);
 		assertCallRequest(rec, test);
 
@@ -543,7 +602,7 @@ public class RpcModuleTest extends TestWithSdk {
 		assertFalse(client.activeCalls.contains(call));
 
 		// call should retry only a fixed number of times before bailing
-		test = new TestCallCase("void_retry_502_max", 128, 128, false);
+		test = new TestCallCase(null, "void_retry_502_max", 128, 128, false);
 		call = sendCallRequest(test);
 		for (int i = 0; i <= RpcModule.MAX_CALL_RETRY_COUNT; i++) {
 			now = Time.nowUptimeSeconds();
@@ -568,7 +627,7 @@ public class RpcModuleTest extends TestWithSdk {
 
 	@Test
 	public void testCallTimeout() throws Exception {
-		TestCallCase test = new TestCallCase("slow_response", 128, 4096, false, 1000L);
+		TestCallCase test = new TestCallCase("1.0", "slow_response", 128, 4096, false, 5000L);
 		RpcModule.CallRequest call = sendCallRequest(test);
 		RpcHostRecord rec = call.hostRecord;
 
@@ -590,7 +649,7 @@ public class RpcModuleTest extends TestWithSdk {
 		assertFalse(client.activeCalls.contains(call));
 
 		// now enforce a timeout
-		test = new TestCallCase("timeout_response", 128, 4096, false, 1000);
+		test = new TestCallCase("1.0", "timeout_response", 128, 4096, false, 1000);
 		call = sendCallRequest(test);
 
 		assertSame(rec, call.hostRecord);

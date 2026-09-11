@@ -104,8 +104,8 @@ public class UnsignedMathTest {
 		for (int i = 0; i < 1000; i++) {
 			int a = rand.nextInt();
 
-			assertEquals(a, UnsignedMath.multiplyFull(a, 1));
-			assertEquals(a, UnsignedMath.multiplyFull(1, a));
+			assertEquals(UnsignedMath.u(a), UnsignedMath.multiplyFull(a, 1));
+			assertEquals(UnsignedMath.u(a), UnsignedMath.multiplyFull(1, a));
 			assertEquals(UnsignedMath.u(a) * 2, UnsignedMath.multiplyFull(a, 2));
 		}
 	}

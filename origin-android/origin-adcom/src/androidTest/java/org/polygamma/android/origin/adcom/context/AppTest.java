@@ -10,12 +10,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomContext;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -24,7 +22,7 @@ import java.util.Arrays;
 @RunWith(AndroidJUnit4.class)
 public class AppTest {
 	@Test
-	public void testSerde() throws IOException {
+	public void testSerde() {
 		App exp = App.ofBuilder()
 			.categoryTaxonomy(AdComEnums.CategoryTaxonomyIabAdProduct10)
 			.pageCategories(Arrays.asList("a", "b", "c"))
@@ -36,11 +34,12 @@ public class AppTest {
 			.name("test.app")
 			.publisherId("89101112")
 			.build();
-		App got = App.ofProtobuf(new ProtobufReader(
-			AdcomContext.DistributionChannel.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		App got = TestUtil.encodeAndDecode(
+			exp,
+			App::toProtobuf,
+			App::ofProtobuf,
+			AdcomContext.DistributionChannel::parseFrom
+		);
 
 		assertEquals(AdComEnums.CategoryTaxonomyIabAdProduct10, got.categoryTaxonomy());
 		assertEquals(3, got.pageCategoryCount());

@@ -18,11 +18,14 @@ import org.polygamma.android.origin.core.RegulationsModule;
 import org.polygamma.android.origin.core.RpcModule;
 import org.polygamma.android.origin.util.Preconditions;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Origin software development kit (SDK) entry-point.
  *
  * @since 1.2
  */
+@SuppressWarnings("JavadocDeclaration")
 public class Origin {
 
 	/**
@@ -62,6 +65,7 @@ public class Origin {
 
 		DeviceModule.Provider dev = DeviceModule.ofProvider();
 
+		//noinspection ConstantValue
 		if ("cn".equals(BuildConfig.ORIGIN_SDK_REGION))
 			opts.addAndroidDeviceId(ctxt);
 		if (!opts.deviceIdClients.isEmpty())

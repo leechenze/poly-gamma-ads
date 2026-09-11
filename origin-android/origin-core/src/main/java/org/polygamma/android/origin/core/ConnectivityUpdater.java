@@ -7,7 +7,8 @@ import android.util.Pair;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
-import androidx.core.util.Consumer;
+
+import org.polygamma.android.origin.util.Consumer;
 
 /**
  * Connectivity {@linkplain Connectivity descriptor} updater.

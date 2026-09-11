@@ -13,12 +13,12 @@ plugins {
 
 android {
 	namespace = project.ext.originNamespace
-	compileSdk = 35
+	compileSdk = 37
 
 	defaultConfig {
 		applicationId = project.ext.originNamespace
 		minSdk = 21
-		targetSdk = 35
+		targetSdk = 36
 		versionCode =
 			project.ext.originVersionMajor * 10000 +
 			project.ext.originVersionMinor * 100 +

@@ -67,7 +67,7 @@ public class Flate {
 	 * @see Deflater
 	 */
 	public static ByteBuffer compressZlib(ByteBuffer src, int level, boolean nowrap) {
-		ByteBuffer dst = ByteBuffer.allocate(Math.min(512, src.remaining() / 2));
+		ByteBuffer dst = ByteBuffer.allocate(Math.min(512, Math.max(1, src.remaining() / 2)));
 		Deflater deflater = deflaterOf(src, level, nowrap);
 
 		while (true) {

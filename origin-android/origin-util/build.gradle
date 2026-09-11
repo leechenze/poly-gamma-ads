@@ -7,6 +7,5 @@ plugins {
 description = "Utility definitions."
 
 dependencies {
-	api(libs.androidx.core)
 	api(libs.guava.listenablefuture)
 }

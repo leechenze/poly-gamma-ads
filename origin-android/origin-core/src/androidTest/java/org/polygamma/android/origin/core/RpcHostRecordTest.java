@@ -13,8 +13,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.util.Time;
 
 import java.util.Collection;
@@ -30,14 +30,14 @@ public class RpcHostRecordTest {
 
 	@Test
 	public void testOfProto() {
-		ProtobufWriter writer = new ProtobufWriter();
+		ProtobufEncoder enc = ProtobufEncoder.of();
 
-		writer.writeFixed64(RpcHostRecord.EXPTS, 123);
-		writer.writeInt32(RpcHostRecord.PRIO, 456);
-		writer.writeString(RpcHostRecord.HOST, "local.host");
-		writer.writeInt32(RpcHostRecord.PORT, 8443);
+		enc.encodeUnsignedLongField(RpcHostRecord.EXPTS, 123)
+			.encodeUnsignedIntField(RpcHostRecord.PRIO, 456)
+			.encodeStringField(RpcHostRecord.HOST, "local.host")
+			.encodeUnsignedIntField(RpcHostRecord.PORT, 8443);
 
-		RpcHostRecord got = RpcHostRecord.ofProtobuf(new ProtobufReader(writer.finish()));
+		RpcHostRecord got = RpcHostRecord.ofProtobuf(ProtobufDecoder.ofBuffer(enc.asBuffer()));
 
 		assertEquals(123, got.expiryTimestampSeconds);
 		assertTrue(got.isExpired());
@@ -51,10 +51,13 @@ public class RpcHostRecordTest {
 		long now = Time.nowUtcSeconds();
 		Executor exec = Runnable::run;
 
-		assertTrue(RpcHostRecord.ofQuery("nonexistant.domain", exec, 5000).isEmpty());
+		assertTrue(
+			RpcHostRecord.ofQuery(TestUtil.context(), exec, "nonexistant.domain", 5000)
+				.isEmpty()
+		);
 
 		Collection<RpcHostRecord> got =
-			RpcHostRecord.ofQuery("oghdrtest.pgoriginad.com", exec, 5000);
+			RpcHostRecord.ofQuery(TestUtil.context(), exec, "oghdrtest.pgoriginad.com", 5000);
 
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
 			assertTrue(got.isEmpty());

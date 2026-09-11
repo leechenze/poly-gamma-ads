@@ -11,13 +11,10 @@ import android.util.SparseArray;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomMedia;
 
 import java.util.Arrays;
@@ -29,7 +26,7 @@ import java.util.Locale;
 @RunWith(AndroidJUnit4.class)
 public class AdEventTrackerTest {
 	@Test
-	public void testSerde() throws InvalidProtocolBufferException {
+	public void testSerde() {
 		ArrayMap<String, String> expVendorData = new ArrayMap<>();
 
 		expVendorData.put("A", "B");
@@ -59,11 +56,12 @@ public class AdEventTrackerTest {
 			))
 			.requiredAdApis(AdComEnums.AdApiOmid10, AdComEnums.AdApiOrmma)
 			.build();
-		AdEventTracker got = AdEventTracker.ofProtobuf(new ProtobufReader(
-			AdcomMedia.AdEventTracker.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		AdEventTracker got = TestUtil.encodeAndDecode(
+			exp,
+			AdEventTracker::toProtobuf,
+			AdEventTracker::ofProtobuf,
+			AdcomMedia.AdEventTracker::parseFrom
+		);
 		SparseArray<String> macros = new SparseArray<>();
 
 		macros.put(AdComEnums.AdTrackerUrlMacroTransactionId, "123");

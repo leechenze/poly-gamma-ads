@@ -2,13 +2,14 @@
 
 package org.polygamma.android.origin.adcom.context;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.*;
 
 import androidx.annotation.CallSuper;
 import androidx.annotation.RestrictTo;
 
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 
 /**
  * Channel through which advertising media is distributed.
@@ -19,19 +20,44 @@ import org.polygamma.android.origin.protobuf.ProtobufWriter;
 public class DistributionChannel implements ProtobufSerializable {
 
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
-	static final @Tag int ID			= ofString( 1);
+	static final @FieldTag int ID			= fieldTagOf(1, WIRE_LEN);
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
-	static final @Tag int NAME			= ofString( 2);
+	static final @FieldTag int NAME			= fieldTagOf(2, WIRE_LEN);
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
-	static final @Tag int PUB			= ofMessage(3);
-	/*static final @Tag int CONTENT		= ofMessage(4);*/
-	/*static final @Tag int SITE		= ofMessage(5);*/
+	static final @FieldTag int PUB			= fieldTagOf(3, WIRE_LEN);
+	/*static final @FieldTag int CONTENT	= fieldTagOf(4, WIRE_LEN);*/
+	/*static final @FieldTag int SITE		= fieldTagOf(5, WIRE_LEN);*/
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
-	static final @Tag int APP			= ofMessage(6);
-	/*static final @Tag int DOOH		= ofMessage(7);*/
+	static final @FieldTag int APP			= fieldTagOf(6, WIRE_LEN);
+	/*static final @FieldTag int DOOH		= fieldTagOf(7, WIRE_LEN);*/
 
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
-	static final @Tag int PUB_ID		= ofString(1);
+	static final @FieldTag int PUB_ID		= fieldTagOf(1, WIRE_LEN);
+
+	static void
+	decodeProtobufField(DistributionChannel dst, ProtobufDecoder dec, @FieldTag int tag) {
+		if (tag == ID) {
+			dst.id = dec.decodeString();
+		} else if (tag == NAME) {
+			dst.name = dec.decodeString();
+		} else if (tag == PUB) {
+			dst.publisherId = dec.decodeLen(pub -> {
+				String id = "";
+
+				while (pub.hasRemaining()) {
+					int pubTag = pub.decodeFieldTag();
+
+					if (pubTag == PUB_ID)
+						id = pub.decodeString();
+					else
+						pub.skipFieldValue(pubTag);
+				}
+				return id;
+			});
+		} else {
+			dec.skipFieldValue(tag);
+		}
+	}
 
 	@RestrictTo(RestrictTo.Scope.SUBCLASSES)
 	String id;
@@ -92,13 +118,12 @@ public class DistributionChannel implements ProtobufSerializable {
 
 	@Override
 	@CallSuper
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(ID, this.id);
-		writer.writeString(NAME, this.name);
-
-		long cookie = writer.beginWriteLen(PUB);
-
-		writer.writeString(PUB_ID, this.publisherId);
-		writer.endWriteLen(cookie);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(ID, this.id)
+			.encodeStringField(NAME, this.name)
+			.encodeLenField(
+				PUB, this.publisherId,
+				(pubId, pubEnc) -> pubEnc.encodeStringField(PUB_ID, pubId)
+			);
 	}
 }

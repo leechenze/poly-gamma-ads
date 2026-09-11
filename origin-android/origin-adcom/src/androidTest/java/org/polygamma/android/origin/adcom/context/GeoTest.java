@@ -6,13 +6,10 @@ import static org.junit.Assert.assertEquals;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.origin.adcom.AdcomContext;
 
 /**
@@ -21,7 +18,7 @@ import org.polygamma.origin.adcom.AdcomContext;
 @RunWith(AndroidJUnit4.class)
 public class GeoTest {
 	@Test
-	public void testSerde() throws InvalidProtocolBufferException {
+	public void testSerde() {
 		Geo exp = Geo.ofBuilder()
 			.type(AdComEnums.GeoSourceDevice)
 			.latitudeDegrees(4.5)
@@ -40,11 +37,12 @@ public class GeoTest {
 			.altitudeMslMeters(10.1)
 			.altitudeMslAccuracyMeters(1.10f)
 			.build();
-		Geo got = Geo.ofProtobuf(new ProtobufReader(
-			AdcomContext.Geo.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		Geo got = TestUtil.encodeAndDecode(
+			exp,
+			Geo::toProtobuf,
+			Geo::ofProtobuf,
+			AdcomContext.Geo::parseFrom
+		);
 
 		assertEquals(AdComEnums.GeoSourceDevice, got.type());
 		assertEquals(4.5, got.latitudeDegrees(), 0);

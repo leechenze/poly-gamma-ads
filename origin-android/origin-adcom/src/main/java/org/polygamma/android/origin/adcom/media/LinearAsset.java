@@ -2,7 +2,9 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
 
@@ -11,9 +13,10 @@ import androidx.annotation.Px;
 
 import org.polygamma.android.origin.adcom.enums.AdApiCode;
 import org.polygamma.android.origin.adcom.enums.PlaybackDeliveryMethod;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.Preconditions;
 
 import java.lang.annotation.Documented;
@@ -29,32 +32,32 @@ import java.lang.annotation.Target;
  */
 public final class LinearAsset implements ProtobufSerializable {
 
-	private static final @Tag int URL					= ofString(  1);
-	private static final @Tag int MIME					= ofString(  2);
-	private static final @Tag int INTERACTIVE			= ofMessage( 3);
-	private static final @Tag int MEDIA					= ofMessage( 4);
-	private static final @Tag int MEZZANINE				= ofMessage( 5);
-	private static final @Tag int CAPTION				= ofMessage( 6);
+	private static final @FieldTag int URL					= fieldTagOf( 1, WIRE_LEN);
+	private static final @FieldTag int MIME					= fieldTagOf( 2, WIRE_LEN);
+	private static final @FieldTag int INTERACTIVE			= fieldTagOf( 3, WIRE_LEN);
+	private static final @FieldTag int MEDIA				= fieldTagOf( 4, WIRE_LEN);
+	private static final @FieldTag int MEZZANINE			= fieldTagOf( 5, WIRE_LEN);
+	private static final @FieldTag int CAPTION				= fieldTagOf( 6, WIRE_LEN);
 
 	// `LinearClosedCaptionAsset`
-	private static final @Tag int CAPTION_LANG			= ofString(  1);
+	private static final @FieldTag int CAPTION_LANG			= fieldTagOf( 1, WIRE_LEN);
 
 	// `LinearMediaAsset`
-	private static final @Tag int MEDIA_ID				= ofString(  1);
-	private static final @Tag int MEDIA_CODEC			= ofString(  2);
-	/*private static final @Tag int MEDIA_SIZE			= ofInt64(   3);*/
-	private static final @Tag int MEDIA_AVGBITR			= ofInt32(   4);
-	private static final @Tag int MEDIA_MINBITR			= ofInt32(   5);
-	private static final @Tag int MEDIA_MAXBITR			= ofInt32(   6);
-	private static final @Tag int MEDIA_DELIVERY		= ofInt32(   7);
-	private static final @Tag int MEDIA_W				= ofInt32(   8);
-	private static final @Tag int MEDIA_H				= ofInt32(   9);
-	private static final @Tag int MEDIA_SCALE			= ofBool(   10);
-	private static final @Tag int MEDIA_ASPECT			= ofBool(   11);
+	private static final @FieldTag int MEDIA_ID				= fieldTagOf( 1, WIRE_LEN);
+	private static final @FieldTag int MEDIA_CODEC			= fieldTagOf( 2, WIRE_LEN);
+	/*private static final @FieldTag int MEDIA_SIZE			= fieldTagOf( 3, WIRE_VARINT);*/
+	private static final @FieldTag int MEDIA_AVGBITR		= fieldTagOf( 4, WIRE_VARINT);
+	private static final @FieldTag int MEDIA_MINBITR		= fieldTagOf( 5, WIRE_VARINT);
+	private static final @FieldTag int MEDIA_MAXBITR		= fieldTagOf( 6, WIRE_VARINT);
+	private static final @FieldTag int MEDIA_DELIVERY		= fieldTagOf( 7, WIRE_VARINT);
+	private static final @FieldTag int MEDIA_W				= fieldTagOf( 8, WIRE_VARINT);
+	private static final @FieldTag int MEDIA_H				= fieldTagOf( 9, WIRE_VARINT);
+	private static final @FieldTag int MEDIA_SCALE			= fieldTagOf(10, WIRE_VARINT);
+	private static final @FieldTag int MEDIA_ASPECT			= fieldTagOf(11, WIRE_VARINT);
 
 	// `LinearInteractiveAsset`
-	private static final @Tag int INTERACTIVE_API		= ofInt32(   1);
-	private static final @Tag int INTERACTIVE_VARDUR	= ofBool(    2);
+	private static final @FieldTag int INTERACTIVE_API		= fieldTagOf( 1, WIRE_VARINT);
+	private static final @FieldTag int INTERACTIVE_VARDUR	= fieldTagOf( 2, WIRE_VARINT);
 
 	/**
 	 * No asset type.
@@ -310,71 +313,30 @@ public final class LinearAsset implements ProtobufSerializable {
 	/**
 	 * Deserialize linear media asset from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized asset
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static LinearAsset ofProtobuf(ProtobufReader reader) {
+	public static LinearAsset ofProtobuf(ProtobufDecoder dec) {
 		LinearAsset rv = new LinearAsset();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == URL) {
-				rv.url = reader.readString();
+				rv.url = dec.decodeString();
 			} else if (tag == MIME) {
-				rv.mime = reader.readString();
+				rv.mime = dec.decodeString();
 			} else if (tag == CAPTION) {
-				int cookie = reader.beginReadLen();
-
-				rv.flagsAndAssetClass = ASSET_CLOSED_CAPTION;
-				while (reader.hasRemaining()) {
-					tag = reader.readTag();
-					if (tag == CAPTION_LANG)
-						rv.playbackIdOrClosedCaptionLanguageCode = reader.readString();
-				}
-				reader.endReadLen(cookie);
+				dec.decodeLen(rv, LinearAsset::mergeCaptionProtobuf);
 			} else if (tag == INTERACTIVE) {
-				int cookie = reader.beginReadLen();
-
-				rv.flagsAndAssetClass = ASSET_INTERACTIVE;
-				while (reader.hasRemaining()) {
-					tag = reader.readTag();
-					if (tag == INTERACTIVE_API)
-						rv.playbackSupportedDeliveryOrInteractiveRequiredApi = reader.readInt32();
-					else if (tag == INTERACTIVE_VARDUR && reader.readBool())
-						rv.flagsAndAssetClass |= FLAG_INTERACTIVE_VARDUR;
-				}
-				reader.endReadLen(cookie);
+				dec.decodeLen(rv, LinearAsset::mergeInteractiveProtobuf);
 			} else if (tag == MEDIA || tag == MEZZANINE) {
-				int cookie = reader.beginReadLen();
-
 				rv.flagsAndAssetClass = tag == MEDIA ? ASSET_MEDIA : ASSET_MEZZANINE;
-				while (reader.hasRemaining()) {
-					tag = reader.readTag();
-					if (tag == MEDIA_ID)
-						rv.playbackIdOrClosedCaptionLanguageCode = reader.readString();
-					else if (tag == MEDIA_CODEC)
-						rv.playbackCodec = reader.readString();
-					else if (tag == MEDIA_AVGBITR)
-						rv.playbackAverageBitRateKbps = reader.readInt32();
-					else if (tag == MEDIA_MINBITR)
-						rv.playbackMinBitRateKbps = reader.readInt32();
-					else if (tag == MEDIA_MAXBITR)
-						rv.playbackMaxBitRateKbps = reader.readInt32();
-					else if (tag == MEDIA_DELIVERY)
-						rv.playbackSupportedDeliveryOrInteractiveRequiredApi = reader.readInt32();
-					else if (tag == MEDIA_W)
-						rv.playbackWidthPx = reader.readInt32();
-					else if (tag == MEDIA_H)
-						rv.playbackHeightPx = reader.readInt32();
-					else if (tag == MEDIA_SCALE && reader.readBool())
-						rv.flagsAndAssetClass |= FLAG_PLAYBACK_SCALE;
-					else if (tag == MEDIA_ASPECT && reader.readBool())
-						rv.flagsAndAssetClass |= FLAG_PLAYBACK_ASPECT;
-				}
-				reader.endReadLen(cookie);
+				dec.decodeLen(rv, LinearAsset::mergeMediaOrMezzanineProtobuf);
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		return rv;
@@ -397,6 +359,64 @@ public final class LinearAsset implements ProtobufSerializable {
 		this.mime = "";
 		this.playbackIdOrClosedCaptionLanguageCode = "";
 		this.playbackCodec = "";
+	}
+
+	private LinearAsset mergeCaptionProtobuf(ProtobufDecoder dec) {
+		this.flagsAndAssetClass = ASSET_CLOSED_CAPTION;
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
+
+			if (tag == CAPTION_LANG)
+				this.playbackIdOrClosedCaptionLanguageCode = dec.decodeString();
+			else
+				dec.skipFieldValue(tag);
+		}
+		return this;
+	}
+
+	private LinearAsset mergeInteractiveProtobuf(ProtobufDecoder dec) {
+		this.flagsAndAssetClass = ASSET_INTERACTIVE;
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
+
+			if (tag == INTERACTIVE_API)
+				this.playbackSupportedDeliveryOrInteractiveRequiredApi = dec.decodeUint32();
+			else if (tag == INTERACTIVE_VARDUR)
+				this.flagsAndAssetClass |= dec.decodeBool() ? FLAG_INTERACTIVE_VARDUR : 0;
+			else
+				dec.skipFieldValue(tag);
+		}
+		return this;
+	}
+
+	private LinearAsset mergeMediaOrMezzanineProtobuf(ProtobufDecoder dec) {
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
+
+			if (tag == MEDIA_ID)
+				this.playbackIdOrClosedCaptionLanguageCode = dec.decodeString();
+			else if (tag == MEDIA_CODEC)
+				this.playbackCodec = dec.decodeString();
+			else if (tag == MEDIA_AVGBITR)
+				this.playbackAverageBitRateKbps = dec.decodeUint32();
+			else if (tag == MEDIA_MINBITR)
+				this.playbackMinBitRateKbps = dec.decodeUint32();
+			else if (tag == MEDIA_MAXBITR)
+				this.playbackMaxBitRateKbps = dec.decodeUint32();
+			else if (tag == MEDIA_DELIVERY)
+				this.playbackSupportedDeliveryOrInteractiveRequiredApi = dec.decodeUint32();
+			else if (tag == MEDIA_W)
+				this.playbackWidthPx = dec.decodeUint32();
+			else if (tag == MEDIA_H)
+				this.playbackHeightPx = dec.decodeUint32();
+			else if (tag == MEDIA_SCALE)
+				this.flagsAndAssetClass |= dec.decodeBool() ? FLAG_PLAYBACK_SCALE : 0;
+			else if (tag == MEDIA_ASPECT)
+				this.flagsAndAssetClass |= dec.decodeBool() ? FLAG_PLAYBACK_ASPECT : 0;
+			else
+				dec.skipFieldValue(tag);
+		}
+		return this;
 	}
 
 	/**
@@ -689,45 +709,54 @@ public final class LinearAsset implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(URL, this.url);
-		writer.writeString(MIME, this.mime);
-
-		long cookie;
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(URL, this.url)
+			.encodeStringField(MIME, this.mime);
 
 		switch (this.assetClass()) {
 		case ASSET_CLOSED_CAPTION:
-			cookie = writer.beginWriteLen(CAPTION);
-			writer.writeString(CAPTION_LANG, this.playbackIdOrClosedCaptionLanguageCode);
+			enc.encodeLenField(
+				CAPTION,
+				this.playbackIdOrClosedCaptionLanguageCode,
+				(lang, langEnc) -> langEnc.encodeStringField(CAPTION_LANG, lang)
+			);
 			break;
 		case ASSET_INTERACTIVE:
-			cookie = writer.beginWriteLen(INTERACTIVE);
-			writer.writeInt32(
-				INTERACTIVE_API,
-				this.playbackSupportedDeliveryOrInteractiveRequiredApi
+			enc.encodeLenField(
+				INTERACTIVE, this,
+				(inter, interEnc) ->
+					interEnc.encodeUnsignedIntField(
+						INTERACTIVE_API,
+						inter.playbackSupportedDeliveryOrInteractiveRequiredApi
+					)
+						.encodeBoolField(
+							INTERACTIVE_VARDUR,
+							inter.interactiveCanExtendPlaybackDuration()
+						)
 			);
-			writer.writeBool(INTERACTIVE_VARDUR, this.interactiveCanExtendPlaybackDuration());
 			break;
 		case ASSET_MEDIA:
 		case ASSET_MEZZANINE:
-			cookie = writer.beginWriteLen(this.isMediaAsset() ? MEDIA : MEZZANINE);
-			writer.writeString(MEDIA_ID, this.playbackIdOrClosedCaptionLanguageCode);
-			writer.writeString(MEDIA_CODEC, this.playbackCodec);
-			writer.writeInt32(MEDIA_AVGBITR, this.playbackAverageBitRateKbps);
-			writer.writeInt32(MEDIA_MINBITR, this.playbackMinBitRateKbps);
-			writer.writeInt32(MEDIA_MAXBITR, this.playbackMaxBitRateKbps);
-			writer.writeInt32(
-				MEDIA_DELIVERY,
-				this.playbackSupportedDeliveryOrInteractiveRequiredApi
+			enc.encodeLenField(
+				this.isMediaAsset() ? MEDIA : MEZZANINE, this,
+				(med, medEnc) ->
+					medEnc.encodeStringField(MEDIA_ID, med.playbackIdOrClosedCaptionLanguageCode)
+						.encodeStringField(MEDIA_CODEC, med.playbackCodec)
+						.encodeUnsignedIntField(MEDIA_AVGBITR, med.playbackAverageBitRateKbps)
+						.encodeUnsignedIntField(MEDIA_MINBITR, med.playbackMinBitRateKbps)
+						.encodeUnsignedIntField(MEDIA_MAXBITR, med.playbackMaxBitRateKbps)
+						.encodeUnsignedIntField(
+							MEDIA_DELIVERY,
+							med.playbackSupportedDeliveryOrInteractiveRequiredApi
+						)
+						.encodeUnsignedIntField(MEDIA_W, med.playbackWidthPx)
+						.encodeUnsignedIntField(MEDIA_H, med.playbackHeightPx)
+						.encodeBoolField(MEDIA_SCALE, med.playbackCanScale())
+						.encodeBoolField(MEDIA_ASPECT, med.playbackMaintainAspectRatio())
 			);
-			writer.writeInt32(MEDIA_W, this.playbackWidthPx);
-			writer.writeInt32(MEDIA_H, this.playbackHeightPx);
-			writer.writeBool(MEDIA_SCALE, this.playbackCanScale());
-			writer.writeBool(MEDIA_ASPECT, this.playbackMaintainAspectRatio());
 			break;
 		default:
-			return;
+			break;
 		}
-		writer.endWriteLen(cookie);
 	}
 }

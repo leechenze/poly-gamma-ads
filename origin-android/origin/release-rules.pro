@@ -46,6 +46,14 @@
 	*** status();
 }
 
+# `origin-util` exported members:
+
+-keep,allowoptimization interface org.polygamma.android.origin.util.BiConsumer,
+	org.polygamma.android.origin.util.Consumer,
+	org.polygamma.android.origin.util.Function,
+	org.polygamma.android.origin.util.IntFunction,
+	org.polygamma.android.origin.util.Supplier { public *; }
+
 # Remove logs below `WARN`.
 -assumenosideeffects interface org.polygamma.android.origin.util.Logger {
 	static *** debug(...);
@@ -53,6 +61,25 @@
 }
 
 # See `../origin-antifraud/release-rules.pro`
--keepnames class org.polygamma.android.origin.antifraud.EntropyMachine
+-keepnames class org.polygamma.android.origin.antifraud.TamperMachine
+
+# See `../origin-protobuf/release-rules.pro`
+-assumevalues public class org.polygamma.android.origin.protobuf.Protobuf {
+	static int MAX_VARINT32_SIZE return 5;
+	static int MAX_VARINT64_SIZE return 10;
+	static int varintSizeOfBits(int) return 0..10;
+
+	public static int wireTypeOfFieldTag(int) return 0..5;
+}
+
+-assumevalues public class org.polygamma.android.origin.protobuf.ProtobufEncoder {
+	private static int sizeOfVarint32(int) return 1..5;
+	private static int sizeOfVarint64(long) return 1..10;
+}
+
+# See `../origin-util/consumer-rules.pro`
+-convertchecknotnull public class org.polygamma.android.origin.util.Preconditions {
+	** checkNotNull(...);
+}
 
 -include consumer-rules.pro

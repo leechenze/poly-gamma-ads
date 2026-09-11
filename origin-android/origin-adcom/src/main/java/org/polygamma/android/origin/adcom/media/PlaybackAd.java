@@ -2,15 +2,17 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.ReturnThis;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.lang.annotation.Documented;
@@ -32,19 +34,19 @@ import java.util.List;
 public final class PlaybackAd extends Ad {
 
 	// `{Audio,Video}Ad`
-	/*private static final @Tag int MIME			= ofString(       1);*/
-	/*private static final @Tag int API				= ofPackedInt32(  2);*/
-	/*private static final @Tag int CTYPE			= ofInt32(        3);*/
-	/*private static final @Tag int DUR				= ofInt64(        4);*/
-	/*private static final @Tag int ADM				= ofString(       5);*/
-	/*private static final @Tag int CURL			= ofString(       6);*/
-	private static final @Tag int PLAYBACK			= ofString(     500);
+	/*private static final @FieldTag int MIME				= fieldTagOf(  1, WIRE_LEN);*/
+	/*private static final @FieldTag int API				= fieldTagOf(  2, WIRE_LEN);*/
+	/*private static final @FieldTag int CTYPE				= fieldTagOf(  3, WIRE_VARINT);*/
+	/*private static final @FieldTag int DUR				= fieldTagOf(  4, WIRE_VARINT);*/
+	/*private static final @FieldTag int ADM				= fieldTagOf(  5, WIRE_LEN);*/
+	/*private static final @FieldTag int CURL				= fieldTagOf(  6, WIRE_LEN);*/
+	private static final @FieldTag int PLAYBACK				= fieldTagOf(500, WIRE_LEN);
 
 	// `PlaybackAd`
-	private static final @Tag int PLAYBACK_TITLE	= ofString(       1);
-	private static final @Tag int PLAYBACK_DESC		= ofString(       2);
-	private static final @Tag int PLAYBACK_EVENT	= ofMessage(      3);
-	private static final @Tag int PLAYBACK_CREATIVE	= ofMessage(      4);
+	private static final @FieldTag int PLAYBACK_TITLE		= fieldTagOf(  1, WIRE_LEN);
+	private static final @FieldTag int PLAYBACK_DESC		= fieldTagOf(  2, WIRE_LEN);
+	private static final @FieldTag int PLAYBACK_EVENT		= fieldTagOf(  3, WIRE_LEN);
+	private static final @FieldTag int PLAYBACK_CREATIVE	= fieldTagOf(  4, WIRE_LEN);
 
 	/**
 	 * Audio or video ad media.
@@ -263,71 +265,34 @@ public final class PlaybackAd extends Ad {
 	}
 
 	/**
-	 * Deserialize {@code PlaybackAd} Protobuf message into playback ad media.
-	 *
-	 * @param dst ad media to deserialize into
-	 * @param src reader to deserialize from
-	 * @throws RuntimeException coding is malformed
-	 */
-	private static void deserializePlaybackAdProtobuf(PlaybackAd dst, ProtobufReader src) {
-		List<AdEventTracker> trkr = new ArrayList<>(0);
-		List<PlaybackCreative> creatives = new ArrayList<>(0);
-
-		while (src.hasRemaining()) {
-			int tag = src.readTag();
-
-			if (tag == PLAYBACK_TITLE)
-				dst.titleText = src.readString();
-			else if (tag == PLAYBACK_DESC)
-				dst.descriptionText = src.readString();
-			else if (tag == PLAYBACK_EVENT)
-				trkr.add(src.readLen(AdEventTracker::ofProtobuf));
-			else if (tag == PLAYBACK_CREATIVE)
-				creatives.add(src.readLen(PlaybackCreative::ofProtobuf));
-		}
-		dst.creatives = CollectionsCompat.toArrayOrEmpty(creatives, DEFAULT_AUDIO.creatives);
-		dst.setEventTrackers(trkr);
-	}
-
-	/**
 	 * Deserialize playback ad media from a {@code PlaybackAd} Protobuf message.
 	 * <p>The {@link #isAudioAd()} and {@link #isVideoAd()} methods, of the returned ad media, are
 	 * guaranteed to both return {@code false}.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized ad media
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static PlaybackAd ofPlaybackAdProtobuf(ProtobufReader reader) {
+	public static PlaybackAd ofPlaybackAdProtobuf(ProtobufDecoder dec) {
 		PlaybackAd rv = new PlaybackAd(DEFAULT_VIDEO);
 
 		rv.type = TYPE_NONE;
-		deserializePlaybackAdProtobuf(rv, reader);
+		rv.mergePlaybackAdProtobuf(dec);
 		return rv;
 	}
 
-	/**
-	 * Deserialize {@linkplain #isAudioAd() audio} or {@linkplain #isVideoAd() video} playback ad
-	 * media from a Protobuf message.
-	 *
-	 * @param base base media to deserialize with
-	 * @param reader reader to deserialize from
-	 * @return deserialized ad media
-	 * @throws RuntimeException coding is malformed
-	 */
-	private static PlaybackAd ofAudioOrVideoAdProtobuf(PlaybackAd base, ProtobufReader reader) {
+	// Deserialize audio or video playback ad media from a Protobuf message.
+	private static PlaybackAd ofAudioOrVideoAdProtobuf(PlaybackAd base, ProtobufDecoder dec) {
 		PlaybackAd rv = new PlaybackAd(base);
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
-			if (tag == PLAYBACK) {
-				int cookie = reader.beginReadLen();
-
-				deserializePlaybackAdProtobuf(rv, reader);
-				reader.endReadLen(cookie);
-			}
+			if (tag == PLAYBACK)
+				dec.decodeLen(rv, PlaybackAd::mergePlaybackAdProtobuf);
+			else
+				dec.skipFieldValue(tag);
 		}
 		return rv;
 	}
@@ -335,27 +300,27 @@ public final class PlaybackAd extends Ad {
 	/**
 	 * Deserialize {@linkplain #isVideoAd() video} playback ad media from a Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized ad media
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 * @see #isVideoAd()
 	 */
-	public static PlaybackAd ofVideoAdProtobuf(ProtobufReader reader) {
-		return ofAudioOrVideoAdProtobuf(DEFAULT_VIDEO, reader);
+	public static PlaybackAd ofVideoAdProtobuf(ProtobufDecoder dec) {
+		return ofAudioOrVideoAdProtobuf(DEFAULT_VIDEO, dec);
 	}
 
 	/**
 	 * Deserialize {@linkplain #isAudioAd() audio} playback ad media from a Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized ad media
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 * @see #isAudioAd()
 	 */
-	public static PlaybackAd ofAudioAdProtobuf(ProtobufReader reader) {
-		return ofAudioOrVideoAdProtobuf(DEFAULT_AUDIO, reader);
+	public static PlaybackAd ofAudioAdProtobuf(ProtobufDecoder dec) {
+		return ofAudioOrVideoAdProtobuf(DEFAULT_AUDIO, dec);
 	}
 
 	private String titleText;
@@ -379,6 +344,30 @@ public final class PlaybackAd extends Ad {
 		this.type = that.type;
 	}
 
+	// Deserialize `PlaybackAd` Protobuf message into playback ad media.
+	private PlaybackAd mergePlaybackAdProtobuf(ProtobufDecoder src) {
+		List<AdEventTracker> trkr = new ArrayList<>(0);
+		List<PlaybackCreative> creatives = new ArrayList<>(0);
+
+		while (src.hasRemaining()) {
+			int tag = src.decodeFieldTag();
+
+			if (tag == PLAYBACK_TITLE)
+				this.titleText = src.decodeString();
+			else if (tag == PLAYBACK_DESC)
+				this.descriptionText = src.decodeString();
+			else if (tag == PLAYBACK_EVENT)
+				trkr.add(src.decodeLen(AdEventTracker::ofProtobuf));
+			else if (tag == PLAYBACK_CREATIVE)
+				creatives.add(src.decodeLen(PlaybackCreative::ofProtobuf));
+			else
+				src.skipFieldValue(tag);
+		}
+		this.creatives = CollectionsCompat.toArrayOrEmpty(creatives, DEFAULT_AUDIO.creatives);
+		this.setEventTrackers(trkr);
+		return this;
+	}
+
 	/**
 	 * Playback media is audio.
 	 *
@@ -386,7 +375,7 @@ public final class PlaybackAd extends Ad {
 	 * @since 1.2
 	 * @see #ofAudioAd()
 	 * @see #ofAudioAdBuilder()
-	 * @see #ofAudioAdProtobuf(ProtobufReader)
+	 * @see #ofAudioAdProtobuf(ProtobufDecoder)
 	 */
 	public boolean isAudioAd() {
 		return this.type == TYPE_AUDIO;
@@ -399,7 +388,7 @@ public final class PlaybackAd extends Ad {
 	 * @since 1.2
 	 * @see #ofVideoAd()
 	 * @see #ofVideoAdBuilder()
-	 * @see #ofVideoAdProtobuf(ProtobufReader)
+	 * @see #ofVideoAdProtobuf(ProtobufDecoder)
 	 */
 	public boolean isVideoAd() {
 		return this.type == TYPE_VIDEO;
@@ -467,27 +456,27 @@ public final class PlaybackAd extends Ad {
 	/**
 	 * Serialize playback ad media as a {@code PlaybackAd} Protobuf message.
 	 *
-	 * @param writer writer to serialize into
+	 * @param enc encoder to serialize into
 	 * @since 1.2
 	 */
-	public void toPlaybackAdProtobuf(ProtobufWriter writer) {
-		writer.writeString(PLAYBACK_TITLE, this.titleText);
-		writer.writeString(PLAYBACK_DESC, this.descriptionText);
-		writer.writeRepeatLen(PLAYBACK_EVENT, super.eventTrackers());
-		writer.writeRepeatLen(PLAYBACK_CREATIVE, this.creatives);
+	public void toPlaybackAdProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(PLAYBACK_TITLE, this.titleText)
+			.encodeStringField(PLAYBACK_DESC, this.descriptionText);
+
+		for (AdEventTracker trkr : this.eventTrackers())
+			enc.encodeMessageField(PLAYBACK_EVENT, trkr);
+		for (PlaybackCreative cr : this.creatives)
+			enc.encodeMessageField(PLAYBACK_CREATIVE, cr);
 	}
 
 	/**
 	 * Serialize playback ad media as an {@linkplain #isAudioAd() audio} or {@linkplain
 	 * #isVideoAd() video} ad media Protobuf message.
 	 *
-	 * @param writer writer to serialize into
+	 * @param enc encoder to serialize into
 	 * @since 1.2
 	 */
-	public void toAudioOrVideoAdProtobuf(ProtobufWriter writer) {
-		long cookie = writer.beginWriteLen(PLAYBACK);
-
-		this.toPlaybackAdProtobuf(writer);
-		writer.endWriteLen(cookie);
+	public void toAudioOrVideoAdProtobuf(ProtobufEncoder enc) {
+		enc.encodeLenField(PLAYBACK, this, PlaybackAd::toPlaybackAdProtobuf);
 	}
 }

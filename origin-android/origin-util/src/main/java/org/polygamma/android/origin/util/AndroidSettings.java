@@ -262,6 +262,7 @@ public class AndroidSettings {
 	 * @since 1.1
 	 * @see #getGlobalBoolean(ContentResolver, String, boolean)
 	 */
+	@SuppressWarnings("JavadocDeclaration")
 	public static boolean getGlobalBoolean(ContentResolver cr, String name) {
 		return getGlobalBoolean(cr, name, false);
 	}

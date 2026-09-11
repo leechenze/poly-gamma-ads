@@ -152,7 +152,12 @@ public class Xtea {
 			int v0 = Bits.loadIntLe(src, srcOff + i + 0);
 			int v1 = Bits.loadIntLe(src, srcOff + i + 4);
 
-			for (int j = 0, s = DELTA * NUM_ROUNDS; j < NUM_ROUNDS; j++) {
+			for (
+				//noinspection NumericOverflow
+				int j = 0, s = DELTA * NUM_ROUNDS;
+				j < NUM_ROUNDS;
+				j++
+			) {
 				v1 -= (((v0 << 4) ^ (v0 >>> 5)) + v0) ^ (s + this.key[(s >>> 11) & 3]);
 				s -= DELTA;
 				v0 -= (((v1 << 4) ^ (v1 >>> 5)) + v1) ^ (s + this.key[s & 3]);

@@ -11,8 +11,8 @@ public interface ProtobufSerializable {
 	/**
 	 * Serialize payload into Protocol buffer.
 	 *
-	 * @param writer writer to serialize with
+	 * @param enc encoder to serialize with
 	 * @since 1.2
 	 */
-	void toProtobuf(ProtobufWriter writer);
+	void toProtobuf(ProtobufEncoder enc);
 }

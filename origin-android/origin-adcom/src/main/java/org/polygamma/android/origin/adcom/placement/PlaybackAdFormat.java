@@ -2,7 +2,9 @@
 
 package org.polygamma.android.origin.adcom.placement;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
 
@@ -12,8 +14,9 @@ import androidx.annotation.ReturnThis;
 import org.polygamma.android.origin.adcom.enums.ActivationBehavior;
 import org.polygamma.android.origin.adcom.enums.AdApiCode;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.util.Preconditions;
 
 import java.util.ArrayList;
@@ -30,47 +33,47 @@ import java.util.List;
 public final class PlaybackAdFormat extends AdFormat {
 
 	// `PlaybackAdFormat`
-	/*private static final @Tag int DELAY			= ofSint64(       1);*/
-	private static final @Tag int SKIP				= ofBool(         2);
-	/*private static final @Tag int SKIPMIN			= ofInt64(        3);*/
-	/*private static final @Tag int SKIPAFTER		= ofInt64(        4);*/
-	/*private static final @Tag int PLAYMETHOD		= ofPackedInt32(  5);*/
-	/*private static final @Tag int PLAYEND			= ofInt32(        6);*/
-	private static final @Tag int MIME				= ofString(       7);
-	private static final @Tag int API				= ofPackedInt32(  8);
-	private static final @Tag int CTYPE				= ofPackedInt32(  9);
-	/*private static final @Tag int MINDUR			= ofInt64(       10);*/
-	/*private static final @Tag int MAXDUR			= ofInt64(       11);*/
-	/*private static final @Tag int RQDDURS			= ofPackedInt64( 12);*/
-	/*private static final @Tag int MAXEXT			= ofInt64(       13);*/
-	private static final @Tag int MINBITR			= ofInt32(       14);
-	private static final @Tag int MAXBITR			= ofInt32(       15);
-	/*private static final @Tag int DELIVERY		= ofPackedInt32( 16);*/
-	/*private static final @Tag int MAXSEQ			= ofInt32(       17);*/
-	/*private static final @Tag int PODDUR			= ofInt32(       18);*/
-	/*private static final @Tag int PODID			= ofInt32(       19);*/
-	/*private static final @Tag int PODSEQ			= ofSint32(      20);*/
-	/*private static final @Tag int SLOTINPOD		= ofSint32(      21);*/
-	/*private static final @Tag int MINCPMPERSEC	= ofDouble(      22);*/
-	/*private static final @Tag int COMP			= ofMessage(     23);*/
-	/*private static final @Tag int COMPTYPE		= ofPackedInt32( 24);*/
-	/*private static final @Tag int OVERLAYEXPDIR	= ofPackedInt32( 25);*/
-	/*private static final @Tag int EVENT			= ofMessage(    500);*/
+	/*private static final @FieldTag int DELAY			= fieldTagOf(  1, WIRE_VARINT);*/
+	private static final @FieldTag int SKIP				= fieldTagOf(  2, WIRE_VARINT);
+	/*private static final @FieldTag int SKIPMIN		= fieldTagOf(  3, WIRE_VARINT);*/
+	/*private static final @FieldTag int SKIPAFTER		= fieldTagOf(  4, WIRE_VARINT);*/
+	/*private static final @FieldTag int PLAYMETHOD		= fieldTagOf(  5, WIRE_LEN);*/
+	/*private static final @FieldTag int PLAYEND		= fieldTagOf(  6, WIRE_VARINT);*/
+	private static final @FieldTag int MIME				= fieldTagOf(  7, WIRE_LEN);
+	private static final @FieldTag int API				= fieldTagOf(  8, WIRE_LEN);
+	private static final @FieldTag int CTYPE			= fieldTagOf(  9, WIRE_LEN);
+	/*private static final @FieldTag int MINDUR			= fieldTagOf( 10, WIRE_VARINT);*/
+	/*private static final @FieldTag int MAXDUR			= fieldTagOf( 11, WIRE_VARINT);*/
+	/*private static final @FieldTag int RQDDURS		= fieldTagOf( 12, WIRE_LEN);*/
+	/*private static final @FieldTag int MAXEXT			= fieldTagOf( 13, WIRE_VARINT);*/
+	private static final @FieldTag int MINBITR			= fieldTagOf( 14, WIRE_VARINT);
+	private static final @FieldTag int MAXBITR			= fieldTagOf( 15, WIRE_VARINT);
+	/*private static final @FieldTag int DELIVERY		= fieldTagOf( 16, WIRE_LEN);*/
+	/*private static final @FieldTag int MAXSEQ			= fieldTagOf( 17, WIRE_VARINT);*/
+	/*private static final @FieldTag int PODDUR			= fieldTagOf( 18, WIRE_VARINT);*/
+	/*private static final @FieldTag int PODID			= fieldTagOf( 19, WIRE_VARINT);*/
+	/*private static final @FieldTag int PODSEQ			= fieldTagOf( 20, WIRE_VARINT);*/
+	/*private static final @FieldTag int SLOTINPOD		= fieldTagOf( 21, WIRE_VARINT);*/
+	/*private static final @FieldTag int MINCPMPERSEC	= fieldTagOf( 22, WIRE_FIXED64);*/
+	/*private static final @FieldTag int COMP			= fieldTagOf( 23, WIRE_LEN);*/
+	/*private static final @FieldTag int COMPTYPE		= fieldTagOf( 24, WIRE_LEN);*/
+	/*private static final @FieldTag int OVERLAYEXPDIR	= fieldTagOf( 25, WIRE_LEN);*/
+	/*private static final @FieldTag int EVENT			= fieldTagOf(500, WIRE_LEN);*/
 
 	// `VideoAdFormat`
-	/*private static final @Tag int VIDEO_PTYPE		= ofInt32(       40);*/
-	/*private static final @Tag int VIDEO_POS		= ofInt32(       41);*/
-	private static final @Tag int VIDEO_CLKTYPE		= ofInt32(       42);
-	private static final @Tag int VIDEO_W			= ofInt32(       43);
-	private static final @Tag int VIDEO_H			= ofInt32(       44);
-	private static final @Tag int VIDEO_UNIT		= ofInt32(       45);
-	/*private static final @Tag int VIDEO_LINEAR	= ofInt32(       46);*/
-	/*private static final @Tag int VIDEO_BOXING	= ofBool(        47);*/
-	/*private static final @Tag int VIDEO_EXPDIR	= ofPackedInt32( 48);*/
+	/*private static final @FieldTag int VIDEO_PTYPE	= fieldTagOf( 40, WIRE_VARINT);*/
+	/*private static final @FieldTag int VIDEO_POS		= fieldTagOf( 41, WIRE_VARINT);*/
+	private static final @FieldTag int VIDEO_CLKTYPE	= fieldTagOf( 42, WIRE_VARINT);
+	private static final @FieldTag int VIDEO_W			= fieldTagOf( 43, WIRE_VARINT);
+	private static final @FieldTag int VIDEO_H			= fieldTagOf( 44, WIRE_VARINT);
+	private static final @FieldTag int VIDEO_UNIT		= fieldTagOf( 45, WIRE_VARINT);
+	/*private static final @FieldTag int VIDEO_LINEAR	= fieldTagOf( 46, WIRE_VARINT);*/
+	/*private static final @FieldTag int VIDEO_BOXING	= fieldTagOf( 47, WIRE_VARINT);*/
+	/*private static final @FieldTag int VIDEO_EXPDIR	= fieldTagOf( 48, WIRE_LEN);*/
 
 	// `AudioAdFormat`
-	/*private static final @Tag int AUDIO_FEED		= ofInt32(       40);*/
-	/*private static final @Tag int AUDIO_NVOL		= ofInt32(       41);*/
+	/*private static final @FieldTag int AUDIO_FEED		= fieldTagOf( 40, WIRE_VARINT);*/
+	/*private static final @FieldTag int AUDIO_NVOL		= fieldTagOf( 41, WIRE_VARINT);*/
 
 	/**
 	 * Audio ad format.
@@ -316,34 +319,26 @@ public final class PlaybackAdFormat extends AdFormat {
 		return DEFAULT_VIDEO.toBuilder();
 	}
 
-	/**
-	 * Deserialize playback ad media format from Protobuf message.
-	 *
-	 * @param reader reader to deserialize from
-	 * @param base base format
-	 * @return resulting format
-	 * @throws RuntimeException coding is malformed
-	 */
-	private static PlaybackAdFormat ofProtobuf(ProtobufReader reader, PlaybackAdFormat base) {
+	// Deserialize playback ad media format from Protobuf message.
+	private static PlaybackAdFormat ofProtobuf(ProtobufDecoder dec, PlaybackAdFormat base) {
 		PlaybackAdFormat rv = new PlaybackAdFormat(base);
 		List<String> mime = new ArrayList<>();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == API) {
-				rv.setSupportedAdApiMask(reader.readWordBitmap(0));
+				rv.setSupportedAdApiMask(dec.decodePackedUint32Bitmap64());
 			} else if (tag == MIME) {
-				mime.add(reader.readString());
+				mime.add(dec.decodeString());
 			} else if (tag == SKIP) {
-				if (reader.readBool())
-					rv.activationBehaviorAndFlags |= FLAG_SKIPPABLE;
+				rv.activationBehaviorAndFlags |= dec.decodeBool() ? FLAG_SKIPPABLE : 0;
 			} else if (tag == MINBITR) {
-				rv.minBitRateKbps = reader.readInt32();
+				rv.minBitRateKbps = dec.decodeUint32();
 			} else if (tag == MAXBITR) {
-				rv.maxBitRateKbps = reader.readInt32();
+				rv.maxBitRateKbps = dec.decodeUint32();
 			} else if (rv.isVideoAd() && tag == VIDEO_CLKTYPE) {
-				int behavior = reader.readInt32();
+				int behavior = dec.decodeUint32();
 
 				if (behavior < 0 || behavior > AdComEnums.MAX_ACTIVATION_BEHAVIOR)
 					continue;
@@ -351,9 +346,11 @@ public final class PlaybackAdFormat extends AdFormat {
 					(rv.activationBehaviorAndFlags & FLAG_MASK) |
 					(behavior & ~FLAG_MASK);
 			} else if (rv.isVideoAd() && tag == VIDEO_W) {
-				rv.videoPlayerWidthDp = reader.readInt32();
+				rv.videoPlayerWidthDp = dec.decodeUint32();
 			} else if (rv.isVideoAd() && tag == VIDEO_H) {
-				rv.videoPlayerHeightDp = reader.readInt32();
+				rv.videoPlayerHeightDp = dec.decodeUint32();
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		rv.setSupportedMimes(mime);
@@ -363,25 +360,25 @@ public final class PlaybackAdFormat extends AdFormat {
 	/**
 	 * Deserialize {@linkplain #isVideoAd() video} ad media format from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return resulting video ad media format
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static PlaybackAdFormat ofVideoAdProtobuf(ProtobufReader reader) {
-		return ofProtobuf(reader, DEFAULT_VIDEO);
+	public static PlaybackAdFormat ofVideoAdProtobuf(ProtobufDecoder dec) {
+		return ofProtobuf(dec, DEFAULT_VIDEO);
 	}
 
 	/**
 	 * Deserialize {@linkplain #isAudioAd() audio} ad media format from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return resulting audio ad media format
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static PlaybackAdFormat ofAudioAdProtobuf(ProtobufReader reader) {
-		return ofProtobuf(reader, DEFAULT_AUDIO);
+	public static PlaybackAdFormat ofAudioAdProtobuf(ProtobufDecoder dec) {
+		return ofProtobuf(dec, DEFAULT_AUDIO);
 	}
 
 	private int minBitRateKbps;
@@ -524,22 +521,19 @@ public final class PlaybackAdFormat extends AdFormat {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		super.writeCommonProtobufFields(writer, MIME, API);
-		writer.writeBool(SKIP, this.skippable());
-		writer.writeWordBitmap(
-			CTYPE,
-			Integer.toUnsignedLong(0x01),
-			AdComEnums.PlaybackCreativeStructured
-		);
-		writer.writeInt32(MINBITR, this.minBitRateKbps);
-		writer.writeInt32(MAXBITR, this.maxBitRateKbps);
+	public void toProtobuf(ProtobufEncoder enc) {
+		super.encodeCommonProtobufFields(enc, MIME, API);
+
+		enc.encodeBoolField(SKIP, this.skippable())
+			.encodePackedUint32Bitmap32Field(CTYPE, 0x01, AdComEnums.PlaybackCreativeStructured)
+			.encodeUnsignedIntField(MINBITR, this.minBitRateKbps)
+			.encodeUnsignedIntField(MAXBITR, this.maxBitRateKbps);
 
 		if (this.isVideoAd()) {
-			writer.writeInt32(VIDEO_CLKTYPE, this.videoActivationBehavior());
-			writer.writeInt32(VIDEO_W, this.videoPlayerWidthDp);
-			writer.writeInt32(VIDEO_H, this.videoPlayerHeightDp);
-			writer.writeInt32(VIDEO_UNIT, AdComEnums.DimensionDp);
+			enc.encodeUnsignedIntField(VIDEO_CLKTYPE, this.videoActivationBehavior())
+				.encodeUnsignedIntField(VIDEO_W, this.videoPlayerWidthDp)
+				.encodeUnsignedIntField(VIDEO_H, this.videoPlayerHeightDp)
+				.encodeUnsignedIntField(VIDEO_UNIT, AdComEnums.DimensionDp);
 		}
 	}
 }

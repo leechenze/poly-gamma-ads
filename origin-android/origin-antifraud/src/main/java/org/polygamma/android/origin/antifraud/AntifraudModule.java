@@ -2,64 +2,40 @@
 
 package org.polygamma.android.origin.antifraud;
 
-import android.app.Activity;
+import static org.polygamma.android.origin.antifraud.CheckWire.ERROR_RECHECK_DELAY_SECONDS;
+import static org.polygamma.android.origin.antifraud.CheckWire.RPC_PROCEDURE_ID;
+
 import android.app.Application;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.os.Build;
-import android.os.Process;
-import android.provider.Settings;
+import android.util.ArrayMap;
 import android.util.Pair;
 
+import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
-import androidx.core.util.Supplier;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.polygamma.android.origin.adcom.AdCom;
+import org.polygamma.android.origin.adcom.context.Device;
 import org.polygamma.android.origin.core.DeviceModule;
 import org.polygamma.android.origin.core.Origin;
 import org.polygamma.android.origin.core.OriginModule;
 import org.polygamma.android.origin.core.OriginModuleEventBus;
 import org.polygamma.android.origin.core.OriginModuleEventCallback;
 import org.polygamma.android.origin.core.OriginModuleEventName;
+import org.polygamma.android.origin.core.RegulationsModule;
 import org.polygamma.android.origin.core.RpcModule;
-import org.polygamma.android.origin.protobuf.ProtobufField;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
-import org.polygamma.android.origin.util.AndroidSettings;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.util.Futures;
-import org.polygamma.android.origin.util.ListenableScheduledFuture;
 import org.polygamma.android.origin.util.Logger;
 import org.polygamma.android.origin.util.Preconditions;
-import org.polygamma.android.origin.util.Time;
+import org.polygamma.android.origin.util.Supplier;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Module tracking invalid traffic (IVT) status of underlying device.
@@ -91,54 +67,21 @@ public final class AntifraudModule extends OriginModule {
 	 */
 	public static final @OriginModuleEventName String STATUS_UPDATE_EVENT = "status-update";
 
-	/**
-	 * Constant used to represent {@code null} data.
-	 */
-	private static final Object NULL = new Object();
+	// Constant used to represent `null` data.
+	static final Object NULL = new Object();
 
-	/**
-	 * Maximum delay, in seconds, between two anti-fraud checks.
-	 */
-	private static final long MAX_RECHECK_DELAY_SECS = TimeUnit.DAYS.toSeconds(5);
+	// Minimum number of sensor samples we want to measure before invoking check procedure.
+	private static final int MIN_SENSOR_SAMPLE_COUNT = 15;
+	// Period at which we measure from samples, in microseconds. (350msec)
+	private static final int SENSOR_SAMPLE_PERIOD_MICROSECONDS = 350000;
 
-	/**
-	 * Minimum delay, in seconds, between two anti-fraud checks.
-	 */
-	private static final long MIN_RECHECK_DELAY_SECS = 1;
-
-	/**
-	 * Default delay, in seconds, to wait before issuing a recheck.
-	 */
-	private static final long RECHECK_DELAY_SECS = TimeUnit.MINUTES.toSeconds(15);
-
-	/**
-	 * Read boot identifier of device.
-	 *
-	 * @return boot id
-	 */
-	@WorkerThread
-	private static String readBootId() {
-		try {
-			File file = new File("/proc/sys/kernel/random/boot_id");
-			List<String> lines;
-
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				lines = java.nio.file.Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-			} else {
-				lines = new ArrayList<>(1);
-				try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-					String ln;
-
-					while ((ln = reader.readLine()) != null)
-						lines.add(ln);
-				}
-			}
-			return String.join("", lines);
-		} catch (Throwable err) {
-			Logger.debug(TAG, "failed to read boot id", err);
-			return "";
-		}
-	}
+	// Delta at which we should begin measuring from sensors *BEFORE* invoking check procedure.
+	@VisibleForTesting
+	static final long SENSORS_CHECK_DELTA_SECONDS =
+		Math.max(1L, TimeUnit.MICROSECONDS.toSeconds(
+			((long) SENSOR_SAMPLE_PERIOD_MICROSECONDS) *
+			MIN_SENSOR_SAMPLE_COUNT
+		));
 
 	/**
 	 * Construct a new module {@linkplain Provider provider}, optionally clearing settings.
@@ -153,11 +96,9 @@ public final class AntifraudModule extends OriginModule {
 			protected AntifraudModule load(Origin sdk, Context ctxt) {
 				AntifraudModule module = new AntifraudModule(sdk);
 
-				sdk.runInBackground(() -> {
-					if (clearSettings)
-						module.storeSettings(new CheckResult());
-					module.init(ctxt);
-				});
+				if (clearSettings)
+					module.storeSettings(ByteBuffer.allocate(0));
+				module.init(ctxt);
 				return module;
 			}
 		};
@@ -174,29 +115,64 @@ public final class AntifraudModule extends OriginModule {
 	}
 
 	private final DeviceModule deviceModule;
+	private final RegulationsModule regulationsModule;
 	private final RpcModule rpcModule;
 	private final OriginModuleEventBus statusUpdateEvent;
-	private final ConcurrentMap<String, Object> entropyData;
+
+	// Mapping of sensitive entropy name to entropy value.
+	private final ConcurrentMap<String, Object> sensitiveEntropies;
+
+	// Current check result.
 	@VisibleForTesting
-	CheckResult lastResult;
+	CheckSessionResult checkResult;
+
+	/*
+	 * Callback which adds module descriptors to `sensitiveEntropies`, this is `null` when we're
+	 * destroyed.
+	 */
 	@VisibleForTesting
-	@Nullable Pair<Cipher, SecretKeySpec> entropyMachineCrypto;
-	private @Nullable OriginModuleEventCallback onModuleEvent;
+	@Nullable OriginModuleEventCallback onModuleEvent;
+
+	/*
+	 * Reference to current activity, this is `null` if we've been destroyed or were unable to
+	 * attach activity lifecycle callbacks to owning application context.
+	 */
+	private @Nullable CurrentActivityReference currentActivityReference;
+
+	/*
+	 * Service we poll sensor entropies from. This is `null` when we don't need to capture sensor
+	 * measurements.
+	 */
+	@GuardedBy("this")
 	@VisibleForTesting
-	@Nullable ListenableFuture<CheckResult> checkFuture;
+	@Nullable SensorEntropyService sensors;
+
+	// Current check session. This is `null` when we don't have a check active.
+	@GuardedBy("this")
 	@VisibleForTesting
-	@Nullable ListenableScheduledFuture<?> callCheckFuture;
-	private @Nullable ActivityListener activityListener;
+	@Nullable CheckSession checkSession;
+
+	/*
+	 * Call check future. This will be `null` if no check is pending, `NULL` if check process is
+	 * executing inline, or `ListenableFuture` if check process is awaiting some I/O.
+	 */
+	@VisibleForTesting
+	@Nullable Object callCheckFuture;
+
+	// Module has been destroyed.
+	@GuardedBy("this")
 	@VisibleForTesting
 	boolean destroyed;
 
 	private AntifraudModule(Origin sdk) {
 		super(NAME, sdk);
 		this.deviceModule = sdk.loadModule(DeviceModule.class);
+		this.regulationsModule = sdk.loadModule(RegulationsModule.class);
 		this.rpcModule = sdk.loadModule(RpcModule.class);
 		this.statusUpdateEvent = super.registerEvent(STATUS_UPDATE_EVENT, false);
-		this.entropyData = new ConcurrentHashMap<>();
-		this.lastResult = new CheckResult();
+		this.sensitiveEntropies = new ConcurrentHashMap<>();
+		this.checkResult =
+			new CheckSessionResult(0, new AntifraudStatus(null, CheckWire.IvtRatingUnknown, 0));
 	}
 
 	/**
@@ -206,326 +182,322 @@ public final class AntifraudModule extends OriginModule {
 	 * @since 1.1
 	 */
 	public AntifraudStatus status() {
-		return this.lastResult.status;
+		return this.checkResult.status;
 	}
 
 	/**
-	 * Add custom entropy data.
+	 * Add custom sensitive entropy data.
 	 * <p>If {@code val} is a {@linkplain Supplier supplier}, it is invoked to retrieve the actual
 	 * entropy data; otherwise, {@code val} is used as-is to generate entropy.
 	 *
-	 * @param name datapoint name
-	 * @param val datapoint value, possibly {@code null}
+	 * @param name data point name
+	 * @param val data point value, possibly {@code null}
 	 * @since 1.1
 	 */
 	public void addEntropyData(String name, @Nullable Object val) {
-		this.entropyData.put(name, val);
+		this.sensitiveEntropies.put(name, Preconditions.checkNotNullElse(val, NULL));
 	}
 
-	/**
-	 * Current app activity, if any.
-	 *
-	 * @return app activity
+	/*
+	 * Update our check result to `curr`. If `curr.status` is not equal to current anti-fraud
+	 * status, `curr.status` is published. In all cases, `curr` is serialized in settings.
+	 * If next check delay is greater than `SENSORS_CHECK_DELTA_SECONDS*2`, sensor measurement
+	 * service is paused. In all cases, `scheduleCheckCall()` is invoked.
 	 */
-	@Nullable Activity currentActivity() {
-		ActivityListener listener = this.activityListener;
+	private void updateCheckResult(CheckSessionResult curr) {
+		CheckSessionResult prev = this.checkResult;
+		ProtobufEncoder enc = ProtobufEncoder.of();
 
-		return listener == null ? null : listener.current();
+		this.checkResult = curr;
+		curr.toProtobuf(enc);
+		super.storeSettings(enc.asBuffer());
+		synchronized (this) {
+			if (this.destroyed)
+				return;
+			// Inline process invoking this implies inline execution is complete.
+			if (this.callCheckFuture == NULL)
+				this.callCheckFuture = null;
+			if (!curr.status.equals(prev.status))
+				this.statusUpdateEvent.submit(curr.status);
+			if (
+				curr.nextCheckDelaySeconds() >= (SENSORS_CHECK_DELTA_SECONDS * 2) &&
+				this.sensors != null
+			) {
+				this.sensors.pause();
+			}
+		}
+		this.scheduleCheckCall();
 	}
 
-	/**
-	 * Decrypt machine entropy operations of a {@linkplain CheckResult result}, if required.
-	 *
-	 * @param res result to decrypt machine entropy operations of
-	 * @return result with decrypted machine operations or {@code res} if decryption was not
-	 * required
+	/*
+	 * Handle completion of check call. This will push the check session forward, initiate any
+	 * subsequent invocations as needed, and if session is complete, update our check result.
 	 */
-	private CheckResult decryptMachineEntropyOperations(CheckResult res) {
-		if (
-			this.entropyMachineCrypto == null ||
-			res.entropyMachineOperations == null ||
-			res.entropyMachineOperations.length == 0
-		) {
-			return res;
+	private void onCheckCallResult() {
+		CheckSession sess;
+		Object fut;
+
+		synchronized (this) {
+			sess = this.checkSession;
+			fut = this.callCheckFuture;
+			this.checkSession = null;
+			if (sess == null || !(fut instanceof ListenableFuture<?>) || this.destroyed)
+				return;
+			this.callCheckFuture = NULL;
 		}
 
-		Cipher cipher = this.entropyMachineCrypto.first;
-		SecretKeySpec key = this.entropyMachineCrypto.second;
-		byte[] entMachineOps = null;
-
 		try {
-			cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(Arrays.copyOf(
-				res.status.digest().getBytes(StandardCharsets.UTF_8),
-				16
-			)));
-			entMachineOps = cipher.doFinal(res.entropyMachineOperations);
-		} catch (
-			BadPaddingException |
-			IllegalBlockSizeException |
-			InvalidAlgorithmParameterException |
-			InvalidKeyException cause
-		) {
-			Logger.info(TAG, "failed to decrypt machine entropy operations", cause);
-		}
-		return new CheckResult(res.recheckTimestampSeconds,res.status, entMachineOps);
-	}
+			Object res = ((ListenableFuture<?>) fut).get();
 
-	/**
-	 * Handle IVT check result.
-	 */
-	private void onCheckComplete() {
-		long now = Time.nowRealtimeSeconds();
-		ListenableFuture<CheckResult> fut = this.checkFuture;
-		CheckResult res;
-
-		try {
-			res = fut == null ? null : fut.get();
 			if (res == null) {
-				Logger.debug(TAG, "previous status is consistent");
-				res = new CheckResult(now + RECHECK_DELAY_SECS, this.lastResult.status, null);
+				/*
+				 * `sess::apply()` doesn't get called when service returns 204, manually let
+				 * session know we received empty response
+				 */
+				sess.apply(null);
 			} else {
-				res = this.decryptMachineEntropyOperations(res);
-				if (!res.status.equals(this.lastResult.status)) {
-					this.statusUpdateEvent.submit(res.status);
-					Logger.info(TAG, "updated status");
+				/*
+				 * `sess::apply()` returns itself, so when RPC module decodes the remote response,
+				 * the future should've completed with `CheckSession` if this is the correct
+				 * future.
+				 */
+				Preconditions.checkState(res instanceof CheckSession);
+			}
+
+			ByteBuffer args = sess.nextCheckArguments();
+
+			if (sess.hasEnded()) {
+				this.updateCheckResult(sess.result());
+				if (args != null)
+					this.rpcModule.callVoidWithBytes(RPC_PROCEDURE_ID, args);
+				Logger.debug(TAG, "check session ended with %s", this.checkResult);
+			} else {
+				synchronized (this) {
+					this.doCallCheck(sess, args);
 				}
 			}
-		} catch (Exception err) {
-			Logger.info(TAG, "check call failed, rescheduling", err);
-			res = this.lastResult.withRecheckTimestampSeconds(now + RECHECK_DELAY_SECS);
-		}
-
-		synchronized (this) {
-			if (this.checkFuture != fut)
-				return;
-			this.checkFuture = null;
-		}
-
-		long delay = res.recheckDelaySeconds();
-
-		if (Long.compareUnsigned(delay, MIN_RECHECK_DELAY_SECS) < 0)
-			res = res.withRecheckTimestampSeconds(now + MIN_RECHECK_DELAY_SECS);
-		else if (Long.compareUnsigned(delay, MAX_RECHECK_DELAY_SECS) > 0)
-			res = res.withRecheckTimestampSeconds(now + MAX_RECHECK_DELAY_SECS);
-		this.lastResult = res;
-		super.storeSettings(res);
-		this.scheduleCheckCall(false);
-		Logger.debug(TAG, "antifraud check result: %s", res);
-	}
-
-	private void prepareCheckArguments(ProtobufWriter writer) {
-		Context ctxt = super.tryContext();
-		ContentResolver contRes = ctxt == null ? null : ctxt.getContentResolver();
-
-		writer.writeLen(CheckArgumentTags.APP, super.sdk().app());
-		writer.writeLen(CheckArgumentTags.DEVICE, this.deviceModule.device());
-		writer.writeString(CheckArgumentTags.ADCOMVER, AdCom.DOMAIN_VERSION);
-		writer.writeString(CheckArgumentTags.DIGEST, this.lastResult.status.digest());
-		writer.writeFixed64(CheckArgumentTags.TIMESTAMPSEC, Time.nowUtcSeconds());
-		writer.writeString(CheckArgumentTags.BOOTID, readBootId());
-		writer.writeInt32(CheckArgumentTags.PID, Process.myPid());
-		writer.writeInt32(CheckArgumentTags.UID, Process.myUid());
-		writer.writeString(CheckArgumentTags.BUILDTAGS, Build.TAGS);
-		writer.writeString(CheckArgumentTags.BUILDFP, Build.FINGERPRINT);
-		writer.writeString(CheckArgumentTags.BUILDPROD, Build.PRODUCT);
-		writer.writeString(CheckArgumentTags.BUILDHW, Build.HARDWARE);
-		writer.writeString(CheckArgumentTags.BUILDDISP, Build.DISPLAY);
-		writer.writeString(CheckArgumentTags.BUILDRADIO, Build.getRadioVersion());
-
-		if (this.entropyMachineCrypto != null) {
-			writer.writeInt32(
-				CheckArgumentTags.ENTMACHINEENC,
-				CheckArgumentTags.ENCRYPTION_AES
+		} catch (Exception cause) {
+			Logger.info(TAG, "check call failed", cause);
+			this.updateCheckResult(
+				this.checkResult.withNextCheckDelaySeconds(ERROR_RECHECK_DELAY_SECONDS)
 			);
-			writer.writeBytes(
-				CheckArgumentTags.ENTMACHINEKEY,
-				this.entropyMachineCrypto.second.getEncoded()
-			);
-		}
-		if (contRes != null) {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-				writer.writeInt32(
-					CheckArgumentTags.BOOTCNT,
-					AndroidSettings.getGlobalInt(contRes, Settings.Global.BOOT_COUNT)
-				);
-			}
-			writer.writeBool(CheckArgumentTags.ADB, AndroidSettings.getGlobalBoolean(
-				contRes,
-				Settings.Global.ADB_ENABLED
-			));
-			writer.writeBool(CheckArgumentTags.AIRMODE, AndroidSettings.getGlobalBoolean(
-				contRes,
-				Settings.Global.AIRPLANE_MODE_ON
-			));
-			writer.writeBool(CheckArgumentTags.AUTOTZ, AndroidSettings.getGlobalBoolean(
-				contRes,
-				Settings.Global.AUTO_TIME_ZONE
-			));
-			writer.writeBool(CheckArgumentTags.ACCESSIB, AndroidSettings.getSecureBoolean(
-				contRes,
-				Settings.Secure.ACCESSIBILITY_ENABLED
-			));
-		}
-
-		long cookie = writer.beginWriteLen(CheckArgumentTags.ENTROPY);
-
-		for (Map.Entry<String, Object> ent : this.entropyData.entrySet()) {
-			writer.writeString(
-				ProtobufField.ofString(1),
-				ent.getKey().isEmpty() ? "XW" : ent.getKey()
-			);
-			writer.writeBytes(
-				ProtobufField.ofBytes(2),
-				Entropy.ofValue(ent.getValue() == NULL ? null : ent.getValue())
-			);
-		}
-
-		if (this.lastResult.entropyMachineOperations != null) {
-			writer.writeString(ProtobufField.ofString(1), "machine");
-			writer.writeBytes(ProtobufField.ofBytes(2), Entropy.ofValue(EntropyMachine.generate(
-				this,
-				ByteBuffer.wrap(this.lastResult.entropyMachineOperations)
-			)));
-		}
-		writer.endWriteLen(cookie);
-	}
-
-	/**
-	 * Call IVT check procedure.
-	 */
-	private void callCheck() {
-		this.callCheckFuture = null;
-
-		if (this.deviceModule.device() == null || (
-			this.entropyData.isEmpty() &&
-			this.lastResult.entropyMachineOperations == null
-		)) {
-			Logger.debug(TAG, "environment not ready for check, rescheduling");
-			this.scheduleCheckCall(true);
-		} else {
-			this.checkFuture = this.rpcModule.call(
-				"ivt",
-				"check",
-				this::prepareCheckArguments,
-				CheckResult::ofProtobuf
-			);
-			Futures.addDirectListener(this.checkFuture, this::onCheckComplete);
-			Logger.debug(TAG, "check called");
 		}
 	}
 
-	/**
-	 * Schedule next check call.
-	 *
-	 * @param imm {@code true} if, and only if, call should be scheduled immediately
-	 */
-	private void scheduleCheckCall(boolean imm) {
-		long delay =
-			imm ? MIN_RECHECK_DELAY_SECS :
-			Math.max(MIN_RECHECK_DELAY_SECS, Math.min(
-				MAX_RECHECK_DELAY_SECS,
-				this.lastResult.recheckDelaySeconds()
-			));
+	// Invoke remote check procedure with session `sess`.
+	@GuardedBy("this")
+	private void doCallCheck(CheckSession sess, @Nullable ByteBuffer args) {
+		Preconditions.checkState(!this.destroyed && this.checkSession == null);
 
-		synchronized (this) {
-			if (this.destroyed || this.callCheckFuture != null || this.checkFuture != null)
-				return;
+		ListenableFuture<?> fut =
+			args == null ? this.rpcModule.callWithoutArguments(RPC_PROCEDURE_ID, sess) :
+			this.rpcModule.callWithBytes(RPC_PROCEDURE_ID, args, sess);
 
-			if (this.lastResult.recheckTimestampSeconds == 0L) {
-				this.lastResult = this.lastResult
-					.withRecheckTimestampSeconds(Time.nowRealtimeSeconds());
-			}
-			//noinspection resource
-			this.callCheckFuture =
-				super.sdk().backgroundExecutor()
-					.schedule(this::callCheck, delay, TimeUnit.SECONDS);
-			Logger.debug(TAG, "scheduled check call in %ss", delay);
-		}
+		this.checkSession = sess;
+		this.callCheckFuture = fut;
+		fut.addListener(this::onCheckCallResult, super.sdk().backgroundExecutor());
+		Logger.debug(TAG, "check called %s arguments", args == null ? "without" : "with");
 	}
 
-	/**
-	 * Initialize module.
-	 *
-	 * @param ctxt context to initialize with
-	 */
+	// Invoke remote check procedure if possible.
 	@WorkerThread
-	private void init(Context ctxt) {
-		try {
-			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-			KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+	private void callCheck() {
+		Device dev = this.deviceModule.device();
 
-			keyGen.init(256);
-			this.entropyMachineCrypto = new Pair<>(cipher, new SecretKeySpec(
-				keyGen.generateKey().getEncoded(),
-				"AES"
-			));
-			Logger.debug(TAG, "Using AES encrypted machine entropy operations");
-		} catch (NoSuchPaddingException | NoSuchAlgorithmException cause) {
-			Logger.info(TAG, "AES not supported", cause);
+		synchronized (this) {
+			if (this.destroyed) {
+				// we're destroyed, clear out device so we punt
+				dev = null;
+			} else {
+				this.callCheckFuture = NULL;
+			}
+		}
+		if (dev == null) {
+			this.scheduleCheckCall();
+			return;
 		}
 
+		ArrayMap<String, Object> senEnt = new ArrayMap<>(this.sensitiveEntropies.size());
+
+		senEnt.putAll(this.sensitiveEntropies);
+		for (int i = 0; i < senEnt.size(); i++) {
+			if (senEnt.valueAt(i) == NULL)
+				senEnt.setValueAt(i, null);
+		}
+
+		CheckSession sess;
+		ByteBuffer args;
+
+		try {
+			sess = CheckSession.open(
+				super.sdk(),
+				this.currentActivityReference,
+				this.checkResult,
+				this.regulationsModule.regs(), dev, this.sensors,
+				senEnt
+			);
+			args = sess.nextCheckArguments();
+		} catch (Exception cause) {
+			Logger.warn(TAG, "failed to open check session", cause);
+			this.updateCheckResult(
+				this.checkResult.withNextCheckDelaySeconds(ERROR_RECHECK_DELAY_SECONDS)
+			);
+			return;
+		}
+		Logger.debug(TAG, "check session opened, invoking check RPC");
+		try {
+			synchronized (this) {
+				this.doCallCheck(sess, args);
+			}
+		} catch (Exception cause) {
+			Logger.debug(TAG, "failed to call check", cause);
+			this.updateCheckResult(
+				this.checkResult
+					.withNextCheckDelaySeconds(ERROR_RECHECK_DELAY_SECONDS)
+			);
+		}
+	}
+
+	/*
+	 * Start measuring entropy from sensors, creating service if one does not already exist, and
+	 * schedule check call after `SENSORS_CHECK_DELTA_SECONDS`.
+	 */
+	private void startSensorsAndScheduleCallCheck() {
 		synchronized (this) {
 			if (this.destroyed)
 				return;
 
-			CheckResult lastRes = super.loadSettings(CheckResult::ofProtobuf);
+			SensorEntropyService svc = this.sensors;
 
-			if (lastRes != null) {
-				this.lastResult =
-					lastRes.recheckDelaySeconds() <= MAX_RECHECK_DELAY_SECS ? lastRes :
-					lastRes.withRecheckTimestampSeconds(Time.nowRealtimeSeconds());
-			}
-			this.onModuleEvent = (mod, name, data, _when) -> {
-				if (mod != this && mod != this.deviceModule) {
-					this.entropyData.put(
-						String.format(Locale.ROOT, "%s/%s", mod.name(), name),
-						Preconditions.checkNotNullElse(data, NULL)
+			try {
+				if (svc == null) {
+					svc = SensorEntropyService.create(
+						super.sdk(),
+						SENSOR_SAMPLE_PERIOD_MICROSECONDS
 					);
+					this.sensors = svc;
 				}
-			};
-			super.sdk().registerModuleEventCallback(this.onModuleEvent, null);
-		}
-		super.sdk().runInForeground(() -> {
-			synchronized (this) {
-				if (!this.destroyed) {
-					this.activityListener = new ActivityListener();
-					((Application) ctxt).registerActivityLifecycleCallbacks(this.activityListener);
-				}
+				svc.unpause();
+			} catch (Exception cause) {
+				Logger.debug(TAG, "failed to start sensor entropy service", cause);
+			} finally {
+				Logger.debug(
+					TAG,
+					"started sensor entropy service, check call scheduled delay=%ds",
+					SENSORS_CHECK_DELTA_SECONDS
+				);
+				//noinspection resource
+				this.callCheckFuture = super.sdk()
+					.backgroundIoExecutor()
+					.schedule(this::callCheck, SENSORS_CHECK_DELTA_SECONDS, TimeUnit.SECONDS);
 			}
-		});
-		this.scheduleCheckCall(false);
+		}
+	}
+
+	// Schedule check call invocation.
+	private void scheduleCheckCall() {
+		synchronized (this) {
+			if (this.destroyed || this.callCheckFuture != null)
+				return;
+
+			long delay = this.checkResult.nextCheckDelaySeconds();
+			SensorEntropyService sensors = this.sensors;
+
+			/*
+			 * If we haven't created the sensor entropy service, or if it's paused, we need to
+			 * adjust the delay such that we create and start the service, collect enough sensor
+			 * measurements, then make the check call.
+			 */
+			if (sensors == null || sensors.isPaused()) {
+				Logger.debug(TAG, "insufficient sensor entropy to schedule check call");
+				delay -= SENSORS_CHECK_DELTA_SECONDS;
+				if (delay < 0) {
+					// Check delay is too soon, so just start it immediately.
+					this.startSensorsAndScheduleCallCheck();
+				} else {
+					//noinspection resource
+					this.callCheckFuture = super.sdk()
+						.backgroundExecutor()
+						.schedule(this::startSensorsAndScheduleCallCheck, delay, TimeUnit.SECONDS);
+				}
+			} else {
+				Logger.debug(TAG, "check call scheduled, delay=%ds", delay);
+				//noinspection resource
+				this.callCheckFuture = super.sdk()
+					.backgroundIoExecutor()
+					.schedule(this::callCheck, Math.max(delay, 1L), TimeUnit.SECONDS);
+			}
+		}
+	}
+
+	// Initialize module.
+	private void init(Context ctxt) {
+		CheckSessionResult lastRes = super.loadSettings(CheckSessionResult::ofProtobuf);
+
+		if (lastRes != null) {
+			this.checkResult =
+				Long.compareUnsigned(
+					lastRes.nextCheckDelaySeconds(),
+					CheckWire.MAX_RECHECK_DELAY_SECONDS
+				) <= 0 ? lastRes :
+				new CheckSessionResult(0, lastRes.status);
+		}
+
+		this.onModuleEvent = (mod, name, data, _when) -> {
+			if (mod != this && mod != this.deviceModule && mod != this.regulationsModule) {
+				data = Preconditions.checkNotNullElse(data, NULL);
+				this.sensitiveEntropies.put(mod.name() + '/' + name, data);
+			}
+		};
+		super.sdk().registerModuleEventCallback(this.onModuleEvent, null);
+
+		try {
+			CurrentActivityReference actRef = new CurrentActivityReference();
+
+			((Application) ctxt).registerActivityLifecycleCallbacks(actRef);
+			this.currentActivityReference = actRef;
+		} catch (Throwable cause) {
+			Logger.debug(TAG, "failed to register activity lifecycle callbacks", cause);
+		}
+
+		this.scheduleCheckCall();
 	}
 
 	@Override
 	protected void destroy() {
-		ArrayList<Future<?>> futs = new ArrayList<>(2);
+		Object callCheckFut;
 
 		synchronized (this) {
 			if (this.destroyed)
 				return;
-
-			futs.add(this.checkFuture);
-			futs.add(this.callCheckFuture);
-			this.checkFuture = null;
+			callCheckFut = this.callCheckFuture;
 			this.callCheckFuture = null;
 			this.destroyed = true;
 		}
 
-		for (Future<?> fut : futs)
-			Futures.cancel(fut, false);
+		if (callCheckFut instanceof ListenableFuture<?>) {
+			Futures.cancel((ListenableFuture<?>) callCheckFut, false);
+			Futures.awaitUnchecked((ListenableFuture<?>) callCheckFut);
+		}
+
+		this.checkSession = null;
+		if (this.sensors != null) {
+			this.sensors.shutdown();
+			this.sensors = null;
+		}
 
 		if (this.onModuleEvent != null) {
 			super.sdk().unregisterModuleEventCallback(this.onModuleEvent, null);
 			this.onModuleEvent = null;
 		}
 
-		if (this.activityListener != null) {
+		if (this.currentActivityReference != null) {
 			super.acceptContext(
 				ctxt ->
 					((Application) ctxt)
-						.unregisterActivityLifecycleCallbacks(this.activityListener)
+						.unregisterActivityLifecycleCallbacks(this.currentActivityReference)
 			);
-			this.activityListener = null;
+			this.currentActivityReference = null;
 		}
 	}
 }

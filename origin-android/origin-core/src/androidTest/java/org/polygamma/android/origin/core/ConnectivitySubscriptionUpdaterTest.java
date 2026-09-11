@@ -22,7 +22,6 @@ import android.telephony.TelephonyManager;
 import android.util.Pair;
 
 import androidx.annotation.RequiresApi;
-import androidx.core.os.ExecutorCompat;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.rule.GrantPermissionRule;

@@ -2,24 +2,20 @@
 
 package org.polygamma.android.origin;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.util.Pair;
 
 import androidx.annotation.ReturnThis;
-import androidx.core.util.Function;
 
 import org.polygamma.android.origin.core.IfaClient;
-import org.polygamma.android.origin.util.AndroidContexts;
 import org.polygamma.android.origin.util.AndroidSettings;
+import org.polygamma.android.origin.util.Function;
 import org.polygamma.android.origin.util.Preconditions;
-import org.polygamma.android.origin.util.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Origin {@linkplain Origin SDK} options.
@@ -150,6 +146,7 @@ public final class OriginOptions {
 	 * @since 1.2
 	 */
 	@ReturnThis
+	@SuppressWarnings("JavadocDeclaration")
 	public OriginOptions addStaticDeviceId(String type, String id, boolean lmt) {
 		this.deviceIdClients.add(0, IfaClient.ofStatic(type, id));
 		return this;
@@ -186,8 +183,6 @@ public final class OriginOptions {
 	 */
 	@Deprecated
 	@ReturnThis
-	@SuppressLint({ "HardwareIds", "MissingPermission" })
-	@SuppressWarnings("deprecation")
 	public OriginOptions addTelephonyDeviceId(Context ctxt) {
 		return this;
 	}

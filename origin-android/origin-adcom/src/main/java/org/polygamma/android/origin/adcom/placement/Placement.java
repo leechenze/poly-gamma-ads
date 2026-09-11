@@ -2,13 +2,16 @@
 
 package org.polygamma.android.origin.adcom.placement;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import androidx.annotation.ReturnThis;
 
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.Preconditions;
 
 /**
@@ -19,18 +22,18 @@ import org.polygamma.android.origin.util.Preconditions;
  */
 public final class Placement implements ProtobufSerializable {
 
-	private static final @Tag int TAGID				= ofString(  1);
-	/*private static final @Tag int SSAI			= ofInt32(   2);*/
-	/*private static final @Tag int SDK				= ofString(  3);*/
-	/*private static final @Tag int SDKVER			= ofString(  4);*/
-	/*private static final @Tag int REWARD			= ofBool(    5);*/
-	/*private static final @Tag int WLANG			= ofString(  6);*/
-	private static final @Tag int SECURE			= ofBool(    7);
-	private static final @Tag int ADMX				= ofBool(    8);
-	private static final @Tag int CURLX				= ofBool(    9);
-	private static final @Tag int DISPLAY			= ofMessage(10);
-	private static final @Tag int VIDEO				= ofMessage(11);
-	private static final @Tag int AUDIO				= ofMessage( 12);
+	private static final @FieldTag int TAGID			= fieldTagOf( 1, WIRE_LEN);
+	/*private static final @FieldTag int SSAI			= fieldTagOf( 2, WIRE_VARINT);*/
+	/*private static final @FieldTag int SDK			= fieldTagOf( 3, WIRE_LEN);*/
+	/*private static final @FieldTag int SDKVER			= fieldTagOf( 4, WIRE_LEN);*/
+	/*private static final @FieldTag int REWARD			= fieldTagOf( 5, WIRE_VARINT);*/
+	/*private static final @FieldTag int WLANG			= fieldTagOf( 6, WIRE_LEN);*/
+	private static final @FieldTag int SECURE			= fieldTagOf( 7, WIRE_VARINT);
+	private static final @FieldTag int ADMX				= fieldTagOf( 8, WIRE_VARINT);
+	private static final @FieldTag int CURLX			= fieldTagOf( 9, WIRE_VARINT);
+	private static final @FieldTag int DISPLAY			= fieldTagOf(10, WIRE_LEN);
+	private static final @FieldTag int VIDEO			= fieldTagOf(11, WIRE_LEN);
+	private static final @FieldTag int AUDIO			= fieldTagOf(12, WIRE_LEN);
 
 	private static final int FLAG_SECURE	= 0x01;
 	private static final int FLAG_ADMX		= 0x02;
@@ -203,31 +206,33 @@ public final class Placement implements ProtobufSerializable {
 	/**
 	 * Deserialize placement from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized placement
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static Placement ofProtobuf(ProtobufReader reader) {
+	public static Placement ofProtobuf(ProtobufDecoder dec) {
 		Placement plcmt = new Placement();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == TAGID)
-				plcmt.id = reader.readString();
-			else if (tag == SECURE && reader.readBool())
-				plcmt.flags |= FLAG_SECURE;
-			else if (tag == ADMX && reader.readBool())
-				plcmt.flags |= FLAG_ADMX;
-			else if (tag == CURLX && reader.readBool())
-				plcmt.flags |= FLAG_CURLX;
+				plcmt.id = dec.decodeString();
+			else if (tag == SECURE)
+				plcmt.flags |= dec.decodeBool() ? FLAG_SECURE : 0;
+			else if (tag == ADMX)
+				plcmt.flags |= dec.decodeBool() ? FLAG_ADMX : 0;
+			else if (tag == CURLX)
+				plcmt.flags |= dec.decodeBool() ? FLAG_CURLX : 0;
 			else if (tag == DISPLAY)
-				plcmt.display = reader.readLen(DisplayAdFormat::ofProtobuf);
+				plcmt.display = dec.decodeLen(DisplayAdFormat::ofProtobuf);
 			else if (tag == VIDEO)
-				plcmt.video = reader.readLen(PlaybackAdFormat::ofVideoAdProtobuf);
+				plcmt.video = dec.decodeLen(PlaybackAdFormat::ofVideoAdProtobuf);
 			else if (tag == AUDIO)
-				plcmt.audio = reader.readLen(PlaybackAdFormat::ofAudioAdProtobuf);
+				plcmt.audio = dec.decodeLen(PlaybackAdFormat::ofAudioAdProtobuf);
+			else
+				dec.skipFieldValue(tag);
 		}
 		return plcmt;
 	}
@@ -356,13 +361,13 @@ public final class Placement implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(TAGID, this.id);
-		writer.writeBool(SECURE, this.secure());
-		writer.writeBool(ADMX, this.supportsInlineMarkup());
-		writer.writeBool(CURLX, this.supportsMarkupUrl());
-		writer.writeLen(DISPLAY, this.display);
-		writer.writeLen(VIDEO, this.video);
-		writer.writeLen(AUDIO, this.audio);
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(TAGID, this.id)
+			.encodeBoolField(SECURE, this.secure())
+			.encodeBoolField(ADMX, this.supportsInlineMarkup())
+			.encodeBoolField(CURLX, this.supportsMarkupUrl())
+			.encodeMessageField(DISPLAY, this.display)
+			.encodeMessageField(VIDEO, this.video)
+			.encodeMessageField(AUDIO, this.audio);
 	}
 }

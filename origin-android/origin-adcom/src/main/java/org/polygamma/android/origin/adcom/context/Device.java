@@ -2,7 +2,10 @@
 
 package org.polygamma.android.origin.adcom.context;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_FIXED32;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
 import android.util.Pair;
@@ -14,9 +17,10 @@ import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.ConnectionType;
 import org.polygamma.android.origin.adcom.enums.DeviceType;
 import org.polygamma.android.origin.adcom.enums.OsCode;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.protobuf.ProtobufSerializable;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
 import org.polygamma.android.origin.util.CollectionsCompat;
 
 import java.util.ArrayList;
@@ -32,39 +36,39 @@ import java.util.List;
  */
 public final class Device implements ProtobufSerializable {
 
-	private static final @Tag int TYPE			= ofInt32(       1);
-	private static final @Tag int UA			= ofString(      2);
-	/*private static final @Tag int SUA			= ofMessage(     3);*/
-	/*private static final @Tag int IFA			= ofString(      4);*/
-	/*private static final @Tag int DNT			= ofBool(        5);*/
-	private static final @Tag int LMT			= ofBool(        6);
-	private static final @Tag int MAKE			= ofString(      7);
-	private static final @Tag int MODEL			= ofString(      8);
-	private static final @Tag int OS			= ofInt32(       9);
-	private static final @Tag int OSV			= ofString(     10);
-	private static final @Tag int HWV			= ofString(     11);
-	private static final @Tag int H				= ofInt32(      12);
-	private static final @Tag int W				= ofInt32(      13);
-	private static final @Tag int PPI			= ofInt32(      14);
-	private static final @Tag int PXRATIO		= ofFloat(      15);
-	/*private static final @Tag int JS			= ofBool(       16);*/
-	/*private static final @Tag int LANG		= ofString(     17);*/
-	private static final @Tag int LANGB			= ofString(     18);
-	/*private static final @Tag int IP			= ofString(     19);*/
-	/*private static final @Tag int IPV6		= ofString(     20);*/
-	/*private static final @Tag int XFF			= ofString(     21);*/
-	/*private static final @Tag int IPTR		= ofBool(       22);*/
-	private static final @Tag int CARRIER		= ofString(     23);
-	private static final @Tag int MCCMNC		= ofString(     24);
-	private static final @Tag int MCCMNCSIM		= ofString(     25);
-	private static final @Tag int CONTYPE		= ofInt32(      26);
-	/*private static final @Tag int GEOFETCH	= ofBool(       27);*/
-	private static final @Tag int GEO			= ofMessage(    28);
-	private static final @Tag int ALLIFA		= ofStringPair(500);
-	private static final @Tag int EXTRALANGB	= ofString(    501);
-	private static final @Tag int NIGHTMODE		= ofBool(      502);
-	private static final @Tag int LANDSCAPE		= ofBool(      503);
-	private static final @Tag int JSSANDBOX		= ofBool(      504);
+	private static final @FieldTag int TYPE			= fieldTagOf(  1, WIRE_VARINT);
+	private static final @FieldTag int UA			= fieldTagOf(  2, WIRE_LEN);
+	/*private static final @FieldTag int SUA		= fieldTagOf(  3, WIRE_LEN);*/
+	/*private static final @FieldTag int IFA		= fieldTagOf(  4, WIRE_LEN);*/
+	/*private static final @FieldTag int DNT		= fieldTagOf(  5, WIRE_VARINT);*/
+	private static final @FieldTag int LMT			= fieldTagOf(  6, WIRE_VARINT);
+	private static final @FieldTag int MAKE			= fieldTagOf(  7, WIRE_LEN);
+	private static final @FieldTag int MODEL		= fieldTagOf(  8, WIRE_LEN);
+	private static final @FieldTag int OS			= fieldTagOf(  9, WIRE_VARINT);
+	private static final @FieldTag int OSV			= fieldTagOf( 10, WIRE_LEN);
+	private static final @FieldTag int HWV			= fieldTagOf( 11, WIRE_LEN);
+	private static final @FieldTag int H			= fieldTagOf( 12, WIRE_VARINT);
+	private static final @FieldTag int W			= fieldTagOf( 13, WIRE_VARINT);
+	private static final @FieldTag int PPI			= fieldTagOf( 14, WIRE_VARINT);
+	private static final @FieldTag int PXRATIO		= fieldTagOf( 15, WIRE_FIXED32);
+	/*private static final @FieldTag int JS			= fieldTagOf( 16, WIRE_VARINT);*/
+	/*private static final @FieldTag int LANG		= fieldTagOf( 17, WIRE_LEN);*/
+	private static final @FieldTag int LANGB		= fieldTagOf( 18, WIRE_LEN);
+	/*private static final @FieldTag int IP			= fieldTagOf( 19, WIRE_LEN);*/
+	/*private static final @FieldTag int IPV6		= fieldTagOf( 20, WIRE_LEN);*/
+	/*private static final @FieldTag int XFF		= fieldTagOf( 21, WIRE_LEN);*/
+	/*private static final @FieldTag int IPTR		= fieldTagOf( 22, WIRE_VARINT);*/
+	private static final @FieldTag int CARRIER		= fieldTagOf( 23, WIRE_LEN);
+	private static final @FieldTag int MCCMNC		= fieldTagOf( 24, WIRE_LEN);
+	private static final @FieldTag int MCCMNCSIM	= fieldTagOf( 25, WIRE_LEN);
+	private static final @FieldTag int CONTYPE		= fieldTagOf( 26, WIRE_VARINT);
+	/*private static final @FieldTag int GEOFETCH	= fieldTagOf( 27, WIRE_VARINT);*/
+	private static final @FieldTag int GEO			= fieldTagOf( 28, WIRE_LEN);
+	private static final @FieldTag int ALLIFA		= fieldTagOf(500, WIRE_LEN);
+	private static final @FieldTag int EXTRALANGB	= fieldTagOf( 501, WIRE_LEN);
+	private static final @FieldTag int NIGHTMODE	= fieldTagOf( 502, WIRE_VARINT);
+	private static final @FieldTag int LANDSCAPE	= fieldTagOf( 503, WIRE_VARINT);
+	private static final @FieldTag int JSSANDBOX	= fieldTagOf( 504, WIRE_VARINT);
 
 	private static final int FLAG_LMT			= 0x01;
 	private static final int FLAG_NIGHTMODE		= 0x02;
@@ -501,66 +505,68 @@ public final class Device implements ProtobufSerializable {
 	/**
 	 * Deserialize device from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized device
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
 	 */
-	public static Device ofProtobuf(ProtobufReader reader) {
+	public static Device ofProtobuf(ProtobufDecoder dec) {
 		Device rv = new Device(DEFAULT);
 		List<String> extraLangb = new ArrayList<>();
 		List<Pair<String, String>> allIfa = new ArrayList<>();
 		List<Geo> geos = new ArrayList<>();
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == UA) {
-				rv.userAgent = reader.readString();
+				rv.userAgent = dec.decodeString();
 			} else if (tag == MAKE) {
-				rv.manufacturerName = reader.readString();
+				rv.manufacturerName = dec.decodeString();
 			} else if (tag == MODEL) {
-				rv.modelName = reader.readString();
+				rv.modelName = dec.decodeString();
 			} else if (tag == HWV) {
-				rv.modelVersion = reader.readString();
+				rv.modelVersion = dec.decodeString();
 			} else if (tag == TYPE) {
-				rv.type = reader.readInt32();
+				rv.type = dec.decodeUint32();
 			} else if (tag == OS) {
-				rv.operatingSystem = reader.readInt32();
+				rv.operatingSystem = dec.decodeUint32();
 			} else if (tag == OSV) {
-				rv.operatingSystemVersion = reader.readString();
+				rv.operatingSystemVersion = dec.decodeString();
 			} else if (tag == PXRATIO) {
-				rv.screenPixelRatio = reader.readFloat();
+				rv.screenPixelRatio = dec.decodeFloat();
 			} else if (tag == PPI) {
-				rv.screenPixelsPerInch = reader.readInt32();
+				rv.screenPixelsPerInch = dec.decodeUint32();
 			} else if (tag == W) {
-				rv.screenWidthPx = reader.readInt32();
+				rv.screenWidthPx = dec.decodeUint32();
 			} else if (tag == H) {
-				rv.screenHeightPx = reader.readInt32();
+				rv.screenHeightPx = dec.decodeUint32();
 			} else if (tag == CONTYPE) {
-				rv.connectionType = reader.readInt32();
+				rv.connectionType = dec.decodeUint32();
 			} else if (tag == CARRIER) {
-				rv.carrierName = reader.readString();
+				rv.carrierName = dec.decodeString();
 			} else if (tag == MCCMNC) {
-				rv.carrierMccMnc = reader.readString();
+				rv.carrierMccMnc = dec.decodeString();
 			} else if (tag == MCCMNCSIM) {
-				rv.simCarrierMccMnc = reader.readString();
+				rv.simCarrierMccMnc = dec.decodeString();
 			} else if (tag == LANGB) {
-				rv.languageCode = reader.readString();
+				rv.languageCode = dec.decodeString();
 			} else if (tag == EXTRALANGB) {
-				extraLangb.add(reader.readString());
+				extraLangb.add(dec.decodeString());
 			} else if (tag == ALLIFA) {
-				allIfa.add(reader.readStringPair());
+				allIfa.add(dec.decodeStringPair());
 			} else if (tag == GEO) {
-				geos.add(reader.readLen(Geo::ofProtobuf));
+				geos.add(dec.decodeLen(Geo::ofProtobuf));
 			} else if (tag == LMT) {
-				rv.flags |= reader.readBool() ? FLAG_LMT : 0;
+				rv.flags |= dec.decodeBool() ? FLAG_LMT : 0;
 			} else if (tag == NIGHTMODE) {
-				rv.flags |= reader.readBool() ? FLAG_NIGHTMODE : 0;
+				rv.flags |= dec.decodeBool() ? FLAG_NIGHTMODE : 0;
 			} else if (tag == LANDSCAPE) {
-				rv.flags |= reader.readBool() ? FLAG_LANDSCAPE : 0;
+				rv.flags |= dec.decodeBool() ? FLAG_LANDSCAPE : 0;
 			} else if (tag == JSSANDBOX) {
-				rv.flags |= reader.readBool() ? FLAG_JSSANDBOX : 0;
+				rv.flags |= dec.decodeBool() ? FLAG_JSSANDBOX : 0;
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		rv.extraLanguageCodes = CollectionsCompat.toStringArrayOrEmpty(extraLangb);
@@ -971,29 +977,32 @@ public final class Device implements ProtobufSerializable {
 	}
 
 	@Override
-	public void toProtobuf(ProtobufWriter writer) {
-		writer.writeString(UA, this.userAgent);
-		writer.writeString(MAKE, this.manufacturerName);
-		writer.writeString(MODEL, this.modelName);
-		writer.writeString(HWV, this.modelVersion);
-		writer.writeInt32(TYPE, this.type);
-		writer.writeInt32(OS, this.operatingSystem);
-		writer.writeString(OSV, this.operatingSystemVersion);
-		writer.writeFloat(PXRATIO, this.screenPixelRatio);
-		writer.writeInt32(PPI, this.screenPixelsPerInch);
-		writer.writeInt32(W, this.screenWidthPx);
-		writer.writeInt32(H, this.screenHeightPx);
-		writer.writeInt32(CONTYPE, this.connectionType);
-		writer.writeString(CARRIER, this.carrierName);
-		writer.writeString(MCCMNC, this.carrierMccMnc);
-		writer.writeString(MCCMNCSIM, this.simCarrierMccMnc);
-		writer.writeString(LANGB, this.languageCode);
-		writer.writeRepeatString(EXTRALANGB, this.extraLanguageCodes);
-		writer.writeRepeatStringPair(ALLIFA, this.advertisingIds);
-		writer.writeRepeatLen(GEO, this.geos);
-		writer.writeBool(LMT, this.limitAdTracking());
-		writer.writeBool(NIGHTMODE, this.nightMode());
-		writer.writeBool(LANDSCAPE, this.landscape());
-		writer.writeBool(JSSANDBOX, this.supportsJavaScriptSandbox());
+	public void toProtobuf(ProtobufEncoder enc) {
+		enc.encodeStringField(UA, this.userAgent)
+			.encodeStringField(MAKE, this.manufacturerName)
+			.encodeStringField(MODEL, this.modelName)
+			.encodeStringField(HWV, this.modelVersion)
+			.encodeUnsignedIntField(TYPE, this.type)
+			.encodeUnsignedIntField(OS, this.operatingSystem)
+			.encodeStringField(OSV, this.operatingSystemVersion)
+			.encodeFloatField(PXRATIO, this.screenPixelRatio)
+			.encodeUnsignedIntField(PPI, this.screenPixelsPerInch)
+			.encodeUnsignedIntField(W, this.screenWidthPx)
+			.encodeUnsignedIntField(H, this.screenHeightPx)
+			.encodeUnsignedIntField(CONTYPE, this.connectionType)
+			.encodeStringField(CARRIER, this.carrierName)
+			.encodeStringField(MCCMNC, this.carrierMccMnc)
+			.encodeStringField(MCCMNCSIM, this.simCarrierMccMnc)
+			.encodeStringField(LANGB, this.languageCode)
+			.encodeBoolField(LMT, this.limitAdTracking())
+			.encodeBoolField(NIGHTMODE, this.nightMode())
+			.encodeBoolField(LANDSCAPE, this.landscape())
+			.encodeBoolField(JSSANDBOX, this.supportsJavaScriptSandbox());
+		for (String langb : this.extraLanguageCodes)
+			enc.encodeStringField(EXTRALANGB, langb);
+		for (Pair<String, String> ifa : this.advertisingIds)
+			enc.encodeStringPairField(ALLIFA, ifa);
+		for (Geo geo : this.geos)
+			enc.encodeMessageField(GEO, geo);
 	}
 }

@@ -9,12 +9,9 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.adcom.TestUtil;
 import org.polygamma.origin.adcom.AdcomPlacement;
 
 /**
@@ -23,7 +20,7 @@ import org.polygamma.origin.adcom.AdcomPlacement;
 @RunWith(AndroidJUnit4.class)
 public class PlacementTest {
 	@Test
-	public void testSerde() throws InvalidProtocolBufferException {
+	public void testSerde() {
 		Placement exp = Placement.ofBuilder()
 			.id("placement-id")
 			.secure(false)
@@ -53,11 +50,12 @@ public class PlacementTest {
 					.build()
 			)
 			.build();
-		Placement got = Placement.ofProtobuf(new ProtobufReader(
-			AdcomPlacement.Placement.parseFrom(ProtobufWriter.serialize(exp))
-				.toByteString()
-				.asReadOnlyByteBuffer()
-		));
+		Placement got = TestUtil.encodeAndDecode(
+			exp,
+			Placement::toProtobuf,
+			Placement::ofProtobuf,
+			AdcomPlacement.Placement::parseFrom
+		);
 
 		assertEquals("placement-id", got.id());
 		assertFalse(got.secure());

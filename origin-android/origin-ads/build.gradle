@@ -8,7 +8,6 @@ description = "Advertising Origin SDK module."
 
 dependencies {
 	api(project(":origin-core"))
-	api(libs.androidx.core)
 	api(libs.guava.listenablefuture)
 
 	implementation(project(":origin-adcom"))

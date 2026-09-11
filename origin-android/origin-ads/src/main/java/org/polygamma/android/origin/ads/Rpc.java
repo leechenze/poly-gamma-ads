@@ -2,9 +2,15 @@
 
 package org.polygamma.android.origin.ads;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_FIXED32;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import androidx.annotation.IntDef;
+
+import org.polygamma.android.origin.protobuf.Protobuf;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -89,43 +95,43 @@ interface Rpc {
 			/**
 			 * Backend persistent settings cookie.
 			 */
-			@Tag int COOKIE			= ofBytes(  1);
+			@FieldTag int COOKIE		= fieldTagOf(1, WIRE_LEN);
 
 			/**
 			 * Antifraud {@linkplain
 			 * org.polygamma.android.origin.antifraud.AntifraudStatus#digest() digest}.
 			 */
-			@Tag int IVTDIGEST		= ofString( 2);
+			@FieldTag int IVTDIGEST		= fieldTagOf(2, WIRE_LEN);
 
 			/**
 			 * AdCOM model {@linkplain org.polygamma.android.origin.adcom.AdCom#DOMAIN_VERSION
 			 * version}.
 			 */
-			@Tag int ADCOMVER		= ofString( 3);
+			@FieldTag int ADCOMVER		= fieldTagOf(3, WIRE_LEN);
 
 			/**
 			 * {@linkplain org.polygamma.android.origin.core.Origin#app() Distribution channel}
 			 * ad media is requested for.
 			 */
-			@Tag int CHANNEL		= ofMessage(4);
+			@FieldTag int CHANNEL		= fieldTagOf(4, WIRE_LEN);
 
 			/**
 			 * {@linkplain org.polygamma.android.origin.core.DeviceModule#device() Device} on
 			 * which ad media will be executed.
 			 */
-			@Tag int DEVICE			= ofMessage(5);
+			@FieldTag int DEVICE		= fieldTagOf(5, WIRE_LEN);
 
 			/**
 			 * {@linkplain org.polygamma.android.origin.core.RegulationsModule#regs() Regulations}
 			 * applicable to device.
 			 */
-			@Tag int REGS			= ofMessage(6);
+			@FieldTag int REGS			= fieldTagOf(6, WIRE_LEN);
 
 			/**
 			 * {@linkplain org.polygamma.android.origin.adcom.placement.Placement Placements} for
 			 * which ad media is being requested.
 			 */
-			@Tag int PLCMT			= ofMessage(7);
+			@FieldTag int PLCMT			= fieldTagOf(7, WIRE_LEN);
 		}
 
 		/**
@@ -164,12 +170,12 @@ interface Rpc {
 			/**
 			 * Backend persistent settings cookie.
 			 */
-			@Tag int COOKIE		= ofBytes(  1);
+			@FieldTag int COOKIE	= fieldTagOf(1, WIRE_LEN);
 
 			/**
 			 * Result items.
 			 */
-			@Tag int ITEM		= ofMessage(2);
+			@FieldTag int ITEM		= fieldTagOf(2, WIRE_LEN);
 
 			/**
 			 * Ad result item.
@@ -178,39 +184,39 @@ interface Rpc {
 				/**
 				 * Item identifier.
 				 */
-				@Tag int ID				= ofString( 1);
+				@FieldTag int ID			= fieldTagOf(1, WIRE_LEN);
 
 				/**
 				 * {@linkplain org.polygamma.android.origin.adcom.media.Ad Ad} result.
 				 */
-				@Tag int AD				= ofMessage(2);
+				@FieldTag int AD			= fieldTagOf(2, WIRE_LEN);
 
 				/**
 				 * Count of item user is rewarded with for viewing ad media.
 				 * <p>If this is {@code 0} or omitted, user is not rewarded for ad media.
 				 */
-				@Tag int RWDITEMCOUNT	= ofInt64(  3);
+				@FieldTag int RWDITEMCOUNT	= fieldTagOf(3, WIRE_VARINT);
 
 				/**
 				 * Type of item user is rewarded with for viewing ad media.
 				 */
-				@Tag int RWDITEMTYPE	= ofString( 4);
+				@FieldTag int RWDITEMTYPE	= fieldTagOf(4, WIRE_LEN);
 
 				/**
 				 * Scale factor to apply when generating preview image(s) of ad media.
 				 * <p>If this is {@code 0}, preview image of ad media is not required.
 				 */
-				@Tag int PREVIEWSCALE	= ofFloat(  5);
+				@FieldTag int PREVIEWSCALE	= fieldTagOf(5, WIRE_FIXED32);
 
 				/**
 				 * Price, in one-thousandths, buyer is willing to pay for ad execution.
 				 */
-				@Tag int PRICEMILLI		= ofInt64(  6);
+				@FieldTag int PRICEMILLI	= fieldTagOf(6, WIRE_VARINT);
 
 				/**
 				 * ISO 4217 code of currency {@linkplain #PRICEMILLI price} is specified in.
 				 */
-				@Tag int PRICECUR		= ofString( 7);
+				@FieldTag int PRICECUR		= fieldTagOf(7, WIRE_LEN);
 			}
 
 			/**
@@ -220,12 +226,12 @@ interface Rpc {
 				/**
 				 * Error {@linkplain ErrorCode code}.
 				 */
-				@Tag int CODE	= ofInt32( 1);
+				@FieldTag int CODE	= fieldTagOf(1, WIRE_VARINT);
 
 				/**
 				 * Human-readable error message.
 				 */
-				@Tag int MSG	= ofString(2);
+				@FieldTag int MSG	= fieldTagOf(2, WIRE_LEN);
 			}
 
 			/**
@@ -238,17 +244,17 @@ interface Rpc {
 				 * for all placements for which ads were requested but for which there are no
 				 * result items.
 				 */
-				@Tag int PLCMTID	= ofString( 1);
+				@FieldTag int PLCMTID	= fieldTagOf(1, WIRE_LEN);
 
 				/**
 				 * {@link ErrorItem Erroneous} result.
 				 */
-				@Tag int ERR		= ofMessage(2);
+				@FieldTag int ERR		= fieldTagOf(2, WIRE_LEN);
 
 				/**
 				 * {@link AdItem Successful ad} result.
 				 */
-				@Tag int AD			= ofMessage(3);
+				@FieldTag int AD		= fieldTagOf(3, WIRE_LEN);
 			}
 		}
 	}
@@ -261,7 +267,7 @@ interface Rpc {
 		 * Single ad event being reported.
 		 */
 		interface ReportAdEvent {
-			
+
 		}
 
 		/**
@@ -276,7 +282,7 @@ interface Rpc {
 			/**
 			 * Ad {@linkplain ReportAdEvent events} being reported.
 			 */
-			@Tag int EVENT		= ofMessage(1);
+			@FieldTag int EVENT		= fieldTagOf(1, WIRE_LEN);
 		}
 	}
 }

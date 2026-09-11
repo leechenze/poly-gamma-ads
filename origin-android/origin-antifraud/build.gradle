@@ -2,14 +2,35 @@
 
 plugins {
 	id("origin-library")
+	alias(libs.plugins.protobuf)
 }
 
 description = "Anti-fraud Origin SDK module."
 
 dependencies {
 	api(project(":origin-core"))
+	implementation(project(":origin-crypt"))
 	implementation(project(":origin-protobuf"))
 
 	androidTestImplementation(libs.androidx.concurrent.futures)
+	androidTestImplementation(libs.bouncycastle)
 	androidTestImplementation(libs.mockwebserver)
+	androidTestImplementation(libs.protobuf.lite)
+}
+
+protobuf {
+	generateProtoTasks {
+		all().configureEach {
+			enabled = false
+		}
+
+		ofTest().configureEach {
+			enabled = true
+			builtins {
+				java {
+					option("lite")
+				}
+			}
+		}
+	}
 }

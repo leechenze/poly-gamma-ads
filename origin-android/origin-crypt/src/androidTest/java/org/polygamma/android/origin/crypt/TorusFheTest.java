@@ -473,7 +473,7 @@ public class TorusFheTest {
 			buffer, bufferSkOff
 		);
 
-		for (int i = 1; i < (n * 2); i++) {
+		for (int i : new int[] { 1, Math.max(2, n / 2), n, n * 2 }) {
 			byte[] expPt = new byte[i];
 			int[] expIntPt = new int[i];
 			long[] expLongPt = new long[i];

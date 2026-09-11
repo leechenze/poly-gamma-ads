@@ -2,7 +2,9 @@
 
 package org.polygamma.android.origin.adcom.media;
 
-import static org.polygamma.android.origin.protobuf.ProtobufField.*;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_LEN;
+import static org.polygamma.android.origin.protobuf.Protobuf.WIRE_VARINT;
+import static org.polygamma.android.origin.protobuf.Protobuf.fieldTagOf;
 
 import android.annotation.SuppressLint;
 import android.util.ArrayMap;
@@ -14,8 +16,9 @@ import androidx.annotation.ReturnThis;
 import org.polygamma.android.origin.adcom.enums.AdApiCode;
 import org.polygamma.android.origin.adcom.enums.AdComEnums;
 import org.polygamma.android.origin.adcom.enums.DisplayCreativeType;
-import org.polygamma.android.origin.protobuf.ProtobufReader;
-import org.polygamma.android.origin.protobuf.ProtobufWriter;
+import org.polygamma.android.origin.protobuf.Protobuf.FieldTag;
+import org.polygamma.android.origin.protobuf.ProtobufDecoder;
+import org.polygamma.android.origin.protobuf.ProtobufEncoder;
 import org.polygamma.android.origin.util.CollectionsCompat;
 import org.polygamma.android.origin.util.Preconditions;
 
@@ -34,30 +37,30 @@ import java.util.Map;
  */
 public final class DisplayAd extends Ad {
 
-	/*private static final @Tag int MIME		= ofString(       1);*/
-	private static final @Tag int API			= ofPackedInt32(  2);
-	/*private static final @Tag int CTYPE		= ofInt32(        3);*/
-	private static final @Tag int W				= ofInt32(        4);
-	private static final @Tag int H				= ofInt32(        5);
-	private static final @Tag int WRATIO		= ofInt32(        6);
-	private static final @Tag int HRATIO		= ofInt32(        7);
-	private static final @Tag int PRIV			= ofString(       8);
-	private static final @Tag int ADM			= ofString(       9);
-	private static final @Tag int CURL			= ofString(      10);
-	private static final @Tag int BANNER		= ofMessage(     11);
-	private static final @Tag int NATIVE		= ofMessage(     12);
-	private static final @Tag int EVENT			= ofMessage(     13);
-	private static final @Tag int MINSHOWDUR	= ofInt64(      500);
-	private static final @Tag int UNIVID		= ofStringPair( 501);
-	private static final @Tag int ICON			= ofMessage(    502);
+	/*private static final @FieldTag int MIME		= fieldTagOf(  1, WIRE_LEN);*/
+	private static final @FieldTag int API			= fieldTagOf(  2, WIRE_LEN);
+	/*private static final @FieldTag int CTYPE		= fieldTagOf(  3, WIRE_VARINT);*/
+	private static final @FieldTag int W			= fieldTagOf(  4, WIRE_VARINT);
+	private static final @FieldTag int H			= fieldTagOf(  5, WIRE_VARINT);
+	private static final @FieldTag int WRATIO		= fieldTagOf(  6, WIRE_VARINT);
+	private static final @FieldTag int HRATIO		= fieldTagOf(  7, WIRE_VARINT);
+	private static final @FieldTag int PRIV			= fieldTagOf(  8, WIRE_LEN);
+	private static final @FieldTag int ADM			= fieldTagOf(  9, WIRE_LEN);
+	private static final @FieldTag int CURL			= fieldTagOf( 10, WIRE_LEN);
+	private static final @FieldTag int BANNER		= fieldTagOf( 11, WIRE_LEN);
+	private static final @FieldTag int NATIVE		= fieldTagOf( 12, WIRE_LEN);
+	private static final @FieldTag int EVENT		= fieldTagOf( 13, WIRE_LEN);
+	private static final @FieldTag int MINSHOWDUR	= fieldTagOf(500, WIRE_VARINT);
+	private static final @FieldTag int UNIVID		= fieldTagOf(501, WIRE_LEN);
+	private static final @FieldTag int ICON			= fieldTagOf(502, WIRE_LEN);
 
 	// `StaticBannerAd`
-	private static final @Tag int BANNER_IMG	= ofString(       1);
-	private static final @Tag int BANNER_LINK	= ofMessage(      2);
+	private static final @FieldTag int BANNER_IMG	= fieldTagOf(  1, WIRE_LEN);
+	private static final @FieldTag int BANNER_LINK	= fieldTagOf(  2, WIRE_LEN);
 
 	// `NativeAd`
-	private static final @Tag int NATIVE_LINK	= ofMessage(      1);
-	private static final @Tag int NATIVE_ASSET	= ofMessage(      2);
+	private static final @FieldTag int NATIVE_LINK	= fieldTagOf(  1, WIRE_LEN);
+	private static final @FieldTag int NATIVE_ASSET	= fieldTagOf(  2, WIRE_LEN);
 
 	private static final int FLAG_ADM		= 0x10000000;
 	private static final int FLAG_CURL		= 0x20000000;
@@ -418,75 +421,54 @@ public final class DisplayAd extends Ad {
 	/**
 	 * Deserialize {@code DisplayAd} from Protobuf message.
 	 *
-	 * @param reader reader to deserialize from
+	 * @param dec decoder to deserialize from
 	 * @return deserialized display ad media
 	 * @throws RuntimeException coding is malformed
 	 * @since 1.2
-	 * @see #toDisplayAdProtobuf(ProtobufWriter)
+	 * @see #toDisplayAdProtobuf(ProtobufEncoder)
 	 */
-	public static DisplayAd ofDisplayAdProtobuf(ProtobufReader reader) {
+	public static DisplayAd ofDisplayAdProtobuf(ProtobufDecoder dec) {
 		DisplayAd rv = new DisplayAd(DEFAULT);
 		ArrayMap<String, String> univIds = new ArrayMap<>(0);
 		List<IconAsset> icons = new ArrayList<>(0);
 		List<AdEventTracker> trackers = new ArrayList<>(0);
 
-		while (reader.hasRemaining()) {
-			int tag = reader.readTag();
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
 
 			if (tag == MINSHOWDUR) {
-				rv.minShowDurationSeconds = reader.readInt64();
+				rv.minShowDurationSeconds = dec.decodeUint64();
 			} else if (tag == API) {
-				rv.requiredAdApisMask = (int) (reader.readWordBitmap(0) & 0xffffffffL);
+				rv.requiredAdApisMask = dec.decodePackedUint32Bitmap32();
 			} else if (tag == PRIV) {
-				rv.buyerPrivacyPolicyUrl = reader.readString();
+				rv.buyerPrivacyPolicyUrl = dec.decodeString();
 			} else if (tag == UNIVID) {
-				Pair<String, String> univId = reader.readStringPair();
+				Pair<String, String> univId = dec.decodeStringPair();
 
 				univIds.put(univId.first, univId.second);
 			} else if (tag == ICON) {
-				icons.add(reader.readLen(IconAsset::ofProtobuf));
+				icons.add(dec.decodeLen(IconAsset::ofProtobuf));
 			} else if (tag == ADM || tag == CURL) {
 				rv.creativeTypeAndFlags =
 					AdComEnums.DisplayCreativeHtml |
 					(tag == CURL ? FLAG_CURL : FLAG_ADM);
-				rv.creative = reader.readString();
+				rv.creative = dec.decodeString();
 			} else if (tag == BANNER) {
-				int cookie = reader.beginReadLen();
-
-				rv.creativeTypeAndFlags = AdComEnums.DisplayCreativeImage;
-				rv.creative = "";
-				while (reader.hasRemaining()) {
-					tag = reader.readTag();
-					if (tag == BANNER_IMG)
-						rv.creative = reader.readString();
-					else if (tag == BANNER_LINK)
-						rv.link = reader.readLen(LinkAsset::ofProtobuf);
-				}
-				reader.endReadLen(cookie);
+				dec.decodeLen(rv, DisplayAd::mergeBannerProtobuf);
 			} else if (tag == NATIVE) {
-				List<NativeAsset> assets = new ArrayList<>();
-				int cookie = reader.beginReadLen();
-
-				rv.creativeTypeAndFlags = AdComEnums.DisplayCreativeNative;
-				while (reader.hasRemaining()) {
-					tag = reader.readTag();
-					if (tag == NATIVE_LINK)
-						rv.link = reader.readLen(LinkAsset::ofProtobuf);
-					else if (tag == NATIVE_ASSET)
-						assets.add(reader.readLen(NativeAsset::ofProtobuf));
-				}
-				rv.creative = assets.toArray(new NativeAsset[0]);
-				reader.endReadLen(cookie);
+				dec.decodeLen(rv, DisplayAd::mergeNativeProtobuf);
 			} else if (tag == EVENT) {
-				trackers.add(reader.readLen(AdEventTracker::ofProtobuf));
+				trackers.add(dec.decodeLen(AdEventTracker::ofProtobuf));
 			} else if (tag == W) {
-				rv.widthDp = reader.readInt32();
+				rv.widthDp = dec.decodeUint32();
 			} else if (tag == H) {
-				rv.heightDp = reader.readInt32();
+				rv.heightDp = dec.decodeUint32();
 			} else if (tag == WRATIO) {
-				rv.widthRatio = reader.readInt32();
+				rv.widthRatio = dec.decodeUint32();
 			} else if (tag == HRATIO) {
-				rv.heightRatio = reader.readInt32();
+				rv.heightRatio = dec.decodeUint32();
+			} else {
+				dec.skipFieldValue(tag);
 			}
 		}
 		rv.icons = CollectionsCompat.toArrayOrEmpty(icons, DEFAULT.icons);
@@ -533,6 +515,40 @@ public final class DisplayAd extends Ad {
 		this.heightDp = that.heightDp;
 		this.widthRatio = that.widthRatio;
 		this.heightRatio = that.heightRatio;
+	}
+
+	private DisplayAd mergeBannerProtobuf(ProtobufDecoder dec) {
+		this.creativeTypeAndFlags = AdComEnums.DisplayCreativeImage;
+		this.creative = "";
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
+
+			if (tag == BANNER_IMG)
+				this.creative = dec.decodeString();
+			else if (tag == BANNER_LINK)
+				this.link = dec.decodeLen(LinkAsset::ofProtobuf);
+			else
+				dec.skipFieldValue(tag);
+		}
+		return this;
+	}
+
+	private DisplayAd mergeNativeProtobuf(ProtobufDecoder dec) {
+		List<NativeAsset> assets = new ArrayList<>();
+
+		this.creativeTypeAndFlags = AdComEnums.DisplayCreativeNative;
+		while (dec.hasRemaining()) {
+			int tag = dec.decodeFieldTag();
+
+			if (tag == NATIVE_LINK)
+				this.link = dec.decodeLen(LinkAsset::ofProtobuf);
+			else if (tag == NATIVE_ASSET)
+				assets.add(dec.decodeLen(NativeAsset::ofProtobuf));
+			else
+				dec.skipFieldValue(tag);
+		}
+		this.creative = assets.toArray(new NativeAsset[0]);
+		return this;
 	}
 
 	/**
@@ -861,24 +877,23 @@ public final class DisplayAd extends Ad {
 	/**
 	 * Serialize as a {@code DisplayAd} Protobuf message.
 	 *
-	 * @param writer writer to serialize to
+	 * @param enc encoder to serialize to
 	 * @since 1.2
-	 * @see #ofDisplayAdProtobuf(ProtobufReader)
+	 * @see #ofDisplayAdProtobuf(ProtobufDecoder)
 	 */
-	public void toDisplayAdProtobuf(ProtobufWriter writer) {
-		long cookie;
+	public void toDisplayAdProtobuf(ProtobufEncoder enc) {
+		enc.encodeUnsignedLongField(MINSHOWDUR, this.minShowDurationSeconds)
+			.encodePackedUint32Bitmap32Field(API, this.requiredAdApisMask)
+			.encodeUnsignedIntField(W, this.widthDp)
+			.encodeUnsignedIntField(H, this.heightDp)
+			.encodeUnsignedIntField(WRATIO, this.widthRatio)
+			.encodeUnsignedIntField(HRATIO, this.heightRatio)
+			.encodeStringField(PRIV, this.buyerPrivacyPolicyUrl);
 
-		writer.writeInt64(MINSHOWDUR, this.minShowDurationSeconds);
-		writer.writeWordBitmap(API, Integer.toUnsignedLong(this.requiredAdApisMask), 0);
-		writer.writeInt32(W, this.widthDp);
-		writer.writeInt32(H, this.heightDp);
-		writer.writeInt32(WRATIO, this.widthRatio);
-		writer.writeInt32(HRATIO, this.heightRatio);
-		writer.writeString(PRIV, this.buyerPrivacyPolicyUrl);
-		writer.writeRepeatLen(ICON, this.icons);
-
+		for (IconAsset icon : this.icons)
+			enc.encodeMessageField(ICON, icon);
 		for (int i = 0; i < this.universalAdIds.size(); i++) {
-			writer.writeStringPair(UNIVID, new Pair<>(
+			enc.encodeStringPairField(UNIVID, new Pair<>(
 				this.universalAdIds.keyAt(i),
 				this.universalAdIds.valueAt(i)
 			));
@@ -886,26 +901,31 @@ public final class DisplayAd extends Ad {
 
 		switch (this.creativeType()) {
 		case AdComEnums.DisplayCreativeHtml:
-			writer.writeString(
+			enc.encodeStringField(
 				(this.creativeTypeAndFlags & FLAG_ADM) != 0 ? ADM : CURL,
 				(String) this.creative
 			);
 			break;
 		case AdComEnums.DisplayCreativeImage:
-			cookie = writer.beginWriteLen(BANNER);
-			writer.writeString(BANNER_IMG, (String) this.creative);
-			writer.writeLen(BANNER_LINK, this.link);
-			writer.endWriteLen(cookie);
+			enc.encodeLenField(
+				BANNER, this,
+				(banner, bannerEnc) ->
+					bannerEnc.encodeStringField(BANNER_IMG, (String) banner.creative)
+						.encodeMessageField(BANNER_LINK, banner.link)
+			);
 			break;
 		case AdComEnums.DisplayCreativeNative:
-			cookie = writer.beginWriteLen(NATIVE);
-			writer.writeLen(NATIVE_LINK, this.link);
-			writer.writeRepeatLen(NATIVE_ASSET, (NativeAsset[]) this.creative);
-			writer.endWriteLen(cookie);
+			enc.encodeLenField(NATIVE, this, (nat, natEnc) -> {
+				enc.encodeMessageField(NATIVE_LINK, nat.link);
+
+				for (NativeAsset asset : (NativeAsset[]) nat.creative)
+					enc.encodeMessageField(NATIVE_ASSET, asset);
+			});
 			break;
 		default:
 			break;
 		}
-		writer.writeRepeatLen(EVENT, super.eventTrackers());
+		for (AdEventTracker trkr : super.eventTrackers())
+			enc.encodeMessageField(EVENT, trkr);
 	}
 }
